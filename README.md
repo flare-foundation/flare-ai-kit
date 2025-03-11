@@ -21,7 +21,7 @@ Each module runs inside Confidential Space, with hardware-backed cryptographic a
 
 ## Key Features
 
-- **Verifiable AI**: Cryptographic proof validated and stored on the Flare blockchain.
+- **Verifiable AI**: Cryptographic proofs from Confidential Space validated and stored on the Flare blockchain.
 - **Model Flexibility**: Support for 300+ LLMs including Google Gemini 2.0 for AI-driven blockchain automation.
 - **Blockchain Native**: Seamless Flare blockchain integration with wallet support, token operations, and contract execution.
 - **Composable Design**: Choose from DeFAI, RAG, Social, and Consensus AI agents or extend with custom logic.
