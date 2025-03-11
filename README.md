@@ -17,15 +17,14 @@ All computations run in Trusted Execution Environments (TEEs) that generate hard
 | [flare-ai-consensus](https://github.com/flare-foundation/flare-ai-consensus)         | Novel approach to AI using [Consensus Learning](https://dev.flare.network/pdf/whitepapers/20240225-ConsensusLearning.pdf) for more reliable, transparent multi-model predictions. |
 | [flare-vtpm-attestation](https://github.com/flare-foundation/flare-vtpm-attestation) | On-chain verification of Confidential Space attestations, enabling trustless validation that AI computations were executed on tamper-proof hardware.                              |
 
-Each module runs inside Confidential Space, with hardware-backed cryptographic attestations guaranteeing that AI computations are tamper-proof, verifiable, and secure
+Each `flare-ai-*` module runs inside Confidential Space.
 
 ## Key Features
 
-- **Verifiable AI**: Cryptographic proofs from Confidential Space validated and stored on the Flare blockchain.
-- **Model Flexibility**: Support for 300+ LLMs including Google Gemini 2.0 for AI-driven blockchain automation.
+- **Verifiable Attestations**: Cryptographic proofs from Confidential Space validated and stored on the Flare blockchain.
 - **Blockchain Native**: Seamless Flare blockchain integration with wallet support, token operations, and contract execution.
+- **Model Flexibility**: Support for 300+ LLMs including Google Gemini 2.0 for AI-driven blockchain automation.
 - **Composable Design**: Choose from DeFAI, RAG, Social, and Consensus AI agents or extend with custom logic.
-- **Confidential**: Confidential execution protects sensitive input data.
 
 ## Getting Started
 
@@ -35,6 +34,8 @@ Clone the meta-repository with all submodules:
 git clone --recursive https://github.com/flare-foundation/flare-ai-kit.git
 ```
 
+Follow the README in each submodule to start building.
+
 ## Contributing
 
-Open an issue or start a discussion in our [GitHub repository](https://github.com/flare-foundation/flare-ai-kit).
+We actively welcome contributions - open an issue or start a discussion.
