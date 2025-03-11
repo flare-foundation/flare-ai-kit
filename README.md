@@ -1,6 +1,6 @@
 # Flare AI Kit
 
-A framework for building verifiable AI agents on the Flare blockchain using Google Cloud Confidential Space.
+A framework for building verifiable AI Agents on Flare using Confidential Space
 
 ## Overview
 
