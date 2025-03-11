@@ -10,3 +10,6 @@
 [submodule "flare-ai-consensus"]
 	path = flare-ai-consensus
 	url = https://github.com/flare-research/flare-ai-consensus
+[submodule "flare-vtpm-attestation"]
+	path = flare-vtpm-attestation
+	url = https://github.com/flare-foundation/flare-vtpm-attestation
