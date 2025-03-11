@@ -1,0 +1,12 @@
+[submodule "flare-ai-defai"]
+	path = flare-ai-defai
+	url = https://github.com/flare-foundation/flare-ai-defai
+[submodule "flare-ai-rag"]
+	path = flare-ai-rag
+	url = https://github.com/flare-foundation/flare-ai-rag
+[submodule "flare-ai-social"]
+	path = flare-ai-social
+	url = https://github.com/flare-foundation/flare-ai-social
+[submodule "flare-ai-consensus"]
+	path = flare-ai-consensus
+	url = https://github.com/flare-research/flare-ai-consensus
