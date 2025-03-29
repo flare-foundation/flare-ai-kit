@@ -5,15 +5,12 @@ from flare_ai_kit.common.exceptions import FtsoV2Error
 from flare_ai_kit.config import settings
 from flare_ai_kit.ecosystem.protocols.ftsov2 import FtsoV2
 
-RPC_URL = str(settings.ecosystem.flare_rpc_url)
-
 
 @pytest.fixture(scope="module")
 def ftso_instance() -> FtsoV2:
     """Provides a real instance of FtsoV2 connected to the network."""
-    print(f"Attempting to connect FtsoV2 instance using RPC: {RPC_URL}")
     try:
-        instance = FtsoV2(web3_provider_url=RPC_URL)
+        instance = FtsoV2(web3_provider_url=str(settings.ecosystem.flare_rpc_url))
         assert instance.w3.is_connected()
     except Exception as e:
         pytest.fail(
