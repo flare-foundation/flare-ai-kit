@@ -1,0 +1,41 @@
+name: Lint
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  lint:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Set up Python environment
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      # Install dependencies
+      - name: Install dependencies
+        run: uv sync --frozen --all-extras
+
+      # Format code with ruff
+      - name: Format with ruff
+        run: uv run ruff format --diff
+
+      # Lint code with ruff
+      - name: Lint with ruff
+        run: uv run ruff check --diff
+        continue-on-error: false
+
+      # Type check with pyright
+      - name: Type check with pyright
+        run: uv run pyright
+
+      # Tests with pytest
+      - name: Test wit pytest
+        run: uv run pytest

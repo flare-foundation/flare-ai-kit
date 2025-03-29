@@ -1,0 +1,59 @@
+[project]
+name = "flare-ai-kit"
+version = "0.1.0"
+description = "SDK for building verifiable AI Agents on Flare using Confidential Space"
+readme = "README.md"
+authors = [
+    { name = "Dinesh Pinto", email = "annual.fallout_0z@icloud.com" }
+]
+keywords = ["flare", "blockchain", "ai", "agent", "sdk", "confidential computing", "ftso"]
+requires-python = ">=3.12"
+dependencies = [
+    "aiohttp>=3.11.14",
+    "cryptography>=44.0.2",
+    "pydantic>=2.11.1",
+    "pydantic-ai>=0.0.46",
+    "pyjwt>=2.10.1",
+    "pyopenssl>=25.0.0",
+    "qdrant-client>=1.13.3",
+    "requests>=2.32.3",
+    "structlog>=25.2.0",
+    "web3>=7.10.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/flare-foundation/flare-ai-kit"
+Repository = "https://github.com/flare-foundation/flare-ai-kit"
+
+[project.scripts]
+flare-ai-kit = "flare_ai_kit:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.398",
+    "pytest>=8.3.5",
+    "ruff>=0.11.2",
+]
+social = [
+    "python-telegram-bot>=22.0",
+    "tweepy>=4.15.0",
+]
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["D203", "D212", "COM812", "S105", "D401", "D104", "ANN401", "T201", "ISC003", "D107"]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"tests/**/*.py" = ["S101", "ARG", "PLR2004", "SLF001", "BLE001", "E501", "D"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+include = ["src/"]
+typeCheckingMode = "strict"
