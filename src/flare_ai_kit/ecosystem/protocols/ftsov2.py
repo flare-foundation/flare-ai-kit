@@ -172,11 +172,3 @@ class FtsoV2(Flare):
         return [
             feed / 10**decimal for feed, decimal in zip(feeds, decimals, strict=False)
         ]
-
-
-if __name__ == "__main__":
-    ftsov2 = FtsoV2(
-        web3_provider_url="https://stylish-light-theorem.flare-mainnet.quiknode.pro/ext/bc/C/rpc"
-    )
-    print(ftsov2.get_latest_price("BTC/USD"))
-    print(ftsov2.get_latest_prices(["BTC/USD", "FLR/USD"]))
