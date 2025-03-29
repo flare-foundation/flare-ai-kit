@@ -14,7 +14,7 @@ logger = structlog.get_logger(__name__)
 
 def get_simulated_token() -> str:
     """Reads the first line from a given file path."""
-    with (Path(__file__).parent / "simulated_token.txt").open("r") as f:
+    with (Path(__file__).parent / "sim_token.txt").open("r") as f:
         return f.readline().strip()
 
 

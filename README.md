@@ -2,14 +2,12 @@
 
 SDK for building verifiable AI Agents on Flare using Confidential Space.
 
-## Overview
-
 Flare AI Kit enables developers to create AI applications with cryptographic guarantees for data integrity, privacy, and provenance.
-All computations run in Trusted Execution Environments (TEEs) that generate hardware-backed attestations verifiable on-chain.
+All computations run in Trusted Execution Environments (TEEs) that generate hardware-backed attestations verifiable on Flare.
 
 ## Goals & Features
 
-* **Verifiable Agent Operations:** Execute agent logic within Google Cloud Confidential Space using Intel TDX for enhanced security and verifiability.
+* **Verifiable Agent Operations:** Execute agent logic within Confidential Space using Intel TDX TEEs.
 * **Agent Framework:** Build robust agents using PydanticAI for type validation and structured interaction with Large Language Models (LLMs) like Google Gemini.
 * **Flare Ecosystem Integration:** Connect directly to Flare's core protocols (FTSO, FDC/State Connector, FAssets) and major ecosystem applications (e.g., Sceptre, SparkDEX, OpenOcean).
 * **Retrieval-Augmented Generation (RAG):**

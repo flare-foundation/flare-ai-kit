@@ -10,6 +10,7 @@ from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
 from flare_ai_kit.rag.graph.settings_models import GraphDbSettingsModel
 from flare_ai_kit.rag.vector.settings_models import VectorDbSettingsModel
 from flare_ai_kit.social.settings_models import SocialSettingsModel
+from flare_ai_kit.tee.settings_models import TeeSettingsModel
 
 
 class AppSettings(BaseSettings):
@@ -32,6 +33,7 @@ class AppSettings(BaseSettings):
     vector_db: VectorDbSettingsModel
     graph_db: GraphDbSettingsModel
     social: SocialSettingsModel
+    tee: TeeSettingsModel
 
 
 # This single instance will be imported by other modules
