@@ -1,0 +1,29 @@
+[
+    {
+      "inputs": [
+        { "internalType": "bytes21", "name": "_feedId", "type": "bytes21" }
+      ],
+      "name": "getFeedById",
+      "outputs": [
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "int8", "name": "", "type": "int8" },
+        { "internalType": "uint64", "name": "", "type": "uint64" }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "bytes21[]", "name": "_feedIds", "type": "bytes21[]" }
+      ],
+      "name": "getFeedsById",
+      "outputs": [
+        { "internalType": "uint256[]", "name": "", "type": "uint256[]" },
+        { "internalType": "int8[]", "name": "", "type": "int8[]" },
+        { "internalType": "uint64", "name": "", "type": "uint64" }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    }
+  ]
+  
