@@ -9,6 +9,7 @@ from web3 import Web3
 from web3.types import TxParams
 
 from flare_ai_kit.common import load_abi
+from flare_ai_kit.config import settings
 
 logger = structlog.get_logger(__name__)
 
@@ -35,7 +36,7 @@ class TxQueueElement:
 class Flare:
     """Handles interactions with the Flare blockchain."""
 
-    def __init__(self, web3_provider_url: str) -> None:
+    def __init__(self, web3_provider_url: str | None = None) -> None:
         """
         Initialize the Flare Provider.
 
@@ -46,7 +47,9 @@ class Flare:
         self.address: ChecksumAddress | None = None
         self.private_key: str | None = None
         self.tx_queue: list[TxQueueElement] = []
-        self.w3 = Web3(Web3.HTTPProvider(web3_provider_url))
+        self.w3 = Web3(Web3.HTTPProvider(web3_provider_url)) or Web3(
+            Web3.HTTPProvider(str(settings.ecosystem.flare_rpc_url))
+        )
         self.contract_registry = self.w3.eth.contract(
             address=self.w3.to_checksum_address(CONTRACT_REGISTRY_ADDRESS),
             abi=load_abi("FlareContractRegistry"),

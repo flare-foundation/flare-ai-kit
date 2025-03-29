@@ -7,34 +7,46 @@ SDK for building verifiable AI Agents on Flare using Confidential Space.
 Flare AI Kit enables developers to create AI applications with cryptographic guarantees for data integrity, privacy, and provenance.
 All computations run in Trusted Execution Environments (TEEs) that generate hardware-backed attestations verifiable on-chain.
 
-## Modules
+## Goals & Features
 
-| **Module**                                                                           | **Description**                                                                                                                                      |
-| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [flare-ai-social](https://github.com/flare-foundation/flare-ai-social)               | AI-powered integration with social platforms (X, Telegram) enabling verifiable content analysis and automated interactions in Web3 social contexts.  |
-| [flare-ai-rag](https://github.com/flare-foundation/flare-ai-rag)                     | Knowledge retrieval system combining blockchain data with LLMs to provide verifiable, attestable answers to complex blockchain queries.              |
-| [flare-ai-defai](https://github.com/flare-foundation/flare-ai-defai)                 | Secure, automated DeFi strategy execution with verifiable AI decision-making for portfolio management, risk assessment, and yield optimization.      |
-| [flare-ai-consensus](https://github.com/flare-foundation/flare-ai-consensus)         | Novel approach to AI using [Consensus Learning](https://arxiv.org/abs/2402.16157) for more reliable, transparent multi-model predictions.            |
-| [flare-vtpm-attestation](https://github.com/flare-foundation/flare-vtpm-attestation) | On-chain verification of Confidential Space attestations, enabling trustless validation that AI computations were executed on tamper-proof hardware. |
+* **Verifiable Agent Operations:** Execute agent logic within Google Cloud Confidential Space using Intel TDX for enhanced security and verifiability.
+* **Agent Framework:** Build robust agents using PydanticAI for type validation and structured interaction with Large Language Models (LLMs) like Google Gemini.
+* **Flare Ecosystem Integration:** Connect directly to Flare's core protocols (FTSO, FDC/State Connector, FAssets) and major ecosystem applications (e.g., Sceptre, SparkDEX, OpenOcean).
+* **Retrieval-Augmented Generation (RAG):**
+    * **VectorRAG:** Index and query unstructured Flare data (docs, news, governance) using Qdrant or pgvector.
+    * **GraphRAG:** Index and query structured Flare blockchain transaction data using Neo4j.
+* **Social Intelligence:** Connectors for platforms like X, Discord, Telegram, Farcaster with analytics capabilities (optional dependency).
+* **Consensus Engine:** Support for multi-agent collaboration to improve decision robustness.
 
-Each `flare-ai-*` module runs inside Confidential Space.
+## Architecture Overview
 
-## Key Features
+The SDK is built with a modular architecture:
 
-- **Verifiable Attestations**: Cryptographic proofs from Confidential Space validated and stored on the Flare blockchain.
-- **Blockchain Native**: Seamless Flare blockchain integration with wallet support, token operations, and contract execution.
-- **Model Flexibility**: Support for 300+ LLMs including Google Gemini 2.0 for AI-driven blockchain automation.
-- **Composable Design**: Choose from DeFAI, RAG, Social, and Consensus AI agents or extend with custom logic.
+* **Agent Framework:** Core agent logic, LLM interaction (PydanticAI).
+* **Ecosystem Engine:** Handles connections to Flare protocols and dApps.
+* **RAG Engines:** Vector and Graph databases & query interfaces.
+* **Social Engine:** Social platform connectors and analysis tools.
+* **Consensus Engine:** Multi-agent coordination.
+* **Security Helpers:** Utilities for working with TEEs / Confidential Space.
 
 ## Getting Started
 
-Clone the meta-repository with all submodules:
+1. Clone the repository:
+
+    ```bash
+    git clone https://github.com/flare-foundation/flare-ai-kit.git
+    ```
+
+2. Setup configuration:
+
+
+For onchain TEE verification 
 
 ```bash
 git clone --recursive https://github.com/flare-foundation/flare-ai-kit.git
 ```
 
-Follow the README in each submodule to start building.
+
 
 ## Contributing
 

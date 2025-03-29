@@ -6,14 +6,16 @@ import requests
 import structlog
 from requests.exceptions import RequestException, Timeout
 
+from flare_ai_kit.config import settings
+
 logger = structlog.get_logger(__name__)
 
 
 class BlockExplorer:
     """Interactions with Flare Block Explorer."""
 
-    def __init__(self, base_url: str) -> None:
-        self.base_url = base_url
+    def __init__(self, explorer_url: str | None = None) -> None:
+        self.explorer_url = explorer_url or str(settings.ecosystem.block_explorer_url)
         self.logger = logger.bind(service="explorer")
 
     def _get(self, params: dict[str, str]) -> dict[str, str]:
@@ -26,7 +28,7 @@ class BlockExplorer:
         headers = {"accept": "application/json"}
         try:
             response = requests.get(
-                self.base_url, params=params, headers=headers, timeout=10
+                self.explorer_url, params=params, headers=headers, timeout=10
             )
             response.raise_for_status()
             json_response = response.json()
@@ -49,7 +51,7 @@ class BlockExplorer:
         :return: Contract ABI
         """
         self.logger.debug(
-            "Fetching ABI for `%s` from `%s`", contract_address, self.base_url
+            "Fetching ABI for `%s` from `%s`", contract_address, self.explorer_url
         )
         response = self._get(
             params={

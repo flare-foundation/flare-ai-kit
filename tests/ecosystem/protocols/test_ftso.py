@@ -2,9 +2,10 @@ import pytest
 from web3 import Web3  # Import Web3 itself for type checking if needed
 
 from flare_ai_kit.common.exceptions import FtsoV2Error
+from flare_ai_kit.config import settings
 from flare_ai_kit.ecosystem.protocols.ftsov2 import FtsoV2
 
-RPC_URL = "https://stylish-light-theorem.flare-mainnet.quiknode.pro/ext/bc/C/rpc"
+RPC_URL = str(settings.ecosystem.flare_rpc_url)
 
 
 @pytest.fixture(scope="module")
