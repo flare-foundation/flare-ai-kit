@@ -28,6 +28,39 @@ Modular components include:
 - Consensus Engine
 - Secure Enclave Connectors (Confidential Space)
 
+```mermaid
+graph TD
+    A(Flare AI Kit)
+    A --> B{Agent Framework - PydanticAI}
+    A --> C{VectorRAG Engine - PostgreSQL + pgvector}
+    A --> D{GraphRAG Engine - Neo4j}
+    A --> E{Secure Enclave - Confidential Space + TDX}
+    A --> F{Ecosystem Engine}
+    A --> G{Social Engine}
+    A --> H{Consensus Engine}
+
+    B --> I(Gemini, GPT, Grok +200 models)
+
+    C --o DevHub/News/Governance
+
+    D --o MainnetTxData
+
+    E --> vTPM
+    vTPM --o RA-TLS
+
+    F --o M(Protocols)
+    M --o FTSO
+    M --o FDC
+    M --o FAssets
+
+    F --o L(Applications)
+    L --o OpenOcean
+    L --o Kinetic
+    L --o SparkDEX
+    L --o Cyclo
+    L --o ...
+```
+
 ## 📦 Getting Started
 
 1. **Clone Repository:**
