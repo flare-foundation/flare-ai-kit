@@ -44,5 +44,10 @@ class FtsoV2Error(Exception):
     """Custom exception for FtsoV errors."""
 
 
-class AbiError(Exception):
+# Explorer errors
+class ExplorerError(Exception):
+    """Custom exception for Explorer errors."""
+
+
+class AbiError(ExplorerError):
     """Custom exception for ABI loading errors."""

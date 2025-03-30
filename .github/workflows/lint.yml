@@ -54,4 +54,4 @@ jobs:
           SOCIAL__X_ACCESS_TOKEN_SECRET: "your_secret_twitter_key"
           SOCIAL__TELEGRAM_API_TOKEN: "your_secret_telegram_token"
           TEE__SIMULATE_ATTESTATION_TOKEN: true
-        run: uv run pytest
+        run: uv run pytest -v

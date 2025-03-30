@@ -11,12 +11,12 @@ requires-python = ">=3.12"
 dependencies = [
     "aiohttp>=3.11.14",
     "cryptography>=44.0.2",
+    "httpx>=0.28.1",
     "pydantic>=2.11.1",
     "pydantic-ai>=0.0.46",
     "pyjwt>=2.10.1",
     "pyopenssl>=25.0.0",
     "qdrant-client>=1.13.3",
-    "requests>=2.32.3",
     "structlog>=25.2.0",
     "web3>=7.10.0",
 ]
@@ -36,6 +36,7 @@ build-backend = "hatchling.build"
 dev = [
     "pyright>=1.1.398",
     "pytest>=8.3.5",
+    "pytest-asyncio>=0.26.0",
     "ruff>=0.11.2",
 ]
 social = [
@@ -48,7 +49,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["D203", "D212", "COM812", "S105", "D401", "D104", "ANN401", "ISC003", "D107"]
+ignore = ["D203", "D212", "COM812", "S105", "D401", "D104", "ANN401", "ISC003", "D107", "PGH003"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "tests/**/*.py" = ["S101", "ARG", "PLR2004", "SLF001", "BLE001", "E501", "T201", "D"]
@@ -57,3 +58,7 @@ ignore = ["D203", "D212", "COM812", "S105", "D401", "D104", "ANN401", "ISC003", 
 pythonVersion = "3.12"
 include = ["src/"]
 typeCheckingMode = "strict"
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"

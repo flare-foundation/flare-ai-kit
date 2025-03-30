@@ -1,6 +1,6 @@
 """Interactions with Flare Time Series Oracle V2 (FTSOv2)."""
 
-from typing import Final
+from typing import Final, Self, TypeVar
 
 import structlog
 
@@ -12,19 +12,44 @@ logger = structlog.get_logger(__name__)
 # Valid categories when querying FTSOv2 prices
 VALID_CATEGORIES: Final[frozenset[str]] = frozenset(["01", "02", "03", "04", "05"])
 
+# Type variable for the factory method pattern
+T = TypeVar("T", bound="FtsoV2")
+
 
 class FtsoV2(Flare):
     """Fetches price data from Flare Time Series Oracle V2 contracts."""
 
     def __init__(self, **kwargs: str) -> None:
         super().__init__(**kwargs)
-        ftsov2_address = self.get_protocol_contract_address("FtsoV2")
-        self.ftsov2 = self.w3.eth.contract(
-            address=self.w3.to_checksum_address(ftsov2_address), abi=load_abi("FtsoV2")
-        )
+        self.ftsov2 = None  # Will be initialized in 'create'
         self.logger = logger.bind(router="ftso")
 
-    def _get_feed_by_id(self, feed_id: str) -> tuple[int, int, int]:
+    # Factory method for asynchronous initialization
+    @classmethod
+    async def create(cls, web3_provider_url: str, **kwargs: str) -> Self:
+        """
+        Asynchronously creates and initializes an FtsoV2 instance.
+
+        Args:
+            web3_provider_url: URL of the Web3 provider endpoint.
+            **kwargs: Additional keyword arguments for the base class.
+
+        Returns:
+            A fully initialized AsyncFtsoV2 instance.
+
+        """
+        instance = cls(web3_provider_url=web3_provider_url, **kwargs)
+        instance.logger.debug("Initializing FtsoV2...")
+        # Await the async method from the base class
+        ftsov2_address = await instance.get_protocol_contract_address("FtsoV2")
+        instance.ftsov2 = instance.w3.eth.contract(
+            address=instance.w3.to_checksum_address(ftsov2_address),
+            abi=load_abi("FtsoV2"),  # Assuming load_abi is sync
+        )
+        instance.logger.debug("FtsoV2 initialized", address=ftsov2_address)
+        return instance
+
+    async def _get_feed_by_id(self, feed_id: str) -> tuple[int, int, int]:
         """
         Internal method to call the getFeedById contract function.
 
@@ -38,14 +63,17 @@ class FtsoV2(Flare):
             FtsoV2Error: If the contract call fails (e.g., revert, network issue).
 
         """
+        if not self.ftsov2:
+            msg = "FtsoV2 instance not fully initialized. Use FtsoV2.create()."
+            raise AttributeError(msg)
         try:
             # The contract returns (price, decimals, timestamp)
-            return self.ftsov2.functions.getFeedById(feed_id).call()
+            return await self.ftsov2.functions.getFeedById(feed_id).call()  # type: ignore
         except Exception as e:
             msg = f"Contract call failed for getFeedById({feed_id}): {e}"
             raise FtsoV2Error(msg) from e
 
-    def _get_feeds_by_id(
+    async def _get_feeds_by_id(
         self, feed_ids: list[str]
     ) -> tuple[list[int], list[int], list[int]]:
         """
@@ -61,9 +89,12 @@ class FtsoV2(Flare):
             FtsoV2Error: If the contract call fails.
 
         """
+        if not self.ftsov2:
+            msg = "FtsoV2 instance not fully initialized. Use FtsoV2.create()."
+            raise AttributeError(msg)
         try:
             # The contract returns (prices[], decimals[], timestamp)
-            return self.ftsov2.functions.getFeedsById(feed_ids).call()
+            return await self.ftsov2.functions.getFeedsById(feed_ids).call()  # type: ignore
         except Exception as e:
             msg = f"Contract call failed for getFeedsById({len(feed_ids)} feeds)"
             raise FtsoV2Error(msg) from e
@@ -116,7 +147,7 @@ class FtsoV2(Flare):
             raise FtsoV2Error(msg)
         return f"0x{padded_hex_string}"
 
-    def get_latest_price(self, feed_name: str, category: str = "01") -> float:
+    async def get_latest_price(self, feed_name: str, category: str = "01") -> float:
         """
         Retrieves the latest price for a single feed.
 
@@ -136,13 +167,18 @@ class FtsoV2(Flare):
         """
         self._check_category_validity(category)
         feed_id = self._feed_name_to_id(feed_name, category)
-        feeds, decimals, timestamp = self._get_feed_by_id(feed_id)
+        feeds, decimals, timestamp = await self._get_feed_by_id(feed_id)
         self.logger.debug(
-            "get_latest_price", feeds=feeds, decimals=decimals, timestamp=timestamp
+            "get_latest_price",
+            feed_name=feed_name,
+            feed_id=feed_id,
+            feeds=feeds,
+            decimals=decimals,
+            timestamp=timestamp,
         )
         return feeds / (10**decimals)
 
-    def get_latest_prices(
+    async def get_latest_prices(
         self, feed_names: list[str], category: str = "01"
     ) -> list[float]:
         """
@@ -161,14 +197,22 @@ class FtsoV2(Flare):
                 or the contract call fails.
 
         """
+        if not self.ftsov2:
+            msg = "FtsoV2 instance not fully initialized. Use FtsoV2.create()."
+            raise AttributeError(msg)
+
         self._check_category_validity(category)
         feed_ids = [
             self._feed_name_to_id(feed_name, category) for feed_name in feed_names
         ]
-        feeds, decimals, timestamp = self._get_feeds_by_id(feed_ids)
+        feeds, decimals, timestamp = await self._get_feeds_by_id(feed_ids)
         self.logger.debug(
-            "get_latest_prices", feeds=feeds, decimals=decimals, timestamp=timestamp
+            "get_latest_prices_async",
+            num_feeds=len(feed_names),
+            feeds=feeds,
+            decimals=decimals,
+            timestamp=timestamp,
         )
         return [
-            feed / 10**decimal for feed, decimal in zip(feeds, decimals, strict=False)
+            feed / 10**decimal for feed, decimal in zip(feeds, decimals, strict=True)
         ]
