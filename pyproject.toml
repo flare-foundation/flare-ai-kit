@@ -37,6 +37,7 @@ dev = [
     "pyright>=1.1.398",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.26.0",
+    "pytest-mock>=3.14.0",
     "ruff>=0.11.2",
 ]
 social = [
@@ -52,7 +53,7 @@ select = ["ALL"]
 ignore = ["D203", "D212", "COM812", "S105", "D401", "D104", "ANN401", "ISC003", "D107", "PGH003"]
 
 [tool.ruff.lint.extend-per-file-ignores]
-"tests/**/*.py" = ["S101", "ARG", "PLR2004", "SLF001", "BLE001", "E501", "T201", "D"]
+"tests/**/*.py" = ["S101", "ARG", "PLR2004", "SLF001", "BLE001", "E501", "T201", "D", "ANN001", "ANN201", "F821"]
 
 [tool.pyright]
 pythonVersion = "3.12"
