@@ -83,7 +83,6 @@ class BlockExplorer:
 
             json_response = response.json()
 
-            # Optional: Add more specific checks based on expected API structure
             if not isinstance(json_response, dict):
                 msg = f"API response is not a JSON object: {json_response}"
                 raise ExplorerError(msg)
@@ -163,7 +162,6 @@ class BlockExplorer:
             if not isinstance(abi, list):
                 msg = f"Parsed ABI for {contract_address} is not a list."
                 self.logger.warning(msg, parsed_abi=abi)
-                # Depending on API behavior, you might return [] or raise error
                 raise AbiError(msg)
 
             self.logger.debug(
