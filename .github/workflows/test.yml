@@ -15,7 +15,7 @@ jobs:
       AGENT__GEMINI_MODEL: "gemini-2.0-flash"
       AGENT__GEMINI_API_KEY: ${{ secrets.AGENT__GEMINI_API_KEY }}
       AGENT__OPENROUTER_API_KEY: ${{ secrets.AGENT__OPENROUTER_API_KEY }}
-      ECOSYSTEM__FLARE_RPC_URL: "https://stylish-light-theorem.flare-mainnet.quiknode.pro/ext/bc/C/rpc"
+      ECOSYSTEM__WEB3_PROVIDER_URL: "https://stylish-light-theorem.flare-mainnet.quiknode.pro/ext/bc/C/rpc"
       ECOSYSTEM__BLOCK_EXPLORER_URL: "https://flare-explorer.flare.network/api"
       VECTOR_DB__QDRANT_URL: "http://localhost:6333"
       VECTOR_DB__QDRANT_API_KEY: "your_secret_qdrant_api_key"
