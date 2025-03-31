@@ -10,6 +10,7 @@ from web3 import AsyncHTTPProvider, AsyncWeb3
 from web3.types import TxParams
 
 from flare_ai_kit.common import load_abi
+from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
 
 logger = structlog.get_logger(__name__)
 
@@ -36,18 +37,18 @@ class TxQueueElement:
 class Flare:
     """Handles interactions with the Flare blockchain."""
 
-    def __init__(self, web3_provider_url: str) -> None:
+    def __init__(self, settings: EcosystemSettingsModel) -> None:
         """
         Initialize the Flare Provider.
 
         Args:
-            web3_provider_url (str): URL of the Web3 provider endpoint
+            settings: Instance of EcosystemSettingsModel.
 
         """
         self.address: ChecksumAddress | None = None
         self.private_key: str | None = None
         self.tx_queue: list[TxQueueElement] = []
-        self.w3 = AsyncWeb3(AsyncHTTPProvider(web3_provider_url))
+        self.w3 = AsyncWeb3(AsyncHTTPProvider(str(settings.web3_provider_url)))
         self.contract_registry = self.w3.eth.contract(
             address=self.w3.to_checksum_address(CONTRACT_REGISTRY_ADDRESS),
             abi=load_abi("FlareContractRegistry"),

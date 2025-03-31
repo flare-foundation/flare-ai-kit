@@ -4,8 +4,10 @@ from web3 import AsyncWeb3, Web3
 from web3.exceptions import ContractLogicError
 
 from flare_ai_kit.common.exceptions import FtsoV2Error
-from flare_ai_kit.config import settings
 from flare_ai_kit.ecosystem.protocols.ftsov2 import FtsoV2  # Import the async version
+from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
+
+settings = EcosystemSettingsModel()  # type: ignore
 
 
 # Use pytest_asyncio.fixture for async fixtures
@@ -14,9 +16,7 @@ async def ftso_instance() -> FtsoV2:  # type: ignore
     """Provides a real instance of FtsoV2 connected to the network."""
     try:
         # Use the async factory method
-        instance = await FtsoV2.create(
-            web3_provider_url=str(settings.ecosystem.flare_rpc_url)
-        )
+        instance = await FtsoV2.create(settings)
         # Perform an async check for connectivity instead of is_connected()
         chain_id = await instance.w3.eth.chain_id
         assert isinstance(chain_id, int)

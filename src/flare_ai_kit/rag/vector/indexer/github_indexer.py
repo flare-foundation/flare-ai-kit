@@ -11,67 +11,9 @@ from git import GitCommandError, Repo  # GitPython
 
 from flare_ai_kit.common import Chunk, ChunkMetadata
 from flare_ai_kit.rag.vector.retriever import QdrantRetriever
+from flare_ai_kit.rag.vector.settings_models import VectorDbSettingsModel
 
 logger = structlog.get_logger(__name__)
-
-# --- Default Configuration ---
-DEFAULT_ALLOWED_EXTENSIONS = {
-    ".py",
-    ".ipynb",
-    ".js",
-    ".jsx",
-    ".ts",
-    ".tsx",
-    ".html",
-    ".css",
-    ".scss",
-    ".java",
-    ".go",
-    ".php",
-    ".rb",
-    ".swift",
-    ".kt",
-    ".scala",
-    ".c",
-    ".cpp",
-    ".h",
-    ".hpp",
-    ".cs",
-    ".rs",
-    ".sh",
-    ".yaml",
-    ".yml",
-    ".json",
-    ".toml",
-    ".tf",
-    ".md",
-    ".rst",
-    ".txt",
-    ".dockerfile",
-    "Dockerfile",
-    ".env.example",
-}
-DEFAULT_IGNORED_DIRS = {
-    ".git",
-    "__pycache__",
-    "node_modules",
-    "venv",
-    ".venv",
-    "target",
-    "build",
-}
-DEFAULT_IGNORED_FILES = {
-    "package-lock.json",
-    "yarn.lock",
-    "poetry.lock",
-    "Pipfile.lock",
-    "uv.lock",
-}
-
-DEFAULT_CHUNK_SIZE = (
-    1500  # Characters, adjust based on model limits and desired granularity
-)
-DEFAULT_CHUNK_OVERLAP = 150  # Characters
 
 
 class GitHubIndexer:
@@ -84,9 +26,7 @@ class GitHubIndexer:
     def __init__(
         self,
         qdrant_retriever: QdrantRetriever,
-        allowed_extensions: set[str] = DEFAULT_ALLOWED_EXTENSIONS,
-        ignored_dirs: set[str] = DEFAULT_IGNORED_DIRS,
-        ignored_files: set[str] = DEFAULT_IGNORED_FILES,
+        settings: VectorDbSettingsModel,
     ) -> None:
         """
         Initialize the GitHubRAGIndexer.
@@ -99,17 +39,15 @@ class GitHubIndexer:
         :param chunk_overlap: Overlap between consecutive chunks (in characters).
         """
         self.qdrant_retriever = qdrant_retriever
-        self.allowed_extensions = allowed_extensions
-        self.ignored_dirs = ignored_dirs
-        self.ignored_files = ignored_files
-        self.chunk_size = self.qdrant_retriever.vectordb_config.embeddings_chunk_size
-        self.chunk_overlap = (
-            self.qdrant_retriever.vectordb_config.embeddings_chunk_overlap
-        )
+        self.allowed_extensions = settings.indexer_allowed_extensions
+        self.ignored_dirs = settings.indexer_ignored_dirs
+        self.ignored_files = settings.indexer_ignored_files
+        self.chunk_size = settings.embeddings_chunk_size
+        self.chunk_overlap = settings.embeddings_chunk_overlap
 
         logger.info(
             "GitHubRAGIndexer initialized",
-            allowed_extensions=len(allowed_extensions),
+            allowed_extensions=len(self.allowed_extensions),
             chunk_size=self.chunk_size,
             chunk_overlap=self.chunk_overlap,
         )
@@ -318,7 +256,7 @@ class GitHubIndexer:
 
         return all_chunks_data
 
-    def index_repository(
+    def index_repo_to_qdrant(
         self,
         collection_name: str,
         repo_url_or_name: str,

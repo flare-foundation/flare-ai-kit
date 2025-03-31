@@ -51,3 +51,7 @@ class ExplorerError(Exception):
 
 class AbiError(ExplorerError):
     """Custom exception for ABI loading errors."""
+
+
+class EmbeddingsError(Exception):
+    """Custom exception for embeddings errors."""

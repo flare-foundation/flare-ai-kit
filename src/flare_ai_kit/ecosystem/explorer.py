@@ -7,6 +7,7 @@ import structlog
 from httpx import HTTPStatusError, RequestError, TimeoutException
 
 from flare_ai_kit.common import AbiError, ExplorerError
+from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
 
 logger = structlog.get_logger(__name__)
 
@@ -14,30 +15,31 @@ logger = structlog.get_logger(__name__)
 class BlockExplorer:
     """Asynchronous interactions with Flare Block Explorer APIs."""
 
-    def __init__(self, explorer_url: str, timeout: float = 10.0) -> None:
+    def __init__(self, settings: EcosystemSettingsModel) -> None:
         """
         Initializes the BlockExplorer.
 
         Args:
-            explorer_url (str): The base URL of the block explorer API endpoint.
-            timeout (float): Default request timeout in seconds.
+            settings: Instance of EcosystemSettingsModel.
 
         """
-        self.explorer_url = explorer_url
+        self.url = str(settings.block_explorer_url)
         self._headers = {
             "accept": "application/json",
             "content-type": "application/json",
         }
         # Create an httpx async client for connection pooling and configuration
         # It's important to close this client when done.
-        self._client = httpx.AsyncClient(
-            base_url=explorer_url, headers=self._headers, timeout=timeout
+        self.client = httpx.AsyncClient(
+            base_url=self.url,
+            headers=self._headers,
+            timeout=settings.block_explorer_timeout,
         )
         logger.debug("BlockExplorer initialized")
 
     async def close(self) -> None:
         """Closes the underlying HTTP client session."""
-        await self._client.aclose()
+        await self.client.aclose()
         logger.debug("BlockExplorer client closed")
 
     # Implement async context manager protocol for easier resource management
@@ -73,7 +75,7 @@ class BlockExplorer:
             # Note: If explorer_url in __init__ includes the path, use '/' here.
             # If it's just the base domain, you might need '/api' or similar.
             # Assuming explorer_url is the full base path for API calls.
-            response = await self._client.get(
+            response = await self.client.get(
                 url="/", params=params
             )  # URL path relative to base_url
 
