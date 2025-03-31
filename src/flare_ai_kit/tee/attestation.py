@@ -28,7 +28,7 @@ class VtpmAttestation:
         self,
         url: str = "http://localhost/v1/token",
         unix_socket_path: str = "/run/container_launcher/teeserver.sock",
-        simulate: bool = False,  # noqa: FBT001, FBT002
+        simulate: bool = False,
     ) -> None:
         self.url = url
         self.unix_socket_path = unix_socket_path

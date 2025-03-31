@@ -10,6 +10,9 @@ class AgentSettingsModel(BaseModel):
         ...,
         description="API key for using Google Gemini.",
     )
+    gemini_model: str = Field(
+        ..., description="Gemini model to use (e.g. gemini-2.0-flash)"
+    )
     openrouter_api_key: SecretStr | None = Field(
         None,
         description="API key for OpenRouter.",

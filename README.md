@@ -83,7 +83,7 @@ graph TD
    Requires Python >= 3.12 and [uv](https://github.com/astral-sh/uv).
 
    ```bash
-   uv sync
+   uv sync --all-extras
    ```
 
 ## ✅ Development Checks
