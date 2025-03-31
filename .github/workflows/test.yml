@@ -12,6 +12,7 @@ jobs:
 
     env:
       LOG_LEVEL: DEBUG
+      AGENT__GEMINI_MODEL: "gemini-2.0-flash"
       AGENT__GEMINI_API_KEY: ${{ secrets.AGENT__GEMINI_API_KEY }}
       AGENT__OPENROUTER_API_KEY: ${{ secrets.AGENT__OPENROUTER_API_KEY }}
       ECOSYSTEM__FLARE_RPC_URL: "https://stylish-light-theorem.flare-mainnet.quiknode.pro/ext/bc/C/rpc"
