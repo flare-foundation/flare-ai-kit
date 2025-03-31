@@ -1,12 +1,67 @@
 """Settings for Vector RAG."""
 
-from pydantic import BaseModel, Field, HttpUrl, PostgresDsn, SecretStr, model_validator
+from pydantic import BaseModel, Field, HttpUrl, PostgresDsn, model_validator
+
+DEFAULT_ALLOWED_EXTENSIONS = {
+    ".py",
+    ".ipynb",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".html",
+    ".css",
+    ".scss",
+    ".java",
+    ".go",
+    ".php",
+    ".rb",
+    ".swift",
+    ".kt",
+    ".scala",
+    ".c",
+    ".cpp",
+    ".h",
+    ".hpp",
+    ".cs",
+    ".rs",
+    ".sh",
+    ".yaml",
+    ".yml",
+    ".json",
+    ".toml",
+    ".tf",
+    ".md",
+    ".rst",
+    ".txt",
+    ".dockerfile",
+    "Dockerfile",
+    ".env.example",
+}
+
+
+DEFAULT_IGNORED_DIRS = {
+    ".git",
+    "__pycache__",
+    "node_modules",
+    "venv",
+    ".venv",
+    "target",
+    "build",
+}
+DEFAULT_IGNORED_FILES = {
+    "package-lock.json",
+    "yarn.lock",
+    "poetry.lock",
+    "Pipfile.lock",
+    "uv.lock",
+}
 
 
 class VectorDbSettingsModel(BaseModel):
     """Configuration for Vector Database connections used in RAG."""
 
-    qdrant_url: HttpUrl | None = Field(  # Use Optional[] for clarity
+    qdrant_url: HttpUrl | None = Field(
         None, description="Host and port for the Qdrant instance."
     )
     qdrant_vector_size: int = Field(768, description="Dimension of vectors to use.")
@@ -14,24 +69,34 @@ class VectorDbSettingsModel(BaseModel):
         100, description="Batch size for upserting points to Qdrant."
     )
     embeddings_model: str = Field(
-        # Example using a known Gemini model name convention
         "gemini-embedding-exp-03-07",
         description="Embedding model name (e.g., 'gemini-embedding-exp-03-07').",
     )
+    embeddings_output_dimensionality: int | None = Field(
+        None,
+        description="Reduced dimension for the output embedding. Leave None for max.",
+    )
     embeddings_chunk_size: int = Field(
-        1500,
+        5000,
         description="Target size for text chunks before embedding (in characters).",
         gt=0,  # Ensure chunk size is positive
     )
     embeddings_chunk_overlap: int = Field(
-        150,
+        500,
         description="Overlap between consecutive text chunks (in characters).",
         ge=0,  # Ensure overlap is non-negative
     )
-
-    qdrant_api_key: SecretStr | None = Field(
-        None, description="API Key for Qdrant Cloud."
+    indexer_allowed_extensions: set[str] = Field(
+        DEFAULT_ALLOWED_EXTENSIONS,
+        description="File extensions indexed by the indexer.",
     )
+    indexer_ignored_dirs: set[str] = Field(
+        DEFAULT_IGNORED_DIRS, description="Directories ignored by the indexer."
+    )
+    indexer_ignored_files: set[str] = Field(
+        DEFAULT_IGNORED_FILES, description="Files ignored by the indexer."
+    )
+
     postgres_dsn: PostgresDsn | None = Field(
         None, description="DSN for PostgreSQL connection string."
     )

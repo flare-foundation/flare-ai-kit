@@ -10,14 +10,10 @@ keywords = ["flare", "blockchain", "ai", "agent", "sdk", "confidential computing
 requires-python = ">=3.12"
 dependencies = [
     "aiohttp>=3.11.14",
-    "cryptography>=44.0.2",
-    "google-generativeai>=0.8.4",
+    "google-genai>=1.8.0",
     "httpx>=0.28.1",
     "pydantic>=2.11.1",
     "pydantic-ai>=0.0.46",
-    "pyjwt>=2.10.1",
-    "pyopenssl>=25.0.0",
-    "qdrant-client>=1.13.3",
     "structlog>=25.2.0",
     "web3>=7.10.0",
 ]
@@ -31,11 +27,17 @@ flare-ai-kit = "flare_ai_kit:main"
 
 [project.optional-dependencies]
 rag = [
+    "qdrant-client>=1.13.3",
     "gitpython>=3.1.44",
 ]
 social = [
     "python-telegram-bot>=22.0",
     "tweepy>=4.15.0",
+]
+tee = [
+    "cryptography>=44.0.2",
+    "pyjwt>=2.10.1",
+    "pyopenssl>=25.0.0",
 ]
 
 [build-system]

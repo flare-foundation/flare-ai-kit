@@ -3,14 +3,13 @@
 import uuid
 from typing import override
 
-import google.api_core.exceptions
 import structlog
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, PointStruct, VectorParams
 
 from flare_ai_kit.common import Chunk, SemanticSearchResult
-from flare_ai_kit.config import VectorDbSettingsModel
-from flare_ai_kit.rag.vector.embedding import EmbeddingTaskType, GeminiEmbedding
+from flare_ai_kit.rag.vector.embedding import BaseEmbedding
+from flare_ai_kit.rag.vector.settings_models import VectorDbSettingsModel
 
 from .base import BaseRetriever
 
@@ -23,9 +22,9 @@ class QdrantRetriever(BaseRetriever):
 
     def __init__(
         self,
-        client: QdrantClient,
-        vectordb_config: VectorDbSettingsModel,
-        embedding_client: GeminiEmbedding,
+        qdrant_client: QdrantClient,
+        embedding_client: BaseEmbedding,
+        settings: VectorDbSettingsModel,
     ) -> None:
         """
         Initialize the QdrantRetriever.
@@ -35,12 +34,10 @@ class QdrantRetriever(BaseRetriever):
                                  collection_name, vector_size, embedding models.
         :param embedding_client: An embedding client (e.g., GeminiEmbedding).
         """
-        self.client = client
-        self.vectordb_config = vectordb_config
+        self.client = qdrant_client
         self.embedding_client = embedding_client
-        self.embedding_model = self.vectordb_config.embeddings_model
-        self.vector_size = self.vectordb_config.qdrant_vector_size
-        self.batch_size = self.vectordb_config.qdrant_batch_size
+        self.vector_size = settings.qdrant_vector_size
+        self.batch_size = settings.qdrant_batch_size
 
     def _create_collection(self, collection_name: str, vector_size: int) -> None:
         """
@@ -107,27 +104,8 @@ class QdrantRetriever(BaseRetriever):
                 title = element.metadata.original_filepath
                 # Calculate embedding using Gemini
                 embedding = self.embedding_client.embed_content(
-                    embedding_model=self.embedding_model,
-                    task_type=EmbeddingTaskType.RETRIEVAL_DOCUMENT,
-                    contents=contents,
-                    title=title,
+                    contents=contents, title=title, task_type="RETRIEVAL_DOCUMENT"
                 )
-            except google.api_core.exceptions.InvalidArgument as e:
-                if "Request payload size exceeds the limit" in str(e):
-                    logger.warning(
-                        "Skipping document due to embedding size limit.",
-                        index=idx,
-                        title=title,
-                        error=str(e),
-                    )
-                else:
-                    logger.exception(
-                        "Skipping document due to invalid argument during embedding.",
-                        index=idx,
-                        title=title,
-                    )
-                skipped_count += 1
-                continue
             except Exception:
                 logger.exception(
                     "Skipping document due to unexpected error during embedding.",
@@ -228,15 +206,15 @@ class QdrantRetriever(BaseRetriever):
         try:
             # Convert the query into a vector embedding
             query_vector = self.embedding_client.embed_content(
-                embedding_model=self.vectordb_config.embeddings_model,
                 contents=query,
-                task_type=EmbeddingTaskType.RETRIEVAL_QUERY,
+                task_type="RETRIEVAL_QUERY",
+                title=None,
             )
 
             # Search Qdrant for similar vectors.
             search_result = self.client.search(
                 collection_name=collection_name,
-                query_vector=query_vector,
+                query_vector=query_vector[0],
                 limit=top_k,
                 score_threshold=score_threshold,  # Pass threshold if provided
                 with_payload=True,  # Ensure payload is returned
