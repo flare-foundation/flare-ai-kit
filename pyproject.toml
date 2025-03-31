@@ -11,6 +11,7 @@ requires-python = ">=3.12"
 dependencies = [
     "aiohttp>=3.11.14",
     "cryptography>=44.0.2",
+    "google-generativeai>=0.8.4",
     "httpx>=0.28.1",
     "pydantic>=2.11.1",
     "pydantic-ai>=0.0.46",
@@ -28,6 +29,15 @@ Repository = "https://github.com/flare-foundation/flare-ai-kit"
 [project.scripts]
 flare-ai-kit = "flare_ai_kit:main"
 
+[project.optional-dependencies]
+rag = [
+    "gitpython>=3.1.44",
+]
+social = [
+    "python-telegram-bot>=22.0",
+    "tweepy>=4.15.0",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -40,17 +50,13 @@ dev = [
     "pytest-mock>=3.14.0",
     "ruff>=0.11.2",
 ]
-social = [
-    "python-telegram-bot>=22.0",
-    "tweepy>=4.15.0",
-]
 
 [tool.ruff]
 target-version = "py312"
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["D203", "D212", "COM812", "S105", "D401", "D104", "ANN401", "ISC003", "D107", "PGH003"]
+ignore = ["D203", "D212", "COM812", "S105", "D401", "D104", "ANN401", "ISC003", "D107", "PGH003", "FBT001", "FBT002"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "tests/**/*.py" = ["S101", "ARG", "PLR2004", "SLF001", "BLE001", "E501", "T201", "D", "ANN001", "ANN201", "F821"]
