@@ -33,13 +33,12 @@ class BlockExplorer:
         self._client = httpx.AsyncClient(
             base_url=explorer_url, headers=self._headers, timeout=timeout
         )
-        self.logger = logger.bind(service="explorer-async", url=explorer_url)
-        self.logger.debug("BlockExplorer initialized")
+        logger.debug("BlockExplorer initialized")
 
     async def close(self) -> None:
         """Closes the underlying HTTP client session."""
         await self._client.aclose()
-        self.logger.debug("BlockExplorer client closed")
+        logger.debug("BlockExplorer client closed")
 
     # Implement async context manager protocol for easier resource management
     async def __aenter__(self) -> "BlockExplorer":
@@ -68,7 +67,7 @@ class BlockExplorer:
             HTTPStatusError: For non-2xx HTTP responses.
 
         """
-        self.logger.debug("Sending async GET request", params=params)
+        logger.debug("Sending async GET request", params=params)
         try:
             # Use the httpx client to make the request
             # Note: If explorer_url in __init__ includes the path, use '/' here.
@@ -89,25 +88,23 @@ class BlockExplorer:
 
             if "result" not in json_response:
                 # Log the actual problematic response
-                self.logger.warning(
-                    "Malformed API response", response_data=json_response
-                )
+                logger.warning("Malformed API response", response_data=json_response)
                 msg = "Malformed response from API: 'result' key missing"
                 raise ExplorerError(msg)
 
-            self.logger.debug("Received successful API response", params=params)
+            logger.debug("Received successful API response", params=params)
         except TimeoutException:
-            self.logger.exception("Request timed out", params=params)
+            logger.exception("Request timed out", params=params)
             raise  # Re-raise the specific httpx exception
         except RequestError as e:
             # Covers connection errors, invalid URLs etc.
-            self.logger.exception(
+            logger.exception(
                 "Network error during API request", params=params, error=str(e)
             )
             raise  # Re-raise the specific httpx exception
         except HTTPStatusError as e:
             # Log details from the HTTP error
-            self.logger.exception(
+            logger.exception(
                 "HTTP error received from API",
                 status_code=e.response.status_code,
                 response_text=e.response.text,
@@ -116,7 +113,7 @@ class BlockExplorer:
             raise  # Re-raise the specific httpx exception
         except json.JSONDecodeError as e:
             # Handle cases where response isn't valid JSON despite 2xx status
-            self.logger.exception(
+            logger.exception(
                 "Failed to decode JSON response", params=params, error=str(e)
             )
             msg = "Failed to decode JSON response"
@@ -140,7 +137,7 @@ class BlockExplorer:
             (Exceptions from _get): RequestError, TimeoutException, HTTPStatusError
 
         """
-        self.logger.info("Fetching ABI for contract", contract_address=contract_address)
+        logger.info("Fetching ABI for contract", contract_address=contract_address)
         try:
             response_data = await self._get(
                 params={
@@ -154,21 +151,21 @@ class BlockExplorer:
 
             if not abi_string or not isinstance(abi_string, str):
                 msg = f"ABI result is missing or not string for {contract_address}"
-                self.logger.warning(msg, response_data=response_data)
+                logger.warning(msg, response_data=response_data)
                 raise AbiError(msg)
 
             # Parse the JSON string into a Python list/dict structure
             abi = json.loads(abi_string)
             if not isinstance(abi, list):
                 msg = f"Parsed ABI for {contract_address} is not a list."
-                self.logger.warning(msg, parsed_abi=abi)
+                logger.warning(msg, parsed_abi=abi)
                 raise AbiError(msg)
 
-            self.logger.debug(
+            logger.debug(
                 "Successfully fetched and parsed ABI", contract_address=contract_address
             )
         except json.JSONDecodeError as e:
-            self.logger.exception(
+            logger.exception(
                 "Failed to parse ABI JSON string",
                 contract_address=contract_address,
                 error=str(e),

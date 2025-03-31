@@ -34,8 +34,7 @@ class VtpmAttestation:
         self.unix_socket_path = unix_socket_path
         self.simulate = simulate
         self.attestation_requested: bool = False
-        self.logger = logger.bind(router="vtpm")
-        self.logger.debug(
+        logger.debug(
             "vtpm", simulate=simulate, url=url, unix_socket_path=self.unix_socket_path
         )
 
@@ -56,7 +55,7 @@ class VtpmAttestation:
         max_byte_len = 74
         for nonce in nonces:
             byte_len = len(nonce.encode("utf-8"))
-            self.logger.debug("nonce_length", byte_len=byte_len)
+            logger.debug("nonce_length", byte_len=byte_len)
             if byte_len < min_byte_len or byte_len > max_byte_len:
                 msg = f"Nonce '{nonce}' must be between {min_byte_len} bytes"
                 f" and {max_byte_len} bytes"
@@ -98,7 +97,7 @@ class VtpmAttestation:
         """
         self._check_nonce_length(nonces)
         if self.simulate:
-            self.logger.debug("sim_token", token=SIM_TOKEN)
+            logger.debug("sim_token", token=SIM_TOKEN)
             return SIM_TOKEN
 
         # Connect to the socket
@@ -123,7 +122,7 @@ class VtpmAttestation:
             msg = f"Failed to get attestation response: {res.status} {res.reason}"
             raise VtpmAttestationError(msg)
         token = res.read().decode()
-        self.logger.debug("token", token_type=token_type, token=token)
+        logger.debug("token", token_type=token_type, token=token)
 
         # Close the connection
         conn.close()

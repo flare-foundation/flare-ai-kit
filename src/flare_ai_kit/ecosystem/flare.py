@@ -52,14 +52,13 @@ class Flare:
             address=self.w3.to_checksum_address(CONTRACT_REGISTRY_ADDRESS),
             abi=load_abi("FlareContractRegistry"),
         )
-        self.logger = logger.bind(router="flare")
 
     def reset(self) -> None:
         """Reset provider state by clearing account details and transaction queue."""
         self.address = None
         self.private_key = None
         self.tx_queue = []
-        self.logger.debug("reset", address=self.address, tx_queue=self.tx_queue)
+        logger.debug("reset", address=self.address, tx_queue=self.tx_queue)
 
     def add_tx_to_queue(self, msg: str, tx: TxParams) -> None:
         """
@@ -72,7 +71,7 @@ class Flare:
         """
         tx_queue_element = TxQueueElement(msg=msg, tx=tx)
         self.tx_queue.append(tx_queue_element)
-        self.logger.debug("add_tx_to_queue", tx_queue=self.tx_queue)
+        logger.debug("add_tx_to_queue", tx_queue=self.tx_queue)
 
     async def send_tx_in_queue(self) -> str:
         """
@@ -87,7 +86,7 @@ class Flare:
         """
         if self.tx_queue:
             tx_hash = await self.sign_and_send_transaction(self.tx_queue[-1].tx)
-            self.logger.debug("sent_tx_hash", tx_hash=tx_hash)
+            logger.debug("sent_tx_hash", tx_hash=tx_hash)
             self.tx_queue.pop()
             return tx_hash
         msg = "Unable to find confirmed tx"
@@ -104,7 +103,7 @@ class Flare:
         account = Account.create()
         self.private_key = account.key.hex()
         self.address = self.w3.to_checksum_address(account.address)
-        self.logger.debug(
+        logger.debug(
             "generate_account", address=self.address, private_key=self.private_key
         )
         return self.address
@@ -131,7 +130,7 @@ class Flare:
         )
         tx_hash = await self.w3.eth.send_raw_transaction(signed_tx.raw_transaction)
         await self.w3.eth.wait_for_transaction_receipt(tx_hash)
-        self.logger.debug("sign_and_send_transaction", tx=tx)
+        logger.debug("sign_and_send_transaction", tx=tx)
         return "0x" + tx_hash.hex()
 
     async def check_balance(self) -> float:
@@ -149,7 +148,7 @@ class Flare:
             msg = "Account does not exist"
             raise ValueError(msg)
         balance_wei = await self.w3.eth.get_balance(self.address)
-        self.logger.debug("check_balance", balance_wei=balance_wei)
+        logger.debug("check_balance", balance_wei=balance_wei)
         return float(self.w3.from_wei(balance_wei, "ether"))
 
     async def create_send_flr_tx(self, to_address: str, amount: float) -> TxParams:
@@ -205,7 +204,7 @@ class Flare:
         address = await self.contract_registry.functions.getContractAddressByName(
             contract_name
         ).call()
-        self.logger.debug(
+        logger.debug(
             "get_contract_address", contract_name=contract_name, address=address
         )
         return address

@@ -90,7 +90,6 @@ class VtpmValidation:
         self.expected_issuer = expected_issuer
         self.oidc_endpoint = oidc_endpoint
         self.pki_endpoint = pki_endpoint
-        self.logger = logger.bind(router="vtpm_validation")
 
     def validate_token(self, token: str) -> dict[str, Any]:
         """
@@ -113,7 +112,7 @@ class VtpmValidation:
 
         """
         unverified_header = jwt.get_unverified_header(token)
-        self.logger.info("token", unverified_header=unverified_header)
+        logger.info("token", unverified_header=unverified_header)
 
         if unverified_header.get("alg") != ALGO:
             msg = f"Invalid algorithm: got {unverified_header.get('alg')}, "
@@ -122,10 +121,10 @@ class VtpmValidation:
 
         if unverified_header.get("x5c", None):
             # if x5c certs in header, token uses pki scheme
-            self.logger.info("PKI_token", alg=unverified_header.get("alg"))
+            logger.info("PKI_token", alg=unverified_header.get("alg"))
             return self._decode_and_validate_pki(token, unverified_header)
         # token uses oidc scheme
-        self.logger.info("OIDC_token", alg=unverified_header.get("alg"))
+        logger.info("OIDC_token", alg=unverified_header.get("alg"))
         return self._decode_and_validate_oidc(token, unverified_header)
 
     def _decode_and_validate_oidc(
@@ -158,7 +157,7 @@ class VtpmValidation:
         # Find the correct key based on the key ID (kid) in header
         for key in jwks["keys"]:
             if key.get("kid") == unverified_header["kid"]:
-                self.logger.info("kid_match", kid=key["kid"])
+                logger.info("kid_match", kid=key["kid"])
                 rsa_key = self._jwk_to_rsa_key(key)
                 break
 
@@ -171,22 +170,22 @@ class VtpmValidation:
             validated_token = jwt.decode(
                 token, rsa_key, algorithms=[ALGO], options={"verify_aud": False}
             )
-            self.logger.info(
+            logger.info(
                 "signature_match",
                 issuer=self.expected_issuer,
                 public_numbers=rsa_key.public_numbers,
             )
         except jwt.ExpiredSignatureError as e:
             msg = "Token has expired"
-            self.logger.exception("token_expired", error=e)
+            logger.exception("token_expired", error=e)
             raise SignatureValidationError(msg) from e
         except jwt.InvalidTokenError as e:
             msg = "Token is invalid"
-            self.logger.exception("invalid_token", error=e)
+            logger.exception("invalid_token", error=e)
             raise VtpmValidationError(msg) from e
         except Exception as e:
             msg = "Unexpected error during validation"
-            self.logger.exception("unexpected_error", error=e)
+            logger.exception("unexpected_error", error=e)
             raise VtpmValidationError(msg) from e
         else:
             return validated_token

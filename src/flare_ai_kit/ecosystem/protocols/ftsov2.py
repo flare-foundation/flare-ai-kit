@@ -22,7 +22,6 @@ class FtsoV2(Flare):
     def __init__(self, **kwargs: str) -> None:
         super().__init__(**kwargs)
         self.ftsov2 = None  # Will be initialized in 'create'
-        self.logger = logger.bind(router="ftso")
 
     # Factory method for asynchronous initialization
     @classmethod
@@ -39,14 +38,14 @@ class FtsoV2(Flare):
 
         """
         instance = cls(web3_provider_url=web3_provider_url, **kwargs)
-        instance.logger.debug("Initializing FtsoV2...")
+        logger.debug("Initializing FtsoV2...")
         # Await the async method from the base class
         ftsov2_address = await instance.get_protocol_contract_address("FtsoV2")
         instance.ftsov2 = instance.w3.eth.contract(
             address=instance.w3.to_checksum_address(ftsov2_address),
             abi=load_abi("FtsoV2"),  # Assuming load_abi is sync
         )
-        instance.logger.debug("FtsoV2 initialized", address=ftsov2_address)
+        logger.debug("FtsoV2 initialized", address=ftsov2_address)
         return instance
 
     async def _get_feed_by_id(self, feed_id: str) -> tuple[int, int, int]:
@@ -168,7 +167,7 @@ class FtsoV2(Flare):
         self._check_category_validity(category)
         feed_id = self._feed_name_to_id(feed_name, category)
         feeds, decimals, timestamp = await self._get_feed_by_id(feed_id)
-        self.logger.debug(
+        logger.debug(
             "get_latest_price",
             feed_name=feed_name,
             feed_id=feed_id,
@@ -206,7 +205,7 @@ class FtsoV2(Flare):
             self._feed_name_to_id(feed_name, category) for feed_name in feed_names
         ]
         feeds, decimals, timestamp = await self._get_feeds_by_id(feed_ids)
-        self.logger.debug(
+        logger.debug(
             "get_latest_prices_async",
             num_feeds=len(feed_names),
             feeds=feeds,
