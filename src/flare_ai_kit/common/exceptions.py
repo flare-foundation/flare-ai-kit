@@ -1,57 +1,87 @@
-"""All exceptions in Flare AI Kit."""
+"""
+Custom exceptions used throughout the Flare AI Kit SDK.
+
+All exceptions defined in this SDK inherit from the base `FlareAIKitError`.
+This allows users to catch any specific SDK error using:
+
+try:
+    # Code using Flare AI Kit
+    ...
+except FlareAIKitError as e:
+    # Handle any error originating from the Flare AI Kit
+    print(f"An SDK error occurred: {e}")
+
+Specific error types can be caught by targeting their respective classes
+or intermediate base exceptions (e.g., `FlareTxError`, `VtpmError`).
+"""
 
 
-# vTPM errors
+# --- Root SDK Exception ---
+class FlareAIKitError(Exception):
+    """Base exception for all Flare AI Kit specific errors."""
+
+
+# --- vTPM Errors ---
+class VtpmError(FlareAIKitError):
+    """Base exception for vTPM related errors."""
+
+
 class VtpmAttestationError(Exception):
-    """Custom exception for vTPM attestation service communication errors."""
+    """Raised for errors during communication with the vTPM attestation service."""
 
 
 class VtpmValidationError(Exception):
-    """Custom exception for validation errors."""
+    """Base exception for vTPM validation errors."""
 
 
 class InvalidCertificateChainError(VtpmValidationError):
-    """Raised when certificate chain validation fails."""
+    """Raised when vTPM certificate chain validation fails."""
 
 
 class CertificateParsingError(VtpmValidationError):
-    """Raised when certificate parsing fails."""
+    """Raised when parsing a vTPM certificate fails."""
 
 
 class SignatureValidationError(VtpmValidationError):
-    """Raised when signature validation fails."""
+    """Raised when vTPM signature validation fails."""
 
 
-# Telegram Bot errors
-class TelegramBotError(Exception):
-    """Custom exception for Telegram errors."""
+# --- Telegram Bot errors ---
+class TelegramBotError(FlareAIKitError):
+    """Base exception for Telegram Bot integration errors."""
 
 
 class BotNotInitializedError(TelegramBotError):
-    """Telegram Bot was not initialized."""
+    """Raised when the Telegram Bot is required, but it's not initialized."""
 
 
 class UpdaterNotInitializedError(TelegramBotError):
-    """Telegram Updater was not initialized."""
+    """Raised when the Telegram Updater is required, but it's not initialized."""
 
 
-# Flare blockchain errors
-class FlareError(Exception):
-    """Custom exception for Flare errors."""
+# --- Flare Blockchain Interaction Errors ---
+class FlareTxError(FlareAIKitError):
+    """Raised for errors during Flare transaction building, signing, or sending."""
+
+
+class FlareTxRevertedError(FlareTxError):
+    """Raised when a Flare transaction is confirmed but has reverted on-chain."""
 
 
 class FtsoV2Error(Exception):
-    """Custom exception for FtsoV errors."""
+    """Raised for errors specific to interacting with FTSO V2 contracts.."""
 
 
-# Explorer errors
-class ExplorerError(Exception):
-    """Custom exception for Explorer errors."""
+# --- Flare Explorer Errors ---
+class ExplorerError(FlareAIKitError):
+    """Base exception for errors related to Flare Block Explorer interactions."""
 
 
-class AbiError(ExplorerError):
-    """Custom exception for ABI loading errors."""
+# --- ABI Errors ---
+class AbiError(FlareAIKitError):
+    """Raised for errors encountered while fetching or processing contract ABIs."""
 
 
-class EmbeddingsError(Exception):
-    """Custom exception for embeddings errors."""
+# --- Embeddings Errors ---
+class EmbeddingsError(FlareAIKitError):
+    """Raised for errors encountered when generating or handling embeddings."""

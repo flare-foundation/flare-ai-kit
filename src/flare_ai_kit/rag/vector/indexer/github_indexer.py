@@ -1,4 +1,4 @@
-"""Indexer for GitHub repositories."""
+"""Indexer for processing and indexing content from GitHub repos into Qdrant."""
 
 import shutil
 import tempfile
@@ -7,7 +7,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import structlog
-from git import GitCommandError, Repo  # GitPython
+from git import GitCommandError, Repo
 
 from flare_ai_kit.common import Chunk, ChunkMetadata
 from flare_ai_kit.rag.vector.retriever import QdrantRetriever
@@ -18,9 +18,12 @@ logger = structlog.get_logger(__name__)
 
 class GitHubIndexer:
     """
-    Indexes content from GitHub repositories into a Qdrant collection for RAG.
+    Indexes content from GitHub repositories into a Qdrant vector collection.
 
-    Handles cloning, text extraction, chunking, embedding, and indexing.
+    This class orchestrates the process of cloning a repository, extracting
+    relevant text content based on configuration (file extensions, ignored paths),
+    chunking the text, and using an injected QdrantRetriever instance to
+    generate embeddings and upsert the data into a specified Qdrant collection.
     """
 
     def __init__(
@@ -29,14 +32,15 @@ class GitHubIndexer:
         settings: VectorDbSettingsModel,
     ) -> None:
         """
-        Initialize the GitHubRAGIndexer.
+        Initializes the GitHubIndexer.
 
-        :param qdrant_retriever: An initialized QdrantRetriever instance.
-        :param allowed_extensions: Set of file extensions to process.
-        :param ignored_dirs: Set of directory names to ignore.
-        :param ignored_files: Set of file names to ignore.
-        :param chunk_size: Target size for text chunks (in characters).
-        :param chunk_overlap: Overlap between consecutive chunks (in characters).
+        Args:
+            qdrant_retriever: An initialized QdrantRetriever instance responsible
+                              for embedding and Qdrant communication.
+            settings: A VectorDbSettingsModel instance containing configuration
+                      for indexing (allowed extensions, ignored items,
+                      chunking parameters).
+
         """
         self.qdrant_retriever = qdrant_retriever
         self.allowed_extensions = settings.indexer_allowed_extensions
@@ -56,14 +60,23 @@ class GitHubIndexer:
         self, repo_url_or_name: str, branch: str | None = None
     ) -> Path | None:
         """
-        Clones a public GitHub repository to a temporary directory using pathlib.
+        Clones a public GitHub repository to a temporary directory.
 
-        :param repo_url_or_name: Repository URL (e.g., https://github.com/owner/repo)
-                                    or name (e.g., owner/repo).
-        :param branch: Specific branch to clone (defaults to the repo's default branch).
-        :return: Path object to the temporary directory where the repo was cloned,
-            or None on failure.
+        Handles repository URL parsing and uses GitPython for cloning. Cleans up
+        the temporary directory automatically if cloning fails.
+
+        Args:
+            repo_url_or_name: The repository URL (e.g., "https://github.com/owner/repo")
+                              or short name format (e.g., "owner/repo").
+            branch: The specific branch to clone. If None, clones the repository's
+                    default branch.
+
+        Returns:
+            A Path object pointing to the temporary directory containing the
+            cloned repository, or None if cloning failed.
+
         """
+        repo_url: str
         if "github.com" not in repo_url_or_name:
             if "/" not in repo_url_or_name:
                 logger.error(
@@ -79,59 +92,82 @@ class GitHubIndexer:
             if not repo_url.endswith(".git"):
                 repo_url += ".git"
 
-        # Create a Path object for the temporary directory
-        temp_dir_path = Path(tempfile.mkdtemp())
-        logger.info(
-            "Attempting to clone repository",
-            repo_url=repo_url,
-            branch=branch or "default",
-            dest_dir=str(temp_dir_path),  # Log path as string for clarity if needed
-        )
-
+        temp_dir: str | None = None
+        temp_dir_path: Path | None = None
         try:
-            # Pass the Path object directly to clone_from
+            # Create a temp directory using tempfile context manager for safer cleanup
+            temp_dir = tempfile.mkdtemp()
+            temp_dir_path = Path(temp_dir)
+
+            logger.info(
+                "Attempting to clone repository",
+                repo_url=repo_url,
+                branch=branch or "default",
+                dest_dir=str(temp_dir_path),
+            )
+
             Repo.clone_from(url=repo_url, to_path=temp_dir_path, branch=branch)
+
             logger.info(
                 "Successfully cloned repository",
                 repo_url=repo_url,
                 dest_dir=str(temp_dir_path),
             )
+
         except GitCommandError as e:
             logger.exception(
-                "Failed to clone repository. Check URL/name, permissions, "
-                "and if git is installed.",
+                "Git command failed during clone. Check URL/name, branch, network, "
+                "permissions, and local Git installation.",
                 repo_url=repo_url,
                 branch=branch,
                 error=str(e),
-                stderr=e.stderr.strip() if hasattr(e, "stderr") else "N/A",
+                # Safely access stderr if it exists
+                stderr=getattr(e, "stderr", "N/A").strip(),
             )
-            # shutil.rmtree works with Path objects
-            shutil.rmtree(temp_dir_path)  # Clean up failed clone attempt
-            return None
+            # Fall through to finally for cleanup
         except Exception as e:
+            # Catch other potential errors (network, permissions, etc.)
             logger.exception(
                 "An unexpected error occurred during cloning.",
                 repo_url=repo_url,
                 error=str(e),
             )
-            # shutil.rmtree works with Path objects
-            shutil.rmtree(temp_dir_path)
-            return None
+            # Fall through to finally for cleanup
         else:
-            # Return the Path object
-            return temp_dir_path
+            return temp_dir_path  # Return the path if successful
+        finally:
+            # Cleanup only if cloning failed within this function
+            if temp_dir_path and not temp_dir_path.exists() and temp_dir_path.is_dir():
+                try:
+                    shutil.rmtree(temp_dir_path)
+                    logger.debug(
+                        "Cleaned up failed clone directory", path=str(temp_dir_path)
+                    )
+                except Exception as cleanup_error:
+                    logger.exception(
+                        "Failed to cleanup temporary clone directory on error",
+                        path=str(temp_dir_path),
+                        error=str(cleanup_error),
+                    )
+        return None  # Explicitly return None on any failure
 
     def _extract_text_from_repo(
         self, repo_path: Path
     ) -> Generator[dict[str, str], None, None]:
         """
-        Extracts content from files in a repository.
+        Walks through a cloned repository, extracts text from allowed files.
 
-        Filtering by file extensions and names.
-        Uses pathlib for all file system operations.
+        Filters files based on configured allowed extensions/filenames and
+        ignored directories/filenames. Reads files as UTF-8, ignoring decoding errors.
 
-        :param repo_path: Path object for the cloned repository.
-        :yield: Dictionaries containing 'file_path' (as string) and 'content'.
+        Args:
+            repo_path: The Path object pointing to the root of the cloned repository.
+
+        Yields:
+            Dictionaries for each valid file found, containing:
+                'file_path': Relative path to the file within the repo (as string).
+                'content': The text content of the file.
+
         """
         logger.info("Starting text extraction", repo_path=str(repo_path))
         processed_files = 0
@@ -189,72 +225,104 @@ class GitHubIndexer:
 
     def _chunk_text(self, file_path: str, content: str) -> list[Chunk]:
         """
-        Splits content into smaller chunks with overlap.
+        Splits a string of text content into smaller, overlapping chunks.
 
-        :param file_path: The relative path of the file being chunked.
-        :param content: The text content of the file.
-        :return: A list of dictionaries, each representing a chunk with metadata.
+        Uses the `chunk_size` and `chunk_overlap` configured during initialization.
+        Generates `Chunk` objects containing the text and `ChunkMetadata`.
+
+        Args:
+            file_path: The relative path of the file being chunked (used in metadata).
+            content: The text content of the file to be chunked.
+
+        Returns:
+            A list of Chunk objects, each representing a text chunk with metadata.
+            Returns an empty list if the input content is empty or whitespace only.
+
         """
+        if not content or not content.strip():
+            return []
+
         chunks: list[Chunk] = []
         start_index = 0
         chunk_id = 0
+        content_len = len(content)
 
-        if not content:
-            return []
-
-        while start_index < len(content):
+        while start_index < content_len:
             end_index = start_index + self.chunk_size
             chunk_text = content[start_index:end_index]
 
-            # Only add non-empty chunks
-            if chunk_text.strip():
-                metadata = ChunkMetadata(
-                    original_filepath=file_path,
-                    chunk_id=chunk_id,
-                    start_index=start_index,
-                    end_index=min(end_index, len(content)),
-                )
-                chunk = Chunk(text=chunk_text, metadata=metadata)
-                chunks.append(chunk)
-                chunk_id += 1
+            # Create metadata and chunk object
+            metadata = ChunkMetadata(
+                original_filepath=file_path,
+                chunk_id=chunk_id,
+                start_index=start_index,
+                end_index=min(end_index, len(content)),
+            )
+            chunk = Chunk(text=chunk_text, metadata=metadata)
+            chunks.append(chunk)
+            chunk_id += 1
 
-            # Move start index for the next chunk, considering overlap
+            # Calculate start index for the next chunk based on overlap
             next_start = start_index + self.chunk_size - self.chunk_overlap
-            # If overlap is large or chunk size small, prevent infinite loop
+
+            # Prevent infinite loops: ensure progression if overlap is too large
+            # or content is very short compared to chunk size.
             if next_start <= start_index:
-                next_start = start_index + 1  # Move at least one character
+                next_start = (
+                    start_index + 1
+                )  # Force progression by at least 1 character
+
+            # Break if the next start is already past the content end
+            if next_start >= content_len:
+                break
 
             start_index = next_start
-
-            # Break if we somehow aren't advancing
-            if start_index >= len(content):
-                break
 
         return chunks
 
     def _prepare_data_for_qdrant(self, repo_path: Path) -> list[Chunk] | None:
         """
-        Extracts, chunks, and formats data into a DataFrame for Qdrant indexing.
+        Extracts text from repository files and chunks them into a list of Chunk.
 
-        :param repo_path: Path to the cloned repository.
-        :return: Pandas DataFrame ready for qdrant_retriever.index_dataframe,
-            or None if no data.
+        This method combines the output of `_extract_text_from_repo` and `_chunk_text`.
+
+        Args:
+            repo_path: The Path object pointing to the root of the cloned repository.
+
+        Returns:
+            A list of Chunk objects ready for embedding and indexing, or None if
+            no processable text content was found in the repository.
+
         """
-        all_chunks_data: list[Chunk] = []
+        all_chunks: list[Chunk] = []
+        file_count = 0
         for file_data in self._extract_text_from_repo(repo_path):
             file_path = file_data["file_path"]
             content = file_data["content"]
-            file_chunks = self._chunk_text(file_path, content)
-            all_chunks_data.extend(file_chunks)
+            try:
+                file_chunks = self._chunk_text(file_path, content)
+                all_chunks.extend(file_chunks)
+                file_count += 1
+            except Exception as e:
+                logger.exception(
+                    "Error chunking file, skipping file.", file=file_path, error=str(e)
+                )
 
-        if not all_chunks_data:
+        if not all_chunks:
             logger.warning(
-                "No processable text content found in the repository.",
-                repo_path=repo_path,
+                "No processable text content found or chunked in the repository.",
+                repo_path=str(repo_path),
+                processed_files=file_count,
             )
             return None
 
-        return all_chunks_data
+        logger.info(
+            "Data preparation complete.",
+            repo_path=str(repo_path),
+            processed_files=file_count,
+            total_chunks=len(all_chunks),
+        )
+        return all_chunks
 
     def index_repo_to_qdrant(
         self,
@@ -264,55 +332,73 @@ class GitHubIndexer:
         cleanup: bool = True,
     ) -> bool:
         """
-        Main method to index a GitHub repository.
+        Indexes a GitHub repository into the specified Qdrant collection.
 
-        Clones the repo, extracts text, chunks it, generates embeddings
-        (via QdrantRetriever), and indexes into the configured Qdrant collection.
+        This is the main entry point method. It orchestrates the cloning,
+        data preparation (extraction, chunking), and indexing pipeline.
+        Embeddings are generated and data is upserted via the configured
+        `QdrantRetriever`.
 
-        :param repo_url_or_name: Repository URL (e.g., https://github.com/owner/repo)
-                                 or name (e.g., owner/repo).
-        :param branch: Specific branch to clone.
-        :param cleanup: If True, delete the cloned repository directory after indexing.
-        :param qdrant_batch_size: Batch size for upserting points to Qdrant.
-        :return: True if indexing process started successfully
-                (doesn't guarantee all docs indexed),
-                 False otherwise (e.g., clone failed, no content found).
+        Args:
+            collection_name: The name of the Qdrant collection to index into.
+            repo_url_or_name: The repository URL (e.g., "https://github.com/owner/repo")
+                              or short name format (e.g., "owner/repo").
+            branch: The specific branch to clone. Defaults to the repo's default branch.
+            cleanup: If True (default), the temporary directory holding the cloned
+                     repository will be deleted after indexing attempt
+                     (success or failure). Set to False for debugging purposes.
+
+        Returns:
+            True if the indexing process was successfully initiated and completed
+            without critical errors during cloning or data preparation phases.
+            False if cloning failed, no processable content was found, or an
+            unhandled exception occurred during the pipeline initiation.
+            Note: Successful return does not guarantee all documents were indexed
+            if non-critical errors occurred during upsertion (check logs).
+
         """
         repo_path = None
         try:
             # 1. Clone Repo
+            logger.info(
+                "Starting indexing pipeline",
+                repo=repo_url_or_name,
+                branch=branch or "default",
+            )
             repo_path = self._clone_repo(repo_url_or_name, branch)
             if not repo_path:
                 return False  # Cloning failed, logged in _clone_repo
 
             # 2. Prepare Data (Extract, Chunk, Format)
-            data = self._prepare_data_for_qdrant(repo_path)
-            if not data:
-                logger.warning("No data prepared for indexing.", repo=repo_url_or_name)
+            logger.info("Repository cloned, preparing data...", repo=repo_url_or_name)
+            chunk_data = self._prepare_data_for_qdrant(repo_path)
+            if not chunk_data:
+                logger.warning(
+                    "Pipeline finished: No data suitable for indexing found.",
+                    repo=repo_url_or_name,
+                )
                 return False
 
             # 3. Index Data using QdrantRetriever
-            # The QdrantRetriever's index_dataframe handles embedding generation
-            # and upserting to Qdrant, including collection creation/recreation.
             logger.info(
-                "Starting Qdrant indexing",
+                "Data prepared, initiating embedding and indexing via QdrantRetriever.",
                 repo=repo_url_or_name,
-                num_chunks=len(data),
-            )
-            self.qdrant_retriever.embed_and_upsert(
-                data=data,
+                num_chunks=len(chunk_data),
                 collection_name=collection_name,
             )
-            # index_dataframe logs its own completion/errors
-
-            logger.info(
-                "Successfully initiated indexing for repository", repo=repo_url_or_name
+            self.qdrant_retriever.embed_and_upsert(
+                data=chunk_data,
+                collection_name=collection_name,
             )
-        except Exception as e:
+            logger.info(
+                "Indexing pipeline successfully submitted data to QdrantRetriever.",
+                repo=repo_url_or_name,
+            )
+        except Exception:
             logger.exception(
                 "An error occurred during the indexing pipeline",
                 repo=repo_url_or_name,
-                error=str(e),
+                collection_name=collection_name,
             )
             return False
         else:

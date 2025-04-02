@@ -13,9 +13,13 @@ from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
 
 settings = EcosystemSettingsModel(
+    is_testnet=True,
     web3_provider_url=HttpUrl("https://explorer.example.com/api"),
+    web3_provider_timeout=10,
     block_explorer_url=HttpUrl("https://explorer.example.com/api"),
     block_explorer_timeout=10,
+    account_address=None,
+    account_private_key=None,
 )
 
 

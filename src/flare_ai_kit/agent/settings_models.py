@@ -8,7 +8,7 @@ class AgentSettingsModel(BaseModel):
 
     gemini_api_key: SecretStr = Field(
         ...,
-        description="API key for using Google Gemini.",
+        description="API key for using Google Gemini (https://aistudio.google.com/app/apikey).",
     )
     gemini_model: str = Field(
         ..., description="Gemini model to use (e.g. gemini-2.0-flash)"

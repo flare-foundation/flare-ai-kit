@@ -4,9 +4,19 @@ from dataclasses import dataclass
 from typing import override
 
 
-@dataclass
+# --- Schemas for Text Chunking and Embeddings ---
+@dataclass(frozen=True)
 class ChunkMetadata:
-    """Metadata associated with text chunk when embedding."""
+    """
+    Immutable metadata associated with a text chunk during embedding.
+
+    Attributes:
+        original_filepath: Path to the source file of the chunk.
+        chunk_id: Unique identifier for the chunk within its source file.
+        start_index: Starting character index of the chunk in the original text.
+        end_index: Ending character index of the chunk in the original text.
+
+    """
 
     original_filepath: str
     chunk_id: int
@@ -23,17 +33,36 @@ class ChunkMetadata:
         )
 
 
-@dataclass
+@dataclass(frozen=True)
 class Chunk:
-    """Text chunk to use when embedding."""
+    """
+    Immutable representation of a text chunk and its associated metadata.
+
+    Attributes:
+        text: The actual text content of the chunk.
+        metadata: The ChunkMetadata object associated with this chunk.
+
+    """
 
     text: str
     metadata: ChunkMetadata
 
 
+# --- Schemas for Search Results ---
 @dataclass
 class SemanticSearchResult:
-    """Result when performing semantic search."""
+    """
+    Immutable result obtained from a semantic search query.
+
+    Attributes:
+        text: The text content of the search result chunk.
+        score: The similarity score (e.g., cosine similarity) of the result
+               relative to the query. Higher usually means more relevant.
+        metadata: A dictionary containing arbitrary metadata associated with
+                  the search result, often derived from the original ChunkMetadata
+                  (e.g., {'original_filepath': '...', 'chunk_id': 1, ...}).
+
+    """
 
     text: str
     score: float

@@ -49,6 +49,7 @@ DEFAULT_IGNORED_DIRS = {
     "target",
     "build",
 }
+
 DEFAULT_IGNORED_FILES = {
     "package-lock.json",
     "yarn.lock",
@@ -62,7 +63,9 @@ class VectorDbSettingsModel(BaseModel):
     """Configuration for Vector Database connections used in RAG."""
 
     qdrant_url: HttpUrl | None = Field(
-        None, description="Host and port for the Qdrant instance."
+        None,
+        description="Host and port for the Qdrant instance.",
+        examples=["env var: VECTOR_DB__QDRANT_URL"],
     )
     qdrant_vector_size: int = Field(768, description="Dimension of vectors to use.")
     qdrant_batch_size: int = Field(
@@ -71,6 +74,10 @@ class VectorDbSettingsModel(BaseModel):
     embeddings_model: str = Field(
         "gemini-embedding-exp-03-07",
         description="Embedding model name (e.g., 'gemini-embedding-exp-03-07').",
+        examples=[
+            "gemini-embedding-exp-03-07",
+            "text-embedding-004",
+        ],
     )
     embeddings_output_dimensionality: int | None = Field(
         None,

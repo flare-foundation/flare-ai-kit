@@ -1,7 +1,7 @@
 import httpx
 import pytest
 
-from flare_ai_kit.common import ExplorerError
+from flare_ai_kit.common import AbiError
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
 
@@ -56,7 +56,7 @@ async def test_get_contract_abi_real_invalid_address() -> None:
         )
         try:
             # Expecting an error because this address shouldn't have a verified ABI
-            with pytest.raises((ExplorerError, httpx.HTTPStatusError)) as excinfo:
+            with pytest.raises((AbiError, httpx.HTTPStatusError)) as excinfo:
                 await explorer.get_contract_abi(INVALID_CONTRACT_ADDRESS)
 
             print(
