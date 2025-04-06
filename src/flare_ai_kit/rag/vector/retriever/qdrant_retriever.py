@@ -1,13 +1,24 @@
 """VectorDB retriever using Qdrant."""
 
-import uuid
 from typing import override
 
 import structlog
 from qdrant_client import QdrantClient
+from qdrant_client.http.exceptions import UnexpectedResponse
 from qdrant_client.http.models import Distance, PointStruct, VectorParams
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
-from flare_ai_kit.common import Chunk, SemanticSearchResult
+from flare_ai_kit.common import (
+    Chunk,
+    EmbeddingsError,
+    SemanticSearchResult,
+    VectorDbError,
+)
 from flare_ai_kit.rag.vector.embedding import BaseEmbedding
 from flare_ai_kit.rag.vector.settings_models import VectorDbSettingsModel
 
@@ -59,28 +70,118 @@ class QdrantRetriever(BaseRetriever):
                 vector_size=vector_size,
             )
         except Exception as e:
+            msg = "Failed to create/recreate Qdrant collection"
             logger.exception(
-                "Failed to create/recreate Qdrant collection",
+                msg,
                 collection_name=collection_name,
                 error=str(e),
             )
-            raise  # Re-raise the exception after logging
+            raise VectorDbError(msg) from e
+
+    def _create_point(self, element: Chunk, idx: int) -> PointStruct | None:
+        title = None
+        try:
+            contents = element.text
+            title = element.metadata.original_filepath
+            # Calculate embedding using Gemini
+            embedding = self.embedding_client.embed_content(
+                contents=contents, title=title, task_type="RETRIEVAL_DOCUMENT"
+            )
+
+        except Exception:
+            logger.exception(
+                "Error processing document for embedding.",
+                index=idx,
+                title=title,
+            )
+            return None
+
+        if not embedding or len(embedding) == 0:
+            msg = f"Empty embeddings returned for document {idx}"
+            raise EmbeddingsError(msg)
+
+        # Prepare payload, ensuring metadata is serializable
+        payload = {
+            "text": contents,
+            "filename": title,
+            "metadata": {
+                "original_filepath": element.metadata.original_filepath,
+                "chunk_id": element.metadata.chunk_id,
+                "start_index": element.metadata.start_index,
+                "end_index": element.metadata.end_index,
+            },
+        }
+
+        return PointStruct(
+            id=f"{element.metadata.original_filepath}_{element.metadata.chunk_id}",
+            vector=embedding[0],  # Use the first embedding
+            payload=payload,
+        )
+
+    @retry(
+        retry=retry_if_exception_type(UnexpectedResponse),
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        reraise=True,
+        before_sleep=lambda retry_state: logger.warning(
+            "Retrying upsert after error",
+            attempt=retry_state.attempt_number,
+            collection_name=retry_state.kwargs.get("collection_name"),
+            batch_size=len(retry_state.kwargs.get("points", [])),
+        ),
+    )
+    def _upsert_batch(
+        self, collection_name: str, points: list[PointStruct], wait: bool = False
+    ) -> None:
+        """
+        Upserts a batch of points to Qdrant with retry logic.
+
+        Args:
+            collection_name: Name of the collection.
+            points: List of points to upsert.
+            wait: Whether to wait for the upsert to complete.
+
+        Raises:
+            VectorDbError: If the upsert fails after retries.
+
+        """
+        try:
+            self.client.upsert(
+                collection_name=collection_name,
+                points=points,
+                wait=wait,
+            )
+        except Exception as e:
+            msg = "Failed to upsert batch after retries"
+            logger.exception(
+                msg,
+                collection_name=collection_name,
+                batch_size=len(points),
+                error=str(e),
+            )
+            raise VectorDbError(msg) from e
 
     def embed_and_upsert(
         self,
         data: list[Chunk],
         collection_name: str,
-    ) -> None:
+        continue_on_error: bool = True,
+    ) -> tuple[int, int, list[tuple[int, VectorDbError]]]:
         """
-        Indexes documents from a Pandas DataFrame into the Qdrant collection.
+        Indexes documents into the Qdrant collection with improved error handling.
 
-        This involves creating embeddings and upserting them.
-        It first recreates the collection as specified in the config.
+        Args:
+            data: List of Chunk objects to index.
+            collection_name: Name of the collection.
+            continue_on_error: If True, continue processing batches even
+                               if a batch fails.
 
-        Requires DataFrame columns: 'content', 'file_name', 'meta_data'.
+        Returns:
+            A tuple containing:
+                - Number of successfully processed chunks
+                - Number of skipped chunks
+                - List of (index, exception) tuples for failed chunks
 
-        :param df_docs: DataFrame containing the documents to index.
-        :param batch_size: Number of documents to upsert in each batch.
         """
         # Ensure the collection exists (or is recreated)
         self._create_collection(collection_name, self.vector_size)
@@ -88,6 +189,7 @@ class QdrantRetriever(BaseRetriever):
         points_batch: list[PointStruct] = []
         processed_count = 0
         skipped_count = 0
+        failed_indices: list[tuple[int, VectorDbError]] = []
         total_docs = len(data)
 
         logger.info(
@@ -98,43 +200,24 @@ class QdrantRetriever(BaseRetriever):
         )
 
         for idx, element in enumerate(data):
-            title = None
-            try:
-                contents = element.text
-                title = element.metadata.original_filepath
-                # Calculate embedding using Gemini
-                embedding = self.embedding_client.embed_content(
-                    contents=contents, title=title, task_type="RETRIEVAL_DOCUMENT"
-                )
-            except Exception:
-                logger.exception(
-                    "Skipping document due to unexpected error during embedding.",
-                    index=idx,
-                    title=title,
-                )
+            # Create point from chunk
+            point = self._create_point(
+                element=element,
+                idx=idx,
+            )
+            if point is None:
+                # If point creation failed, skip to the next element
                 skipped_count += 1
                 continue
 
-            # Prepare payload, ensuring metadata is serializable
-            payload = {
-                "text": contents,
-                "filename": title,
-                # Ensure metadata is a dictionary (or handle other types if needed)
-                "metadata": element.metadata,
-            }
-
-            point = PointStruct(
-                id=str(uuid.uuid4()),  # Use UUID for robust unique IDs
-                vector=embedding,  # Use the extracted vector
-                payload=payload,
-            )
+            # Add point to the batch
             points_batch.append(point)
 
             # Upsert batch if it reaches the desired size
             if len(points_batch) >= self.batch_size:
                 try:
                     # Set wait=False for potentially faster async upsert
-                    self.client.upsert(
+                    self._upsert_batch(
                         collection_name=collection_name,
                         points=points_batch,
                         wait=False,
@@ -146,16 +229,23 @@ class QdrantRetriever(BaseRetriever):
                         processed_count=processed_count,
                         collection_name=collection_name,
                     )
-                    points_batch = []  # Clear the batch
-                except Exception:
+                except VectorDbError as e:
                     logger.exception(
-                        "Failed to upsert batch to Qdrant",
+                        "Failed to upsert batch after retries",
                         collection_name=collection_name,
                         batch_size=len(points_batch),
                     )
-                    # Decide how to handle batch failure: skip batch, retry, etc.
-                    # For now, just log and continue with next batch
-                    points_batch = []  # Clear failed batch
+
+                    if not continue_on_error:
+                        # Add all documents in the failed batch to the failed indices
+                        batch_start_idx = idx - len(points_batch) + 1
+                        failed_indices.extend(
+                            [(batch_start_idx + i, e) for i in range(len(points_batch))]
+                        )
+                        return processed_count, skipped_count, failed_indices
+
+                # Clear the batch regardless of success or failure
+                points_batch = []
 
         # Upsert any remaining points
         if points_batch:
@@ -172,11 +262,16 @@ class QdrantRetriever(BaseRetriever):
                     processed_count=processed_count,
                     collection_name=collection_name,
                 )
-            except Exception:
+            except VectorDbError as e:
                 logger.exception(
-                    "Failed to upsert final batch to Qdrant",
+                    "Failed to upsert final batch",
                     collection_name=collection_name,
                     batch_size=len(points_batch),
+                )
+                # Add all documents in the failed batch to the failed indices
+                batch_start_idx = total_docs - len(points_batch)
+                failed_indices.extend(
+                    [(batch_start_idx + i, e) for i in range(len(points_batch))]
                 )
 
         logger.info(
@@ -186,6 +281,15 @@ class QdrantRetriever(BaseRetriever):
             successfully_processed=processed_count,
             skipped=skipped_count,
         )
+
+        if failed_indices and not continue_on_error:
+            logger.warning(
+                "Some documents failed to index. Consider retry with failed indices.",
+                collection_name=collection_name,
+                failed_count=len(failed_indices),
+            )
+
+        return processed_count, skipped_count, failed_indices
 
     @override
     def semantic_search(
@@ -203,6 +307,15 @@ class QdrantRetriever(BaseRetriever):
         :param score_threshold: Optional minimum score threshold for results.
         :return: A list of SemanticSearchResult.
         """
+        # Validate inputs to provide clear error messages
+        if not query or not query.strip():
+            logger.warning("Empty query provided for semantic search")
+            return []
+
+        if not collection_name:
+            logger.warning("Empty collection name provided for semantic search")
+            return []
+
         try:
             # Convert the query into a vector embedding
             query_vector = self.embedding_client.embed_content(
@@ -210,6 +323,10 @@ class QdrantRetriever(BaseRetriever):
                 task_type="RETRIEVAL_QUERY",
                 title=None,
             )
+
+            if not query_vector or len(query_vector) == 0:
+                logger.warning("Empty embedding generated for query", query=query)
+                return []
 
             # Search Qdrant for similar vectors.
             search_result = self.client.search(

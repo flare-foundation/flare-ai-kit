@@ -85,3 +85,8 @@ class AbiError(FlareAIKitError):
 # --- Embeddings Errors ---
 class EmbeddingsError(FlareAIKitError):
     """Raised for errors encountered when generating or handling embeddings."""
+
+
+# --- VectorDB Errors ---
+class VectorDbError(FlareAIKitError):
+    """Raised for errors encountered when interacting with VectorDBs."""

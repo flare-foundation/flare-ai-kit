@@ -30,6 +30,14 @@ class EcosystemSettingsModel(BaseModel):
         10,
         description="Flare Block Explorer query timeout (in seconds).",
     )
+    max_retries: PositiveInt = Field(
+        3,
+        description="Max retries for Flare transactions.",
+    )
+    retry_delay: PositiveInt = Field(
+        5,
+        description="Delay between retries for Flare transactions (in seconds).",
+    )
     account_address: ChecksumAddress | None = Field(
         None,
         description="Account address to use when interacting onchain.",

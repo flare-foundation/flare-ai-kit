@@ -49,7 +49,7 @@ class Chunk:
 
 
 # --- Schemas for Search Results ---
-@dataclass
+@dataclass(frozen=True)
 class SemanticSearchResult:
     """
     Immutable result obtained from a semantic search query.
