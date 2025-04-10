@@ -3,8 +3,8 @@
 from typing import override
 
 import structlog
-from google import genai  # type: ignore[reportMissingTypeStubs]
-from google.genai import types  # type: ignore[reportMissingTypeStubs]
+from google import genai  # pyright: ignore[reportMissingTypeStubs]
+from google.genai import types  # pyright: ignore[reportMissingTypeStubs]
 
 from flare_ai_kit.common import EmbeddingsError
 
@@ -83,7 +83,7 @@ class GeminiEmbedding(BaseEmbedding):
             output_dimensionality=self.output_dimensionality,
         )
 
-        response = self.client.models.embed_content(  # type: ignore[reportUnknownMemberType]
+        response = self.client.models.embed_content(  # pyright: ignore[reportUnknownMemberType]
             model=self.model,
             contents=contents_list,
             config=types.EmbedContentConfig(
@@ -112,7 +112,7 @@ class GeminiEmbedding(BaseEmbedding):
                 "Successfully generated Gemini embeddings.",
                 num_embeddings=len(embedding_values),
             )
-            return embedding_values  # type: ignore[reportReturnType]
+            return embedding_values  # pyright: ignore[reportReturnType]
         # Handle cases where the API call succeeded but returned no embeddings
         logger.error(
             "Gemini API returned no embeddings.", response_details=str(response)

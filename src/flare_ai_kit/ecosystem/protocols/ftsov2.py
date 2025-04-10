@@ -67,7 +67,7 @@ class FtsoV2(Flare):
             raise AttributeError(msg)
         try:
             # The contract returns (price, decimals, timestamp)
-            return await self.ftsov2.functions.getFeedById(feed_id).call()  # type: ignore
+            return await self.ftsov2.functions.getFeedById(feed_id).call()  # pyright: ignore[reportUnknownVariableType,reportGeneralTypeIssues]
         except Exception as e:
             msg = f"Contract call failed for getFeedById({feed_id}): {e}"
             raise FtsoV2Error(msg) from e
@@ -93,7 +93,7 @@ class FtsoV2(Flare):
             raise AttributeError(msg)
         try:
             # The contract returns (prices[], decimals[], timestamp)
-            return await self.ftsov2.functions.getFeedsById(feed_ids).call()  # type: ignore
+            return await self.ftsov2.functions.getFeedsById(feed_ids).call()  # pyright: ignore[reportUnknownVariableType,reportGeneralTypeIssues]
         except Exception as e:
             msg = f"Contract call failed for getFeedsById({len(feed_ids)} feeds)"
             raise FtsoV2Error(msg) from e

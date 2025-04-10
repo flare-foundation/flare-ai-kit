@@ -48,7 +48,7 @@ class BlockExplorer:
         # The client is already created in __init__, just return self
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:  # noqa: ANN001 # type: ignore[reportUnknownParameterType]
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:  # noqa: ANN001 # pyright: ignore[reportUnknownParameterType, reportMissingParameterType]
         """Exit the async context manager, ensuring the client is closed."""
         await self.close()
 
@@ -121,7 +121,7 @@ class BlockExplorer:
             msg = "Failed to decode JSON response"
             raise ExplorerError(msg) from e
         else:
-            return json_response  # type: ignore
+            return json_response  # pyright: ignore[reportUnknownVariableType]
 
     async def get_contract_abi(self, contract_address: str) -> list[dict[str, str]]:
         """
@@ -175,4 +175,4 @@ class BlockExplorer:
             msg = "Failed to parse ABI from API response"
             raise AbiError(msg) from e
         else:
-            return abi  # type: ignore
+            return abi  # pyright: ignore[reportUnknownVariableType]

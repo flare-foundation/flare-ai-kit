@@ -16,7 +16,7 @@ from web3.exceptions import (
     Web3Exception,
 )
 from web3.middleware import (
-    ExtraDataToPOAMiddleware,  # type: ignore[reportUnknownVariableType]
+    ExtraDataToPOAMiddleware,  # pyright: ignore[reportUnknownVariableType]
 )
 from web3.types import TxParams
 

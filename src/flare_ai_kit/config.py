@@ -38,10 +38,10 @@ class AppSettings(BaseSettings):
 
 # This single instance will be imported by other modules
 try:
-    settings = AppSettings()  # type: ignore[reportCallIssue]
+    settings = AppSettings()  # pyright: ignore[reportCallIssue]
 except Exception as e:  # noqa: BLE001
     msg = f"Could not load settings (missing .env file or environment variables): {e}"
     warnings.warn(msg, stacklevel=2)
     # Let Pydantic raise validation errors if required fields are missing
     # Attempt again, will likely fail if required fields are missing without defaults
-    settings = AppSettings()  # type: ignore[reportCallIssue]
+    settings = AppSettings()  # pyright: ignore[reportCallIssue]

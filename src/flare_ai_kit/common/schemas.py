@@ -1,7 +1,8 @@
 """Dataclass schemas used in Flare AI Kit."""
 
-from dataclasses import dataclass
 from typing import override
+
+from pydantic.dataclasses import dataclass
 
 
 # --- Schemas for Text Chunking and Embeddings ---
