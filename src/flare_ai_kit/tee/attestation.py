@@ -30,6 +30,15 @@ class VtpmAttestation:
         unix_socket_path: str = "/run/container_launcher/teeserver.sock",
         simulate: bool = False,
     ) -> None:
+        """
+        Initialize the VtpmAttestation client.
+
+        Args:
+            url: URL for the attestation service.
+            unix_socket_path: Path to the Unix domain socket.
+            simulate: If True, use a simulated token instead of making a real request.
+
+        """
         self.url = url
         self.unix_socket_path = unix_socket_path
         self.simulate = simulate
