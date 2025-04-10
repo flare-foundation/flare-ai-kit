@@ -12,10 +12,9 @@ Create AI applications where data integrity, privacy, and computation provenance
 
 - **Verifiable Execution:** Run agent logic securely within Confidential Space (Intel TDX TEEs).
 - **Consensus Engine:** Framework for multi-agent collaboration based on the full [Consensus Learning whitepaper](https://arxiv.org/abs/2402.16157).
-- **Agent Framework:** Build type-safe agents (PydanticAI) interacting with LLMs (e.g., Gemini).
-- **Social Intelligence:** Connectors & analytics for X, Telegram, Discord, Farcaster.
+- **Agent Framework:** Build type-safe agents (PydanticAI) interacting with LLMs (e.g., Gemini 2.5 Pro).
 - **Flare Integration:** Connect to core protocols ([FTSO](https://dev.flare.network/ftso/overview), [FDC](https://dev.flare.network/fdc/overview), [FAssets](https://dev.flare.network/fassets/overview)) & ecosystem dApps ([Sceptre](http://sceptre.fi), [OpenOcean](https://openocean.finance), [Kinetic](https://kinetic.market) etc.).
-- **Social Intelligence:** Connectors & analytics for X, Telegram, Discord, Farcaster.
+- **Social Intelligence:** Connectors & analytics for X, Telegram, and Farcaster.
 
 ## 🏗️ Architecture Overview
 
@@ -103,8 +102,6 @@ uv run pyright
 # Run tests (ensure required env vars are set for integration tests)
 uv run pytest
 ```
-
-All checks must pass in CI.
 
 ## 🤝 Contributing
 
