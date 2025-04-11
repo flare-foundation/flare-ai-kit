@@ -5,7 +5,16 @@ from typing import override
 import structlog
 from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import UnexpectedResponse
-from qdrant_client.http.models import Distance, PointStruct, VectorParams
+from qdrant_client.http.models import (
+    Distance,
+    FieldCondition,
+    Filter,
+    MatchText,
+    PointStruct,
+    Record,
+    ScoredPoint,
+    VectorParams,
+)
 from tenacity import (
     retry,
     retry_if_exception_type,
@@ -26,6 +35,32 @@ from .base import BaseRetriever
 
 # Initialize logger
 logger = structlog.get_logger(__name__)
+
+
+def convert_points_to_results(
+    points: list[ScoredPoint] | list[Record], default_score: float = 1.0
+) -> list[SemanticSearchResult]:
+    """
+    Convert a list of Qdrant PointStruct objects to SemanticSearchResult instances.
+
+    Args:
+        points: A list of Qdrant PointStruct objects.
+        default_score: A fallback score value if a point doesn't have one.
+
+    Returns:
+        A list of SemanticSearchResult objects.
+
+    """
+    results: list[SemanticSearchResult] = []
+    for point in points:
+        payload = point.payload if point.payload is not None else {}
+        text = payload.get("text", "")
+        metadata = {k: v for k, v in payload.items() if k != "text"}
+        # Use the point's score if available; otherwise, use the default score.
+        score = getattr(point, "score", default_score)
+        result = SemanticSearchResult(text=text, score=score, metadata=metadata)
+        results.append(result)
+    return results
 
 
 class QdrantRetriever(BaseRetriever):
@@ -338,16 +373,7 @@ class QdrantRetriever(BaseRetriever):
             )
 
             # Process and return results.
-            output: list[SemanticSearchResult] = []
-            for hit in search_result:
-                payload = hit.payload if hit.payload else {}
-                text = payload.get("text", "")
-                # Exclude 'text' from metadata, include everything else from payload
-                metadata = {k: v for k, v in payload.items() if k != "text"}
-                result = SemanticSearchResult(
-                    text=text, score=hit.score, metadata=metadata
-                )
-                output.append(result)
+            output = convert_points_to_results(search_result)
 
             logger.info(
                 "Semantic search performed successfully.",
@@ -366,3 +392,60 @@ class QdrantRetriever(BaseRetriever):
             return []
         else:
             return output
+
+    @override
+    def keyword_search(
+        self, keywords: list[str], collection_name: str, top_k: int = 5
+    ) -> list[SemanticSearchResult]:
+        """
+        Perform keyword search using Qdrant's scroll API.
+
+        Args:
+            keywords: A list of keywords to match in the document payload.
+            collection_name: The name of the Qdrant collection.
+            top_k: Maximum number of results to return.
+
+        Returns:
+            A list of SemanticSearchResult objects containing the search results.
+
+        """
+        if not keywords:
+            logger.warning("No keywords provided for keyword search.")
+            return []
+
+        # Build filter conditions using MatchText for each keyword.
+        keyword_conditions = [
+            FieldCondition(key="text", match=MatchText(text=keyword))
+            for keyword in keywords
+        ]
+
+        # Build a filter using a "should" clause (OR logic).
+        scroll_filter = Filter(should=keyword_conditions)  # pyright: ignore[reportArgumentType]
+
+        try:
+            # Use client.scroll to retrieve matching points.
+            points = self.client.scroll(
+                collection_name=collection_name,
+                scroll_filter=scroll_filter,
+                limit=top_k,
+            )[0]
+        except Exception as e:
+            logger.exception(
+                "Error during keyword search.",
+                keywords=keywords,
+                collection_name=collection_name,
+                error=str(e),
+            )
+            return []
+
+        # Process and return results.
+        output = convert_points_to_results(points, default_score=1.0)
+
+        logger.info(
+            "Keyword search performed successfully.",
+            keywords=keywords,
+            top_k=top_k,
+            results_found=len(output),
+            collection_name=collection_name,
+        )
+        return output

@@ -13,3 +13,9 @@ class BaseRetriever(ABC):
         self, query: str, collection_name: str, top_k: int = 5
     ) -> list[SemanticSearchResult]:
         """Perform semantic search using vector embeddings."""
+
+    @abstractmethod
+    def keyword_search(
+        self, keywords: list[str], collection_name: str, top_k: int = 5
+    ) -> list[SemanticSearchResult]:
+        """Perform semantic search using vector embeddings."""
