@@ -13,3 +13,6 @@ wheels/
 .pytest_cache
 .vscode
 .DS_Store
+
+# Project specific
+build.log
