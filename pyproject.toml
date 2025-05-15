@@ -3,10 +3,23 @@ name = "flare-ai-kit"
 version = "0.1.0"
 description = "SDK for building verifiable AI Agents on Flare using Confidential Space"
 readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 authors = [
     { name = "Dinesh Pinto", email = "annual.fallout_0z@icloud.com" }
 ]
-keywords = ["flare", "blockchain", "ai", "agent", "sdk", "confidential computing", "ftso"]
+keywords = ["flare", "blockchain", "ai", "agent", "sdk", "confidential computing"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 requires-python = ">=3.12"
 dependencies = [
     "aiohttp>=3.11.14",
@@ -22,6 +35,8 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/flare-foundation/flare-ai-kit"
 Repository = "https://github.com/flare-foundation/flare-ai-kit"
+Releases = "https://github.com/flare-foundation/flare-ai-kit/releases"
+Issues = "https://github.com/flare-foundation/flare-ai-kit/issues"
 
 [project.scripts]
 flare-ai-kit = "flare_ai_kit:main"
@@ -59,7 +74,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["D203", "D212", "COM812", "S105", "D401", "D104", "ANN401", "ISC003", "D107", "PGH003", "FBT001", "FBT002"]
+ignore = ["D203", "D212", "COM812", "S105", "D401", "D104", "ANN401", "ISC003", "D107", "FBT001", "FBT002"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "tests/**/*.py" = ["S101", "ARG", "PLR2004", "SLF001", "BLE001", "E501", "T201", "D", "ANN001", "ANN201", "F821"]

@@ -7,12 +7,12 @@ from flare_ai_kit.common.exceptions import FtsoV2Error
 from flare_ai_kit.ecosystem.protocols.ftsov2 import FtsoV2  # Import the async version
 from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
 
-settings = EcosystemSettingsModel()  # type: ignore
+settings = EcosystemSettingsModel()  # type: ignore[reportCallIssue]
 
 
 # Use pytest_asyncio.fixture for async fixtures
 @pytest_asyncio.fixture(scope="function")
-async def ftso_instance() -> FtsoV2:  # type: ignore
+async def ftso_instance() -> FtsoV2:  # type: ignore[reportInvalidTypeForm]
     """Provides a real instance of FtsoV2 connected to the network."""
     try:
         # Use the async factory method
@@ -26,7 +26,7 @@ async def ftso_instance() -> FtsoV2:  # type: ignore
             f"Failed to initialize FtsoV2 instance or connect to Flare network: {e}"
         )
     else:
-        yield instance  # type: ignore
+        yield instance  # type: ignore[reportReturnType]
 
 
 # This test uses a static SYNCHRONOUS method, so it remains synchronous
@@ -43,7 +43,7 @@ def test_feed_name_to_id_static(
 ) -> None:
     """Test the static method _feed_name_to_id (no network required)."""
     # Call the static method on the FtsoV2 class
-    assert FtsoV2._feed_name_to_id(feed_name, category) == f"0x{expected_id}"  # type: ignore
+    assert FtsoV2._feed_name_to_id(feed_name, category) == f"0x{expected_id}"  # type: ignore[reportPrivateUsage]
 
 
 # Mark test as async as it uses an async fixture
@@ -107,12 +107,12 @@ async def test_get_feed_by_id_real_structure(ftso_instance: FtsoV2) -> None:
     Uses a known valid feed ID.
     """
     # Sync call to static method is fine
-    feed_id = FtsoV2._feed_name_to_id("FLR/USD", "01")  # type: ignore
+    feed_id = FtsoV2._feed_name_to_id("FLR/USD", "01")  # type: ignore[reportPrivateUsage]
     print(f"Querying _get_feed_by_id for feed ID: {feed_id}")
 
     try:
         # Await the internal async method call
-        feeds, decimals, timestamp = await ftso_instance._get_feed_by_id(feed_id)  # type: ignore
+        feeds, decimals, timestamp = await ftso_instance._get_feed_by_id(feed_id)  # type: ignore[reportPrivateUsage]
         print(
             f"Received feed data: Feeds={feeds}, Decimals={decimals}, Timestamp={timestamp}"
         )

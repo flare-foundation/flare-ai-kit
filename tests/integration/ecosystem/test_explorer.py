@@ -5,7 +5,7 @@ from flare_ai_kit.common import AbiError
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
 
-settings = EcosystemSettingsModel()  # type: ignore
+settings = EcosystemSettingsModel()  # type: ignore[reportCallIssue]
 # Example: FlareContractRegistry (known to have a verified ABI)
 REAL_CONTRACT_ADDRESS = "0xaD67FE66660Fb8dFE9d6b1b4240d8650e30F6019"
 # Example: An unverified address
