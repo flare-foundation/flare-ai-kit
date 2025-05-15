@@ -2,11 +2,12 @@
 
 SDK for building **verifiable AI Agents** on Flare using Confidential Space.
 
-Create AI applications where data integrity, privacy, and computation provenance are cryptographically guaranteed via Trusted Execution Environments (TEEs) and verifiable on the Flare network.
-
-> **⚠️ Note: Under active development ⚠️**
+> [!WARNING]
 >
-> Flare AI Kit is currently under active development (pre-release/alpha stage). Interfaces, APIs, and functionalities may change frequently and potentially in backward-incompatible ways before a stable release. Use with caution.
+> Flare AI Kit is currently under active development (pre-release/alpha stage).
+>
+> Interfaces, APIs, and functionalities may change frequently and potentially in backward-incompatible ways before a stable release.
+> Use with caution.
 
 ## ✨ Goals & Features
 
