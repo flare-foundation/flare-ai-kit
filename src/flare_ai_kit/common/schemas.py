@@ -1,8 +1,8 @@
 """Dataclass schemas used in Flare AI Kit."""
 
+from dataclasses import dataclass
+from enum import Enum
 from typing import override
-
-from pydantic.dataclasses import dataclass
 
 
 # --- Schemas for Text Chunking and Embeddings ---
@@ -68,3 +68,14 @@ class SemanticSearchResult:
     text: str
     score: float
     metadata: dict[str, str]
+
+
+# --- FTSO ---
+class FtsoFeedCategory(str, Enum):
+    """Enum for FTSO Feed Categories. See https://dev.flare.network/ftso/feeds."""
+
+    CRYPTO = "01"
+    FOREX = "02"
+    COMMODITY = "03"
+    STOCK = "04"
+    CUSTOMFEED = "05"

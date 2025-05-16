@@ -4,7 +4,7 @@ from typing import Final, Self, TypeVar
 
 import structlog
 
-from flare_ai_kit.common import FtsoV2Error, load_abi
+from flare_ai_kit.common import FtsoFeedCategory, FtsoV2Error, load_abi
 from flare_ai_kit.ecosystem.flare import Flare
 from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
 
@@ -99,24 +99,7 @@ class FtsoV2(Flare):
             raise FtsoV2Error(msg) from e
 
     @staticmethod
-    def _check_category_validity(category: str) -> None:
-        """
-        Validates the provided category string.
-
-        Args:
-            category: The category string (e.g., "01").
-
-        Raises:
-            FtsoV2Error: If the category is not in VALID_CATEGORIES.
-
-        """
-        if category not in VALID_CATEGORIES:
-            msg = f"Invalid category '{category}' specified."
-            f"Valid categories: {sorted(VALID_CATEGORIES)}"
-            raise FtsoV2Error(msg)
-
-    @staticmethod
-    def _feed_name_to_id(feed_name: str, category: str) -> str:
+    def _feed_name_to_id(feed_name: str, category: FtsoFeedCategory) -> str:
         """
         Converts a human-readable feed name and category into a bytes21 hex feed ID.
 
@@ -124,7 +107,7 @@ class FtsoV2(Flare):
 
         Args:
             feed_name: The feed name string (e.g., "BTC/USD").
-            category: The category string (e.g., "01").
+            category: The category (e.g., FtsoFeedCategory.CRYPTO).
 
         Returns:
             The resulting bytes21 feed ID as a hex string prefixed with '0x'.
@@ -135,8 +118,8 @@ class FtsoV2(Flare):
         """
         # Encode name to bytes, convert to hex
         hex_feed_name = feed_name.encode("utf-8").hex()
-        # Concatenate category and hex name
-        combined_hex = category + hex_feed_name
+        # Concatenate category value and hex name
+        combined_hex = category.value + hex_feed_name
         # Pad with '0' on the right to reach 42 hex characters (21 bytes)
         hex_bytes_size = 42
         padded_hex_string = combined_hex.ljust(hex_bytes_size, "0")
@@ -146,13 +129,15 @@ class FtsoV2(Flare):
             raise FtsoV2Error(msg)
         return f"0x{padded_hex_string}"
 
-    async def get_latest_price(self, feed_name: str, category: str = "01") -> float:
+    async def get_latest_price(
+        self, feed_name: str, category: FtsoFeedCategory = FtsoFeedCategory.CRYPTO
+    ) -> float:
         """
         Retrieves the latest price for a single feed.
 
         Args:
             feed_name: The human-readable feed name (e.g., "BTC/USD").
-            category: The feed category (default: "01").
+            category: The feed category (default: CRYPTO i.e. "01").
 
         Returns:
             The latest price as a float, adjusted for decimals.
@@ -164,7 +149,6 @@ class FtsoV2(Flare):
                 or the contract call fails.
 
         """
-        self._check_category_validity(category)
         feed_id = self._feed_name_to_id(feed_name, category)
         feeds, decimals, timestamp = await self._get_feed_by_id(feed_id)
         logger.debug(
@@ -178,7 +162,9 @@ class FtsoV2(Flare):
         return feeds / (10**decimals)
 
     async def get_latest_prices(
-        self, feed_names: list[str], category: str = "01"
+        self,
+        feed_names: list[str],
+        category: FtsoFeedCategory = FtsoFeedCategory.CRYPTO,
     ) -> list[float]:
         """
         Retrieves the latest prices for multiple feeds within the same category.
@@ -200,7 +186,6 @@ class FtsoV2(Flare):
             msg = "FtsoV2 instance not fully initialized. Use FtsoV2.create()."
             raise AttributeError(msg)
 
-        self._check_category_validity(category)
         feed_ids = [
             self._feed_name_to_id(feed_name, category) for feed_name in feed_names
         ]
