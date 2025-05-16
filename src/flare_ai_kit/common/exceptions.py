@@ -26,11 +26,11 @@ class VtpmError(FlareAIKitError):
     """Base exception for vTPM related errors."""
 
 
-class VtpmAttestationError(Exception):
+class VtpmAttestationError(VtpmError):
     """Raised for errors during communication with the vTPM attestation service."""
 
 
-class VtpmValidationError(Exception):
+class VtpmValidationError(VtpmError):
     """Base exception for vTPM validation errors."""
 
 
@@ -68,7 +68,7 @@ class FlareTxRevertedError(FlareTxError):
     """Raised when a Flare transaction is confirmed but has reverted on-chain."""
 
 
-class FtsoV2Error(Exception):
+class FtsoV2Error(FlareAIKitError):
     """Raised for errors specific to interacting with FTSO V2 contracts.."""
 
 
