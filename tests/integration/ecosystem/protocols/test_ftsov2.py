@@ -3,8 +3,8 @@ import pytest_asyncio
 from web3 import AsyncWeb3, Web3
 from web3.exceptions import ContractLogicError
 
-from flare_ai_kit.common.exceptions import FtsoV2Error
-from flare_ai_kit.ecosystem.protocols.ftsov2 import FtsoV2  # Import the async version
+from flare_ai_kit.common import FtsoFeedCategory, FtsoV2Error
+from flare_ai_kit.ecosystem.protocols.ftsov2 import FtsoV2
 from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
 
 settings = EcosystemSettingsModel()  # type: ignore[reportCallIssue]
@@ -33,13 +33,25 @@ async def ftso_instance() -> FtsoV2:  # type: ignore[reportInvalidTypeForm]
 @pytest.mark.parametrize(
     ("feed_name", "category", "expected_id"),
     [
-        ("BTC/USD", "01", "014254432f55534400000000000000000000000000"),
-        ("ETH/USD", "01", "014554482f55534400000000000000000000000000"),
-        ("FLR/USD", "01", "01464c522f55534400000000000000000000000000"),
+        (
+            "BTC/USD",
+            FtsoFeedCategory.CRYPTO,
+            "014254432f55534400000000000000000000000000",
+        ),
+        (
+            "ETH/USD",
+            FtsoFeedCategory.CRYPTO,
+            "014554482f55534400000000000000000000000000",
+        ),
+        (
+            "FLR/USD",
+            FtsoFeedCategory.CRYPTO,
+            "01464c522f55534400000000000000000000000000",
+        ),
     ],
 )
 def test_feed_name_to_id_static(
-    feed_name: str, category: str, expected_id: str
+    feed_name: str, category: FtsoFeedCategory, expected_id: str
 ) -> None:
     """Test the static method _feed_name_to_id (no network required)."""
     # Call the static method on the FtsoV2 class
@@ -70,12 +82,12 @@ async def test_ftso_v2_real_initialization(ftso_instance: FtsoV2) -> None:
 @pytest.mark.parametrize(
     ("feed_name", "category"),
     [
-        ("FLR/USD", "01"),
-        ("BTC/USD", "01"),
+        ("FLR/USD", FtsoFeedCategory.CRYPTO),
+        ("BTC/USD", FtsoFeedCategory.CRYPTO),
     ],
 )
 async def test_get_latest_price_real_valid_feeds(
-    ftso_instance: FtsoV2, feed_name: str, category: str
+    ftso_instance: FtsoV2, feed_name: str, category: FtsoFeedCategory
 ) -> None:
     """
     Test fetching the latest price asynchronously for known valid feeds.
@@ -107,7 +119,7 @@ async def test_get_feed_by_id_real_structure(ftso_instance: FtsoV2) -> None:
     Uses a known valid feed ID.
     """
     # Sync call to static method is fine
-    feed_id = FtsoV2._feed_name_to_id("FLR/USD", "01")  # type: ignore[reportPrivateUsage]
+    feed_id = FtsoV2._feed_name_to_id("FLR/USD", FtsoFeedCategory.CRYPTO)  # type: ignore[reportPrivateUsage]
     print(f"Querying _get_feed_by_id for feed ID: {feed_id}")
 
     try:
@@ -135,7 +147,9 @@ async def test_get_feed_by_id_real_structure(ftso_instance: FtsoV2) -> None:
 async def test_get_latest_price_real_invalid_category(ftso_instance: FtsoV2) -> None:
     """Test behavior when requesting a valid feed with an invalid category."""
     valid_feed_name = "FLR/USD"
-    invalid_category = "99"  # Assuming '99' is never a valid category
+    invalid_category = (
+        FtsoFeedCategory.COMMODITY
+    )  # Assuming '99' is never a valid category
     print(
         f"Testing with valid feed '{valid_feed_name}' and invalid category '{invalid_category}'"
     )
@@ -145,7 +159,7 @@ async def test_get_latest_price_real_invalid_category(ftso_instance: FtsoV2) -> 
         # Await the call inside the context manager
         await ftso_instance.get_latest_price(valid_feed_name, invalid_category)
 
-    assert "Invalid category" in str(excinfo.value)
+    assert "feed does not exist" in str(excinfo.value)
     print(f"Received expected FtsoV2Error: {excinfo.value}")
 
 
@@ -158,7 +172,7 @@ async def test_get_latest_price_real_nonexistent_feed(ftso_instance: FtsoV2) -> 
     """
     # Create a feed name that is unlikely to exist but converts to a valid ID format
     invalid_feed_name = "NONEXISTENTXYZABC/NON"
-    category = "01"
+    category = FtsoFeedCategory.CRYPTO
     print(
         f"Testing with likely non-existent feed: {invalid_feed_name} (Category: {category})"
     )
@@ -192,7 +206,7 @@ async def test_get_latest_price_real_nonexistent_feed(ftso_instance: FtsoV2) -> 
 async def test_get_latest_prices_real_valid_feeds(ftso_instance: FtsoV2) -> None:
     """Test fetching multiple prices asynchronously."""
     feeds = ["FLR/USD", "BTC/USD", "ETH/USD"]
-    category = "01"
+    category = FtsoFeedCategory.CRYPTO
     print(f"\nFetching latest prices for {feeds} (Category: {category})...")
     try:
         prices = await ftso_instance.get_latest_prices(feeds, category)
