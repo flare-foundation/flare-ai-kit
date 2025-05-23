@@ -3,7 +3,7 @@
 import os
 from typing import Any
 
-import google.generativeai as genai  # type: ignore[import]
+import google.genai as genai  # type: ignore[import]
 
 from .base import AgentBase, AgentInput, AgentOutput, Message
 
@@ -17,8 +17,7 @@ class GeminiLLMAdapter:
             error_msg = "Google Gemini API key not provided."
             raise ValueError(error_msg)
         self.model = model
-        genai.configure(api_key=self.api_key)  # type: ignore[attr-defined]
-        self.gemini_model = genai.GenerativeModel(model)  # type: ignore[attr-defined]
+        self.client = genai.Client(api_key=self.api_key)
 
     def generate_text(
         self, prompt: str, context: Any | None = None, **kwargs: Any
@@ -27,14 +26,14 @@ class GeminiLLMAdapter:
         full_prompt = prompt
         if context:
             full_prompt = f"Context: {context}\nPrompt: {prompt}"
-        response = self.gemini_model.generate_content(full_prompt, **kwargs)  # type: ignore[attr-defined]
-        return response.text if getattr(response, "text", None) else ""  # type: ignore[attr-defined]
+        response = self.client.models.generate_content(model=self.model, contents=full_prompt, **kwargs)
+        return response.text if hasattr(response, "text") else ""
 
 
 class GeminiAgent(AgentBase):
     """Agent implementation using GeminiLLMAdapter."""
 
-    llm_adapter: GeminiLLMAdapter
+    llm_adapter: GeminiLLMAdapter | None = None
     context: Any | None = None
 
     def initialize(self, **kwargs: Any) -> None:

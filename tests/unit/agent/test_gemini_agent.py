@@ -36,18 +36,24 @@ def test_gemini_adapter_generate_text():
     """Test text generation with GeminiLLMAdapter."""
     mock_response = MagicMock()
     mock_response.text = "Generated response"
-    mock_model = MagicMock()
-    mock_model.generate_content.return_value = mock_response
-    with patch("google.generativeai.GenerativeModel", return_value=mock_model):
+    
+    mock_models = MagicMock()
+    mock_models.generate_content.return_value = mock_response
+    
+    mock_client = MagicMock()
+    mock_client.models = mock_models
+    
+    with patch("google.genai.Client", return_value=mock_client):
         adapter = GeminiLLMAdapter(api_key="test_key")
         response = adapter.generate_text("test prompt")
         assert response == "Generated response"
-        mock_model.generate_content.assert_called_once_with("test prompt")
+        mock_models.generate_content.assert_called_once_with(model="gemini-pro", contents="test prompt")
 
 
 def test_gemini_agent_initialization():
     """Test GeminiAgent initialization."""
-    agent = GeminiAgent(llm_adapter=GeminiLLMAdapter(api_key="test_key"))
+    agent = GeminiAgent()
+    agent.llm_adapter = GeminiLLMAdapter(api_key="test_key")
     assert agent.context is None
 
 
@@ -55,7 +61,8 @@ def test_gemini_agent_process_input():
     """Test GeminiAgent input processing."""
     mock_adapter = MagicMock(spec=GeminiLLMAdapter)
     mock_adapter.generate_text.return_value = "Generated response"
-    agent = GeminiAgent(llm_adapter=mock_adapter)
+    agent = GeminiAgent()
+    agent.llm_adapter = mock_adapter
     agent_input = AgentInput(message="test message")
     output = agent.process_input(agent_input)
     assert output.response == "Generated response"
@@ -67,7 +74,8 @@ def test_gemini_agent_process_input():
 
 def test_gemini_agent_context_update():
     """Test GeminiAgent context update."""
-    agent = GeminiAgent(llm_adapter=GeminiLLMAdapter(api_key="test_key"))
+    agent = GeminiAgent()
+    agent.llm_adapter = GeminiLLMAdapter(api_key="test_key")
     context = {"key": "value"}
     agent.update_context(context)
     assert agent.context == context

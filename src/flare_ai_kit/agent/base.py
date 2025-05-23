@@ -35,7 +35,7 @@ class AgentBase(ABC, BaseModel):
     Manages agent lifecycle and conversation history.
     """
 
-    conversation_history: list[Message] = Field(default_factory=list)
+    conversation_history: list[Message] = Field(default_factory=list[Message])
     max_history: int = 10
 
     class Config:

@@ -92,7 +92,8 @@ def test_conversation_history():
 
 def test_max_history_limit():
     """Test maximum history limit."""
-    agent = TestAgent(max_history=2)
+    agent = TestAgent()
+    agent.max_history = 2
     for i in range(3):
         agent.add_message(Message(role="user", content=f"Message {i}"))
     history = agent.get_history()
