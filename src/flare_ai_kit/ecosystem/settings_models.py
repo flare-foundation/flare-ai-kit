@@ -1,7 +1,49 @@
 """Settings for Ecosystem."""
 
+from typing import cast
+
 from eth_typing import ChecksumAddress
-from pydantic import BaseModel, Field, HttpUrl, PositiveInt, SecretStr
+from pydantic import BaseModel, Field, HttpUrl, PositiveInt, SecretStr, model_validator
+
+
+class ContractAddresses(BaseModel):
+    """A model for storing contract addresses for a single network."""
+
+    sparkdex_universal_router: ChecksumAddress | None = None
+    sparkdex_swap_router: ChecksumAddress | None = None
+    kinetic_comptroller: ChecksumAddress | None = None
+    kinetic_ksflr: ChecksumAddress | None = None
+
+
+class Contracts(BaseModel):
+    """A model for storing contract addresses for all supported networks."""
+
+    # Tell pyright that Pydantic will cast these as ChecksumAddress during runtime
+    flare: ContractAddresses = ContractAddresses(
+        sparkdex_universal_router=cast(
+            "ChecksumAddress", "0x0f3D8a38D4c74afBebc2c42695642f0e3acb15D3"
+        ),
+        sparkdex_swap_router=cast(
+            "ChecksumAddress", "0x8a1E35F5c98C4E85B36B7B253222eE17773b2781"
+        ),
+        kinetic_comptroller=cast(
+            "ChecksumAddress", "0xeC7e541375D70c37262f619162502dB9131d6db5"
+        ),
+        kinetic_ksflr=cast(
+            "ChecksumAddress", "0x291487beC339c2fE5D83DD45F0a15EFC9Ac45656"
+        ),
+    )
+    coston2: ContractAddresses = ContractAddresses()
+
+    @model_validator(mode="after")
+    def enforce_flare_addresses(self) -> "Contracts":
+        """Ensure that all contract addresses are set for Flare mainnet."""
+        # Iterate over the fields defined in the ContractAddresses model
+        for field_name in ContractAddresses.model_fields:
+            if getattr(self.flare, field_name) is None:
+                msg = f"'{field_name}' must be set for mainnet contracts"
+                raise ValueError(msg)
+        return self
 
 
 class EcosystemSettingsModel(BaseModel):
@@ -45,4 +87,8 @@ class EcosystemSettingsModel(BaseModel):
     account_private_key: SecretStr | None = Field(
         None,
         description="Account private key to use when interacting onchain.",
+    )
+    contracts: Contracts = Field(
+        default_factory=Contracts,
+        description="dApp contract addresses on each supported network.",
     )
