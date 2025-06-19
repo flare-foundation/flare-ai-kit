@@ -1,7 +1,7 @@
 """Client for interacting with the X API using Tweepy."""
 
 import structlog
-import tweepy  # type: ignore[reportMissingTypeStubs]
+import tweepy.asynchronous as tweepy  # type: ignore[reportMissingTypeStubs]
 from tweepy.errors import TweepyException  # type: ignore[reportMissingTypeStubs]
 
 from flare_ai_kit.social.settings_models import SocialSettingsModel
@@ -40,7 +40,7 @@ class XClient:
             else None
         )
 
-        self.client: tweepy.Client | None = None
+        self.client: tweepy.AsyncClient | None = None
         self.is_configured = False
 
         if api_key and api_key_secret and access_token and access_token_secret:
@@ -48,7 +48,7 @@ class XClient:
                 logger.info("XClient credentials provided, initializing client.")
 
                 # V2 API Client for creating tweets
-                self.client = tweepy.Client(
+                self.client = tweepy.AsyncClient(
                     consumer_key=api_key,
                     consumer_secret=api_key_secret,
                     access_token=access_token,
@@ -64,7 +64,7 @@ class XClient:
                 "API calls will be simulated."
             )
 
-    def post_tweet(self, text: str) -> bool:
+    async def post_tweet(self, text: str) -> bool:
         """
         Posts a tweet to X.
 
@@ -87,7 +87,7 @@ class XClient:
 
         logger.info("Attempting to post", tweet=text[:50])
         try:
-            response = self.client.create_tweet(text=text)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+            response = await self.client.create_tweet(text=text)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
             tweet_id = response.data.get("id") if response.data else "N/A"  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
         except TweepyException as e:
             logger.exception("Failed to post tweet due to an API error.", error=e)
