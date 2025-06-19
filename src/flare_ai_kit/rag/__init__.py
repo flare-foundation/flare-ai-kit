@@ -5,7 +5,6 @@ from .vector import (
     BaseResponder,
     BaseRetriever,
     GeminiEmbedding,
-    GitHubIndexer,
     QdrantRetriever,
 )
 
@@ -14,6 +13,5 @@ __all__ = [
     "BaseResponder",
     "BaseRetriever",
     "GeminiEmbedding",
-    "GitHubIndexer",
     "QdrantRetriever",
 ]
