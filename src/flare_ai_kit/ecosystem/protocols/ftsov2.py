@@ -150,16 +150,16 @@ class FtsoV2(Flare):
 
         """
         feed_id = self._feed_name_to_id(feed_name, category)
-        feeds, decimals, timestamp = await self._get_feed_by_id(feed_id)
+        value, decimals, timestamp = await self._get_feed_by_id(feed_id)
         logger.debug(
             "get_latest_price",
             feed_name=feed_name,
             feed_id=feed_id,
-            feeds=feeds,
+            value=value,
             decimals=decimals,
             timestamp=timestamp,
         )
-        return feeds / (10**decimals)
+        return value / (10**decimals)
 
     async def get_latest_prices(
         self,
@@ -189,14 +189,14 @@ class FtsoV2(Flare):
         feed_ids = [
             self._feed_name_to_id(feed_name, category) for feed_name in feed_names
         ]
-        feeds, decimals, timestamp = await self._get_feeds_by_id(feed_ids)
+        values, decimals, timestamp = await self._get_feeds_by_id(feed_ids)
         logger.debug(
-            "get_latest_prices_async",
-            num_feeds=len(feed_names),
-            feeds=feeds,
+            "get_latest_prices",
+            feed_names=feed_names,
+            value=values,
             decimals=decimals,
             timestamp=timestamp,
         )
         return [
-            feed / 10**decimal for feed, decimal in zip(feeds, decimals, strict=True)
+            value / 10**decimal for value, decimal in zip(values, decimals, strict=True)
         ]
