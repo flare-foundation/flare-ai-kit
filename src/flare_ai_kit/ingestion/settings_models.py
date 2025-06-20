@@ -1,6 +1,6 @@
 """Settings for Vector RAG."""
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, PositiveInt, model_validator
 
 DEFAULT_ALLOWED_EXTENSIONS = {
     ".py",
@@ -62,12 +62,12 @@ DEFAULT_IGNORED_FILES = {
 class IngestionSettingsModel(BaseModel):
     """Configuration for Vector Database connections used in RAG."""
 
-    chunk_size: int = Field(
+    chunk_size: PositiveInt = Field(
         5000,
         description="Target size for text chunks before embedding (in characters).",
         gt=0,  # Ensure chunk size is positive
     )
-    chunk_overlap: int = Field(
+    chunk_overlap: PositiveInt = Field(
         500,
         description="Overlap between consecutive text chunks (in characters).",
         ge=0,  # Ensure overlap is non-negative

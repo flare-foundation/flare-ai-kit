@@ -3,7 +3,15 @@
 from typing import cast
 
 from eth_typing import ChecksumAddress
-from pydantic import BaseModel, Field, HttpUrl, PositiveInt, SecretStr, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    HttpUrl,
+    PositiveInt,
+    SecretStr,
+    StrictBool,
+    model_validator,
+)
 
 
 class ContractAddresses(BaseModel):
@@ -49,7 +57,7 @@ class Contracts(BaseModel):
 class EcosystemSettingsModel(BaseModel):
     """Configuration specific to the Flare ecosystem interactions."""
 
-    is_testnet: bool = Field(
+    is_testnet: StrictBool = Field(
         False,  # noqa: FBT003
         description="Set True if interacting with testnets (Coston or Coston2).",
         examples=["env var: ECOSYSTEM__IS_TESTNET"],

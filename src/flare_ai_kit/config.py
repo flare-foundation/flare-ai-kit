@@ -1,7 +1,9 @@
 """Settings for Flare AI Kit."""
 
 import warnings
+from typing import Literal
 
+import structlog
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -26,8 +28,9 @@ class AppSettings(BaseSettings):
         extra="ignore",  # Ignore extra variables found in environment/file
     )
 
-    log_level: str = Field(
-        "INFO", description="Logging level (e.g., DEBUG, INFO, WARNING)"
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
+        "INFO",
+        description="Logging level (e.g., DEBUG, INFO, WARNING, ERROR, CRITICAL)",
     )
     agent: AgentSettingsModel = Field(default_factory=AgentSettingsModel)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
     ecosystem: EcosystemSettingsModel = Field(default_factory=EcosystemSettingsModel)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
@@ -41,6 +44,9 @@ class AppSettings(BaseSettings):
 # This single instance will be imported by other modules
 try:
     settings = AppSettings()  # pyright: ignore[reportCallIssue]
+    structlog.configure(
+        wrapper_class=structlog.make_filtering_bound_logger(settings.log_level)
+    )
 except Exception as e:  # noqa: BLE001
     msg = f"Could not load settings (missing .env file or environment variables): {e}"
     warnings.warn(msg, stacklevel=2)

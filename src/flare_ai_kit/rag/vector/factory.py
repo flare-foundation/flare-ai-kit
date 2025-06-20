@@ -58,7 +58,6 @@ def create_vector_rag_pipeline(
     """
     logger.info("Creating vector RAG pipeline...")
 
-    # --- Validate essential settings ---
     if not vector_db_settings.qdrant_url:
         msg = "Qdrant URL is not configured. Please set VECTOR_DB__QDRANT_URL."
         logger.error(msg)
@@ -69,7 +68,7 @@ def create_vector_rag_pipeline(
         logger.error(msg)
         raise FlareAIKitError(msg)
 
-    # --- Initialize Components ---
+    # Initialize Components
     try:
         # 1. Embedding Client
         embedding_client = GeminiEmbedding(
