@@ -6,7 +6,7 @@ from typing import Any
 from pydantic_ai import Agent
 
 
-class Coordinator(ABC):
+class BaseCoordinator(ABC):
     """Base coordinator class."""
 
     @abstractmethod

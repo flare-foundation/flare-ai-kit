@@ -1,4 +1,4 @@
-from .base import Coordinator
+from .base import BaseCoordinator
 from .simple import SimpleCoordinator
 
-__all__ = ["Coordinator", "SimpleCoordinator"]
+__all__ = ["BaseCoordinator", "SimpleCoordinator"]

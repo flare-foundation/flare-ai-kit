@@ -2,13 +2,15 @@
 
 from flare_ai_kit.common import Prediction
 from flare_ai_kit.consensus.aggregator.base import BaseAggregator
-from flare_ai_kit.consensus.coordinator.base import Coordinator
+from flare_ai_kit.consensus.coordinator.base import BaseCoordinator
 
 
 class ConsensusEngine:
     """Orchestrates task distribution and result aggregation."""
 
-    def __init__(self, coordinator: Coordinator, aggregator: BaseAggregator) -> None:
+    def __init__(
+        self, coordinator: BaseCoordinator, aggregator: BaseAggregator
+    ) -> None:
         """
         Initializes the ConsensusEngine.
 

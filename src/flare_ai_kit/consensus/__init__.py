@@ -1,13 +1,13 @@
 """Module framework for achieving consensus among multiple AI agents."""
 
 from .aggregator import BaseAggregator, majority_vote, top_confidence, weighted_average
-from .coordinator import Coordinator
+from .coordinator import BaseCoordinator
 from .engine import ConsensusEngine
 
 __all__ = [
     "BaseAggregator",
+    "BaseCoordinator",
     "ConsensusEngine",
-    "Coordinator",
     "majority_vote",
     "top_confidence",
     "weighted_average",

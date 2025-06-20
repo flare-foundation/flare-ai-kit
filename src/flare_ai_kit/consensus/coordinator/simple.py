@@ -6,10 +6,10 @@ from typing import Any, override
 from pydantic_ai import Agent
 
 from flare_ai_kit.common import Prediction
-from flare_ai_kit.consensus.coordinator.base import Coordinator
+from flare_ai_kit.consensus.coordinator.base import BaseCoordinator
 
 
-class SimpleCoordinator(Coordinator):
+class SimpleCoordinator(BaseCoordinator):
     """A simple coordinator that distributes a task to all agents."""
 
     def __init__(self) -> None:
