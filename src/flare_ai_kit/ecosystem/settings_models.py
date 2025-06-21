@@ -9,7 +9,6 @@ from pydantic import (
     HttpUrl,
     PositiveInt,
     SecretStr,
-    StrictBool,
     model_validator,
 )
 
@@ -57,7 +56,7 @@ class Contracts(BaseModel):
 class EcosystemSettingsModel(BaseModel):
     """Configuration specific to the Flare ecosystem interactions."""
 
-    is_testnet: StrictBool = Field(
+    is_testnet: bool = Field(
         False,  # noqa: FBT003
         description="Set True if interacting with testnets (Coston or Coston2).",
         examples=["env var: ECOSYSTEM__IS_TESTNET"],
