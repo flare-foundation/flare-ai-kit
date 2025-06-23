@@ -9,24 +9,17 @@ SDK for building **verifiable AI Agents** on Flare using Confidential Space.
 > Interfaces, APIs, and functionalities may change frequently and potentially in backward-incompatible ways before a stable release.
 > Use with caution.
 
-## ✨ Goals & Features
+## ✨ Features
 
-- **Verifiable Execution:** Run agent logic securely within Confidential Space (Intel TDX TEEs).
-- **Consensus Engine:** Framework for multi-agent collaboration based on the full [Consensus Learning whitepaper](https://arxiv.org/abs/2402.16157).
-- **Agent Framework:** Build type-safe agents (PydanticAI) interacting with LLMs (e.g., Gemini 2.5 Pro).
-- **Flare Integration:** Connect to core protocols ([FTSO](https://dev.flare.network/ftso/overview), [FDC](https://dev.flare.network/fdc/overview), [FAssets](https://dev.flare.network/fassets/overview)) & ecosystem dApps ([Sceptre](http://sceptre.fi), [OpenOcean](https://openocean.finance), [Kinetic](https://kinetic.market) etc.).
+- **Verifiable Execution:** Run agent logic in a hardware-isolated Trusted Execution Environment (Confidential Space TDX TEEs).
+- **Consensus Engine:** Framework for multi-agent collaboration based on the [Consensus Learning](https://arxiv.org/abs/2402.16157) whitepaper.
+- **Agent Framework:** Build type-safe agents (PydanticAI) that interact with 200+ LLMs (Gemini, GPT etc.).
+- **Flare Integration:** Connect to core protocols ([FTSO](https://dev.flare.network/ftso/overview), [FDC](https://dev.flare.network/fdc/overview), [FAssets](https://dev.flare.network/fassets/overview)) and dApps ([Sceptre](http://sceptre.fi), [SparkDEX](https://sparkdex.ai), [Kinetic](https://kinetic.market) etc.).
 - **Social Intelligence:** Connectors & analytics for X, Telegram, and Farcaster.
 
-## 🏗️ Architecture Overview
+## 🏗️ Architecture
 
-Modular components include:
-
-- Agent Framework
-- Ecosystem Engine (Flare Blockchain Connectors)
-- RAG Engines (Vector/Graph)
-- Social Engine
-- Consensus Engine
-- Secure Enclave Connectors (Confidential Space)
+The kit is composed of modular engines for agents, social feeds, onchain data, and consensus.
 
 ```mermaid
 graph TD
@@ -63,24 +56,23 @@ graph TD
 
 ## 📦 Getting Started
 
-1. **Clone Repository:**
+**Prerequisites** Python >= 3.12 and [uv](https://github.com/astral-sh/uv).
+
+1. **Clone the repo:**
 
    ```bash
    git clone --recursive https://github.com/flare-foundation/flare-ai-kit.git
    cd flare-ai-kit
    ```
 
-2. **Configure Environment:**
-
-   Copy the example `.env` file and populate it with your specific endpoints, API keys, etc.
+2. **Configure your environment:**
 
    ```bash
+   # Copy the template and add your models, API keys etc.
    cp .env.example .env
    ```
 
-3. **Install Dependencies:**
-
-   Requires Python >= 3.12 and [uv](https://github.com/astral-sh/uv).
+3. **Install dependencies:**
 
    ```bash
    uv sync --all-extras
@@ -88,21 +80,30 @@ graph TD
 
 ## ✅ Development Checks
 
-Run the following checks locally before committing or submitting PRs:
+Run the following commands to format, lint, type-check, and test your code before committing.
 
 ```bash
-# Format code
+# Format, lint, and auto-fix
 uv run ruff format
-
-# Lint and auto-fix issues
 uv run ruff check --fix
 
 # Run static type checking
 uv run pyright
 
-# Run tests (ensure required env vars are set for integration tests)
+# Run tests
 uv run pytest
 ```
+
+## ☁️ Deploy to Confidential Space
+
+1. **Configure GCP:** Set all `GCP__*` variables in your `.env` file.
+
+2. **Deploy:**
+
+   ```bash
+   chmod +x gcloud-deploy.sh
+   ./gcloud-deploy.sh
+   ```
 
 ## 🤝 Contributing
 
