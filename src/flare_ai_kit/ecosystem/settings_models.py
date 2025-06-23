@@ -58,7 +58,7 @@ class EcosystemSettingsModel(BaseModel):
 
     is_testnet: bool = Field(
         False,  # noqa: FBT003
-        description="Set True if interacting with testnets (Coston or Coston2).",
+        description="Set True if interacting with Flare Testnet Coston2.",
         examples=["env var: ECOSYSTEM__IS_TESTNET"],
     )
     web3_provider_url: HttpUrl = Field(

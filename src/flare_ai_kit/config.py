@@ -29,7 +29,7 @@ class AppSettings(BaseSettings):
     )
 
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
-        "INFO",
+        "DEBUG",
         description="Logging level (e.g., DEBUG, INFO, WARNING, ERROR, CRITICAL)",
     )
     agent: AgentSettingsModel = Field(default_factory=AgentSettingsModel)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
