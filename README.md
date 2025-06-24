@@ -96,6 +96,8 @@ uv run pytest
 
 ## ☁️ Deploy to Confidential Space
 
+**Prerequisites:** Authenticated [gcloud CLI](https://cloud.google.com/sdk/docs/install).
+
 1. **Configure GCP:** Set all `GCP__*` variables in your `.env` file.
 
 2. **Deploy:**
