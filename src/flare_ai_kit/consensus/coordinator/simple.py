@@ -1,7 +1,7 @@
-"""A simple implementation of the Coordinator interface."""
+"""An enhanced implementation of the Coordinator interface."""
 
 import asyncio
-from typing import Any, override
+from typing import Any, override, Optional
 
 from pydantic_ai import Agent
 
@@ -10,55 +10,101 @@ from flare_ai_kit.consensus.coordinator.base import BaseCoordinator
 
 
 class SimpleCoordinator(BaseCoordinator):
-    """A simple coordinator that distributes a task to all agents."""
+    """A coordinator that manages agent lifecycle, distribution, and roles."""
 
     def __init__(self) -> None:
         """Initializes the SimpleCoordinator."""
-        self.agents: list[tuple[Agent, str]] = []
+        self.agents: dict[str, dict[str, Any]] = {}
+         # Format: {agent_id: {"agent": Agent, "role": str, "config": dict}}
 
     @override
-    def add_agent(self, agent: Agent, role: str) -> None:
-        """Adds an agent to the coordinator's pool."""
-        self.agents.append((agent, role))
-
-    @override
-    async def distribute_task(self, task: str) -> list[Any]:
+    def add_agent(self, agent: Agent, role: str, config: Optional[dict] = None) -> None:
         """
-        Distributes a task to all agents and collects their predictions.
+        Adds an agent with a specific role and optional config.
 
         Args:
-            task: The task to be distributed to the agents.
+            agent: The AI agent instance.
+            role: Role of the agent (e.g., "summarizer").
+            config: Optional agent-specific configuration.
+        """
+        agent_id = f"{type(agent).__name__}_{len(self.agents)}"
+        self.agents[agent_id] = {
+            "agent" : agent,
+            "role": role,
+            "config": config or {}
+        }
+
+    def remove_agent(self, agent_id: str) -> None:
+        """Removes an agent by ID."""
+        if agent_id in self.agents:
+            del self.agents[agent_id]
+    
+    async def start_agents(self) -> None:
+        """Opptionally starts all agents if they define a start() coroutine."""
+        for entry in self.agents.values():
+            agent = entry["agent"]
+            if hasattr(agent, "start") and asyncio.iscoroutinefunction(agent.start):
+                await agent.start()
+
+    async def stop_agents(self) -> None:
+        """Optionally stops all agents if they define a stop() coroutine."""
+        for entry in self.agents.values():
+            agent = entry["agent"]
+            if hasattr(agent, "stop") and asyncio.iscoroutinefunction(agent.stop):
+                await agent.stop()
+
+    def monitor_agents(self) -> list[dict[str, Any]]:
+        """Returns basic agent info for monitoring."""
+        return [
+            {
+                "agent_id": agent_id,
+                "role": meta["role"],
+                "status": getattr(meta["agent"], "status", "unknown")
+            }
+            for agent_id, meta in self.agents.items()
+        ]
+
+    @override
+    async def distribute_task(self, task: str, role: Optional[str] = None) -> list[Any]:
+        """
+        Distributes a task to all or role-matching agents.
+
+        Args:
+            task: The task to distribute.
+            role: If specified, only agents with this role will receive the task.
 
         Returns:
-            A list of predictions from the agents.
-
+            A list of agent responses.
         """
-        tasks = [agent.run(task) for agent, _ in self.agents]
+        selected = [
+            meta["agent"]
+            for meta in self.agents.values()
+            if role is None or meta["role"] == role
+        ]
+
+        tasks = [agent.run(task) for agent in selected]
         return await asyncio.gather(*tasks)
 
     @override
     async def process_results(self, predictions: list[Any]) -> list[Prediction]:
         """
-        Processes the raw results from agents into a structured Prediction format.
+        Processes raw outputs from agents.
 
         Args:
-            predictions: A list of raw outputs from the agents.
+            predictions: Agent outputs.
 
         Returns:
             A list of Prediction objects.
-
         """
         processed: list[Prediction] = []
+        agent_ids = list(self.agents.keys())
         for i, pred in enumerate(predictions):
-            agent, _ = self.agents[i]
-            # Assuming agent has a unique identifier, like its class name or an ID
-            # For simplicity, we use the index as a unique agent_id here.
-            # A more robust solution might involve agent-specific identifiers.
+            agent_id = agent_ids[i]
             processed.append(
                 Prediction(
-                    agent_id=f"agent_{i}_{agent.__class__.__name__}",
-                    prediction=str(pred),  # Ensure prediction is a string or float
-                    confidence=1.0,  # Default confidence
+                    agent_id=agent_id,
+                    prediction=str(pred),
+                    confidence=1.0  # This can be made dynamic using config
                 )
             )
         return processed
