@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import override
+from datetime import datetime
 
 
 # --- Schemas for Text Chunking and Embeddings ---
@@ -16,6 +17,9 @@ class ChunkMetadata:
         chunk_id: Unique identifier for the chunk within its source file.
         start_index: Starting character index of the chunk in the original text.
         end_index: Ending character index of the chunk in the original text.
+        last_updated: Datetime when this chunk was last refreshed from the source.
+        ttl: Time-to-live in seconds for this chunk's freshness (0 means no expiry).
+        source_hash: Hash of the source content for change detection.
 
     """
 
@@ -23,6 +27,9 @@ class ChunkMetadata:
     chunk_id: int
     start_index: int
     end_index: int
+    last_updated: datetime | None = None
+    ttl: int = 0  # in seconds, 0 means no expiry
+    source_hash: str = ""
 
     @override
     def __str__(self) -> str:
