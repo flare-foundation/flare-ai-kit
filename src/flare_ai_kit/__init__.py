@@ -1,3 +1,3 @@
-from .main import FlareAIKit
+"""Flare AI Kit - SDK for building verifiable AI Agents on Flare."""
 
-__all__ = ["FlareAIKit"]
+__version__ = "0.1.0"
