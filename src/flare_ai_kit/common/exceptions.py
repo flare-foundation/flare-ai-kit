@@ -90,3 +90,28 @@ class EmbeddingsError(FlareAIKitError):
 # --- VectorDB Errors ---
 class VectorDbError(FlareAIKitError):
     """Raised for errors encountered when interacting with VectorDBs."""
+
+
+# --- FAssets Errors ---
+class FAssetsError(FlareAIKitError):
+    """Base exception for errors related to FAssets protocol interactions."""
+
+
+class FAssetsContractError(FAssetsError):
+    """Raised for errors during FAssets contract interactions."""
+
+
+class FAssetsMintError(FAssetsError):
+    """Raised for errors during FAssets minting process."""
+
+
+class FAssetsRedeemError(FAssetsError):
+    """Raised for errors during FAssets redemption process."""
+
+
+class FAssetsCollateralError(FAssetsError):
+    """Raised for errors related to FAssets collateral management."""
+
+
+class FAssetsAgentError(FAssetsError):
+    """Raised for errors related to FAssets agent operations."""

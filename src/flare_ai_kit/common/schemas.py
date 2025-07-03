@@ -88,3 +88,95 @@ class Prediction:
     agent_id: str
     prediction: float | str
     confidence: float = 1.0
+
+
+# --- FAssets ---
+class FAssetType(str, Enum):
+    """Enum for supported FAsset types."""
+
+    FXRP = "FXRP"
+    FBTC = "FBTC" 
+    FDOGE = "FDOGE"
+
+
+class FAssetStatus(str, Enum):
+    """Enum for FAsset status states."""
+
+    NORMAL = "NORMAL"
+    CCB = "CCB"  # Collateral Call Band
+    LIQUIDATION = "LIQUIDATION"
+    FULL_LIQUIDATION = "FULL_LIQUIDATION"
+
+
+class CollateralType(str, Enum):
+    """Enum for collateral types in FAssets."""
+
+    VAULT_COLLATERAL = "VAULT_COLLATERAL"  # FLR/SGB
+    POOL_COLLATERAL = "POOL_COLLATERAL"   # Stablecoins
+    UNDERLYING = "UNDERLYING"             # BTC/XRP/DOGE
+
+
+@dataclass(frozen=True)
+class FAssetInfo:
+    """Information about a specific FAsset."""
+
+    symbol: str
+    name: str
+    asset_manager_address: str
+    f_asset_address: str
+    underlying_symbol: str
+    decimals: int
+    is_active: bool
+
+
+@dataclass(frozen=True)
+class AgentInfo:
+    """Information about an FAssets agent."""
+
+    agent_address: str
+    name: str
+    description: str
+    icon_url: str
+    info_url: str
+    vault_collateral_token: str
+    fee_share: int
+    mint_count: int
+    remaining_wnat: int
+    free_underlying_balance_usd: int
+    all_lots: int
+    available_lots: int
+
+
+@dataclass(frozen=True)
+class CollateralInfo:
+    """Information about collateral in FAssets."""
+
+    collateral_type: CollateralType
+    token_address: str
+    amount: int
+    usd_value: float
+    ratio: float
+
+
+@dataclass(frozen=True)
+class MintingRequest:
+    """Request details for FAssets minting."""
+
+    asset_type: FAssetType
+    lots: int
+    max_minting_fee_bips: int
+    max_executor_fee_nat: int
+    executor_address: str
+    recipient_address: str
+
+
+@dataclass(frozen=True)
+class RedemptionRequest:
+    """Request details for FAssets redemption."""
+
+    asset_type: FAssetType
+    lots: int
+    max_redemption_fee_bips: int
+    max_executor_fee_nat: int
+    executor_address: str
+    recipient_underlying_address: str

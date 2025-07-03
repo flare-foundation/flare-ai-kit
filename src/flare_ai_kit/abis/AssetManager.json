@@ -1,0 +1,224 @@
+[
+  {
+    "inputs": [],
+    "name": "getSettings",
+    "outputs": [
+      {
+        "components": [
+          {"internalType": "contract IIAssetManagerController", "name": "assetManagerController", "type": "address"},
+          {"internalType": "contract IERC20", "name": "fAsset", "type": "address"},
+          {"internalType": "contract IIFtso", "name": "ftso", "type": "address"},
+          {"internalType": "contract IIFtso", "name": "ftsoNat", "type": "address"},
+          {"internalType": "string", "name": "assetName", "type": "string"},
+          {"internalType": "string", "name": "assetSymbol", "type": "string"},
+          {"internalType": "uint256", "name": "assetDecimals", "type": "uint256"},
+          {"internalType": "uint256", "name": "amgToAgentFeeShare", "type": "uint256"},
+          {"internalType": "uint256", "name": "poolFeeShare", "type": "uint256"},
+          {"internalType": "uint256", "name": "mintingVaultCollateralRatio", "type": "uint256"},
+          {"internalType": "uint256", "name": "mintingPoolCollateralRatio", "type": "uint256"},
+          {"internalType": "uint256", "name": "buybackCollateralRatio", "type": "uint256"},
+          {"internalType": "uint256", "name": "redeemCollateralRatio", "type": "uint256"},
+          {"internalType": "uint256", "name": "ccbTimeSeconds", "type": "uint256"},
+          {"internalType": "uint256", "name": "attestationWindowSeconds", "type": "uint256"},
+          {"internalType": "uint256", "name": "averageBlockTimeMS", "type": "uint256"},
+          {"internalType": "uint256", "name": "confirmationByOthersAfterSeconds", "type": "uint256"},
+          {"internalType": "uint256", "name": "confirmationByOthersRewardUSD5", "type": "uint256"},
+          {"internalType": "uint256", "name": "maxRedeemedTickets", "type": "uint256"},
+          {"internalType": "uint256", "name": "withdrawalWaitMinSeconds", "type": "uint256"},
+          {"internalType": "uint256", "name": "ccbTimeSeconds", "type": "uint256"},
+          {"internalType": "uint256", "name": "liquidationStepSeconds", "type": "uint256"},
+          {"internalType": "uint256", "name": "maxTrustedPriceAgeSeconds", "type": "uint256"},
+          {"internalType": "uint256", "name": "lotSizeAMG", "type": "uint256"},
+          {"internalType": "uint256", "name": "minUnderlyingBackingBIPS", "type": "uint256"}
+        ],
+        "internalType": "struct AssetManagerSettings.Data",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "address", "name": "_agentVault", "type": "address"}
+    ],
+    "name": "getAgentInfo",
+    "outputs": [
+      {
+        "components": [
+          {"internalType": "address", "name": "ownerManagementAddress", "type": "address"},
+          {"internalType": "address", "name": "ownerWorkAddress", "type": "address"},
+          {"internalType": "string", "name": "name", "type": "string"},
+          {"internalType": "string", "name": "description", "type": "string"},
+          {"internalType": "string", "name": "iconUrl", "type": "string"},
+          {"internalType": "string", "name": "infoUrl", "type": "string"},
+          {"internalType": "address", "name": "vaultCollateralToken", "type": "address"},
+          {"internalType": "uint256", "name": "feeBIPS", "type": "uint256"},
+          {"internalType": "uint256", "name": "poolFeeShareBIPS", "type": "uint256"},
+          {"internalType": "uint256", "name": "mintingVaultCollateralRatioBIPS", "type": "uint256"},
+          {"internalType": "uint256", "name": "mintingPoolCollateralRatioBIPS", "type": "uint256"},
+          {"internalType": "uint256", "name": "poolExitCollateralRatioBIPS", "type": "uint256"},
+          {"internalType": "uint256", "name": "buyFAssetByAgentFactorBIPS", "type": "uint256"},
+          {"internalType": "uint256", "name": "poolTopupCollateralRatioBIPS", "type": "uint256"},
+          {"internalType": "uint256", "name": "poolTopupTokenPriceFactorBIPS", "type": "uint256"}
+        ],
+        "internalType": "struct Agent.Info",
+        "name": "info",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {"internalType": "enum Agent.Status", "name": "status", "type": "uint8"},
+          {"internalType": "uint256", "name": "totalVaultCollateralWei", "type": "uint256"},
+          {"internalType": "uint256", "name": "totalPoolCollateralNATWei", "type": "uint256"},
+          {"internalType": "uint256", "name": "freeUnderlyingBalanceUBA", "type": "uint256"},
+          {"internalType": "uint256", "name": "mintedUBA", "type": "uint256"},
+          {"internalType": "uint256", "name": "reservedUBA", "type": "uint256"},
+          {"internalType": "uint256", "name": "redeemingUBA", "type": "uint256"},
+          {"internalType": "uint256", "name": "poolRedeemingUBA", "type": "uint256"},
+          {"internalType": "uint256", "name": "dustUBA", "type": "uint256"},
+          {"internalType": "uint256", "name": "ccbStartTimestamp", "type": "uint256"},
+          {"internalType": "uint256", "name": "liquidationStartTimestamp", "type": "uint256"},
+          {"internalType": "uint256", "name": "maxLiquidationAmountUBA", "type": "uint256"},
+          {"internalType": "uint256", "name": "liquidationPaymentFactorVaultBIPS", "type": "uint256"},
+          {"internalType": "uint256", "name": "liquidationPaymentFactorPoolBIPS", "type": "uint256"},
+          {"internalType": "uint256", "name": "underlyingBalanceTimestampSeconds", "type": "uint256"},
+          {"internalType": "uint256", "name": "announcedVaultCollateralWithdrawalWei", "type": "uint256"},
+          {"internalType": "uint256", "name": "announcedPoolTokenWithdrawalWei", "type": "uint256"}
+        ],
+        "internalType": "struct Agent.Status",
+        "name": "status",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "address", "name": "_agentVault", "type": "address"},
+      {"internalType": "uint256", "name": "_lots", "type": "uint256"},
+      {"internalType": "uint256", "name": "_maxMintingFeeBIPS", "type": "uint256"},
+      {"internalType": "address", "name": "_executor", "type": "address"}
+    ],
+    "name": "reserveCollateral",
+    "outputs": [
+      {"internalType": "uint256", "name": "_collateralReservationId", "type": "uint256"}
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "_collateralReservationId", "type": "uint256"},
+      {"internalType": "bytes32", "name": "_paymentReference", "type": "bytes32"},
+      {"internalType": "address", "name": "_recipient", "type": "address"}
+    ],
+    "name": "executeMinting",
+    "outputs": [
+      {"internalType": "uint256", "name": "_mintedAmountUBA", "type": "uint256"}
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "_lots", "type": "uint256"},
+      {"internalType": "uint256", "name": "_maxRedemptionFeeBIPS", "type": "uint256"},
+      {"internalType": "string", "name": "_underlyingAddress", "type": "string"},
+      {"internalType": "address", "name": "_executor", "type": "address"}
+    ],
+    "name": "redeemFromAgent",
+    "outputs": [
+      {"internalType": "uint256", "name": "_requestId", "type": "uint256"}
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllAgents",
+    "outputs": [
+      {"internalType": "address[]", "name": "", "type": "address[]"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "_agentId", "type": "uint256"}
+    ],
+    "name": "getAgentVaultAddress",
+    "outputs": [
+      {"internalType": "address", "name": "", "type": "address"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "address", "name": "_agentVault", "type": "address"}
+    ],
+    "name": "getAvailableLots",
+    "outputs": [
+      {"internalType": "uint256", "name": "", "type": "uint256"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "_requestId", "type": "uint256"}
+    ],
+    "name": "getRedemptionRequest",
+    "outputs": [
+      {
+        "components": [
+          {"internalType": "address", "name": "agentVault", "type": "address"},
+          {"internalType": "address", "name": "redeemer", "type": "address"},
+          {"internalType": "uint256", "name": "valueUBA", "type": "uint256"},
+          {"internalType": "uint256", "name": "feeUBA", "type": "uint256"},
+          {"internalType": "uint256", "name": "firstUnderlyingBlock", "type": "uint256"},
+          {"internalType": "uint256", "name": "lastUnderlyingBlock", "type": "uint256"},
+          {"internalType": "uint256", "name": "lastUnderlyingTimestamp", "type": "uint256"},
+          {"internalType": "string", "name": "paymentAddress", "type": "string"},
+          {"internalType": "address", "name": "executor", "type": "address"},
+          {"internalType": "uint256", "name": "executorFeeNatWei", "type": "uint256"}
+        ],
+        "internalType": "struct RedemptionRequest.Data",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "_collateralReservationId", "type": "uint256"}
+    ],
+    "name": "getCollateralReservationData",
+    "outputs": [
+      {
+        "components": [
+          {"internalType": "address", "name": "agentVault", "type": "address"},
+          {"internalType": "address", "name": "minter", "type": "address"},
+          {"internalType": "uint256", "name": "valueUBA", "type": "uint256"},
+          {"internalType": "uint256", "name": "feeUBA", "type": "uint256"},
+          {"internalType": "uint256", "name": "firstUnderlyingBlock", "type": "uint256"},
+          {"internalType": "uint256", "name": "lastUnderlyingBlock", "type": "uint256"},
+          {"internalType": "uint256", "name": "lastUnderlyingTimestamp", "type": "uint256"},
+          {"internalType": "string", "name": "paymentAddress", "type": "string"},
+          {"internalType": "address", "name": "executor", "type": "address"},
+          {"internalType": "uint256", "name": "executorFeeNatWei", "type": "uint256"}
+        ],
+        "internalType": "struct CollateralReservation.Data",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+] 

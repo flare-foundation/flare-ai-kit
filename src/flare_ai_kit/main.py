@@ -1,7 +1,7 @@
 """Entry point for Flare AI Kit SDK."""
 
 from .config import AppSettings, settings
-from .ecosystem import BlockExplorer, Flare, FtsoV2
+from .ecosystem import BlockExplorer, FAssets, Flare, FtsoV2
 from .ingestion import GithubIngestor
 from .rag.vector import VectorRAGPipeline, create_vector_rag_pipeline
 from .social import TelegramClient, XClient
@@ -29,6 +29,7 @@ class FlareAIKit:
         self._flare = None
         self._block_explorer = None
         self._ftso = None
+        self._fassets = None
         self._vector_rag = None
         self._telegram = None
         self._github_ingestor = None
@@ -49,6 +50,13 @@ class FlareAIKit:
         if self._ftso is None:
             self._ftso = await FtsoV2.create(self.settings.ecosystem)
         return self._ftso
+
+    @property
+    async def fassets(self) -> FAssets:
+        """Access FAssets protocol methods."""
+        if self._fassets is None:
+            self._fassets = await FAssets.create(self.settings.ecosystem)
+        return self._fassets
 
     @property
     def block_explorer(self) -> BlockExplorer:
