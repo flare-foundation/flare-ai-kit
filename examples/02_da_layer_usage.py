@@ -44,8 +44,9 @@ async def demonstrate_da_layer_basic_usage() -> None:
     settings = EcosystemSettingsModel(
         web3_provider_url="https://flare-api.flare.network/ext/C/rpc",
         account_address="0x0000000000000000000000000000000000000000",  # Placeholder
-        account_private_key="0x" + "0" * 64,  # Placeholder - not needed for read operations
-        is_testnet=False
+        account_private_key="0x"
+        + "0" * 64,  # Placeholder - not needed for read operations
+        is_testnet=False,
     )
 
     # Initialize DA Layer connector
@@ -128,8 +129,10 @@ async def demonstrate_voting_rounds(da_layer: DataAvailabilityLayer):
             timestamp = datetime.fromtimestamp(round_data.timestamp, tz=timezone.utc)
             finalized = "✅ Yes" if round_data.finalized else "⏳ No"
 
-            print(f"{round_data.voting_round:>8d} {finalized:>10} "
-                  f"{round_data.total_attestations:>12d} {timestamp.strftime('%Y-%m-%d %H:%M'):>20}")
+            print(
+                f"{round_data.voting_round:>8d} {finalized:>10} "
+                f"{round_data.total_attestations:>12d} {timestamp.strftime('%Y-%m-%d %H:%M'):>20}"
+            )
 
         # Try to get detailed data for the latest finalized round
         if rounds and rounds[0].finalized:
@@ -148,7 +151,9 @@ async def demonstrate_round_details(da_layer: DataAvailabilityLayer, voting_roun
 
         print(f"  Voting Round: {round_data.voting_round}")
         print(f"  Merkle Root: {round_data.merkle_root}")
-        print(f"  Timestamp: {datetime.fromtimestamp(round_data.timestamp, tz=timezone.utc)}")
+        print(
+            f"  Timestamp: {datetime.fromtimestamp(round_data.timestamp, tz=timezone.utc)}"
+        )
         print(f"  Total Attestations: {round_data.total_attestations}")
         print(f"  Finalized: {'Yes' if round_data.finalized else 'No'}")
 
@@ -158,8 +163,10 @@ async def demonstrate_round_details(da_layer: DataAvailabilityLayer, voting_roun
             for i in range(min(3, round_data.total_attestations)):
                 try:
                     attestation = await da_layer.get_attestation_data(voting_round, i)
-                    print(f"    [{i}] Type: {attestation.response.attestation_type}, "
-                          f"Source: {attestation.response.source_id}")
+                    print(
+                        f"    [{i}] Type: {attestation.response.attestation_type}, "
+                        f"Source: {attestation.response.source_id}"
+                    )
                 except AttestationNotFoundError:
                     print(f"    [{i}] Attestation not found")
                 except Exception as e:
@@ -184,7 +191,7 @@ async def demonstrate_attestation_search(da_layer: DataAvailabilityLayer):
 
             attestations = await da_layer.get_attestations_by_type(
                 attestation_type=attestation_type,
-                limit=5  # Limit to 5 results for the example
+                limit=5,  # Limit to 5 results for the example
             )
 
             print(f"Found {len(attestations)} {attestation_type} attestations:")
@@ -212,9 +219,13 @@ async def demonstrate_attestation_search(da_layer: DataAvailabilityLayer):
             print(f"❌ Failed to search {attestation_type}: {e}")
 
 
-async def demonstrate_merkle_verification(da_layer: DataAvailabilityLayer, attestation: AttestationData):
+async def demonstrate_merkle_verification(
+    da_layer: DataAvailabilityLayer, attestation: AttestationData
+):
     """Demonstrate Merkle proof verification."""
-    print(f"\n🔐 Verifying Merkle proof for attestation in round {attestation.response.voting_round}...")
+    print(
+        f"\n🔐 Verifying Merkle proof for attestation in round {attestation.response.voting_round}..."
+    )
 
     try:
         is_valid = await da_layer.verify_merkle_proof(attestation)
@@ -244,14 +255,19 @@ async def demonstrate_historical_data(da_layer: DataAvailabilityLayer):
         end_time = datetime.now()
         start_time = end_time - timedelta(hours=24)
 
-        print(f"🕐 Retrieving attestations from {start_time.strftime('%Y-%m-%d %H:%M')} "
-              f"to {end_time.strftime('%Y-%m-%d %H:%M')}")
+        print(
+            f"🕐 Retrieving attestations from {start_time.strftime('%Y-%m-%d %H:%M')} "
+            f"to {end_time.strftime('%Y-%m-%d %H:%M')}"
+        )
 
         historical_data = await da_layer.get_historical_data(
             start_timestamp=int(start_time.timestamp()),
             end_timestamp=int(end_time.timestamp()),
-            attestation_types=["EVMTransaction", "Payment"],  # Filter for specific types
-            limit=10  # Limit results for the example
+            attestation_types=[
+                "EVMTransaction",
+                "Payment",
+            ],  # Filter for specific types
+            limit=10,  # Limit results for the example
         )
 
         print(f"Found {len(historical_data)} historical attestations:")
@@ -271,8 +287,10 @@ async def demonstrate_historical_data(da_layer: DataAvailabilityLayer):
             for i, attestation in enumerate(historical_data[:3], 1):
                 resp = attestation.response
                 timestamp = datetime.fromtimestamp(resp.lowest_used_timestamp)
-                print(f"  {i}. [{resp.attestation_type}] Round {resp.voting_round}, "
-                      f"Time: {timestamp.strftime('%H:%M:%S')}")
+                print(
+                    f"  {i}. [{resp.attestation_type}] Round {resp.voting_round}, "
+                    f"Time: {timestamp.strftime('%H:%M:%S')}"
+                )
 
     except Exception as e:
         print(f"❌ Failed to retrieve historical data: {e}")
@@ -288,7 +306,7 @@ async def demonstrate_advanced_usage():
         web3_provider_url="https://flare-api.flare.network/ext/C/rpc",
         account_address="0x0000000000000000000000000000000000000000",
         account_private_key="0x" + "0" * 64,
-        is_testnet=False
+        is_testnet=False,
     )
 
     # Demonstrate context manager usage
@@ -303,7 +321,7 @@ async def demonstrate_advanced_usage():
             eth_attestations = await da_layer.get_attestations_by_type(
                 attestation_type="EVMTransaction",
                 source_id="ETH",  # Ethereum mainnet
-                limit=3
+                limit=3,
             )
 
             print(f"Found {len(eth_attestations)} Ethereum attestations")
