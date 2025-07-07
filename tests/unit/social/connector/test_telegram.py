@@ -1,5 +1,4 @@
 from unittest.mock import AsyncMock
-
 import pytest
 from dotenv import load_dotenv
 
@@ -48,8 +47,8 @@ async def test_fetch_mentions_filters_and_limits(monkeypatch):
 
     monkeypatch.setattr(connector.app, "initialize", AsyncMock())
     monkeypatch.setattr(connector.app, "start", AsyncMock())
-    monkeypatch.setattr(connector.app.updater, "start_polling", AsyncMock())
-    monkeypatch.setattr(connector.app.updater, "stop", AsyncMock())
+    monkeypatch.setattr(connector.app, "stop", AsyncMock())
+    monkeypatch.setattr(connector.app, "shutdown", AsyncMock())
 
     results = await connector.fetch_mentions("flare", limit=2)
     assert len(results) == 2

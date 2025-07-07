@@ -2,6 +2,7 @@
 
 import logging
 import os
+import asyncio
 
 from dotenv import load_dotenv
 from telegram import Update
@@ -36,16 +37,17 @@ class TelegramConnector(SocialConnector):
 
     async def fetch_mentions(self, query: str = "", limit: int = 10) -> list[dict]:
         """Starts polling and filters collected messages by query."""
-        async with self.app:
-            await self.app.initialize()
-            await self.app.start()
-            await self.app.updater.start_polling()
-            await self.app.updater.stop()
 
-        results = [
+        await self.app.initialize()
+        await self.app.start()
+        await asyncio.sleep(1)  # collect messages
+        await self.app.stop()
+        await self.app.shutdown()
+
+        filtered = [
             msg for msg in self._messages if query.lower() in msg["content"].lower()
         ]
-        return results[-limit:]
+        return filtered[-limit:]
 
     async def _on_message(self, update: Update) -> None:
         message = update.message
