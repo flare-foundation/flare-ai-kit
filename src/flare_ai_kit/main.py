@@ -3,6 +3,8 @@
 from .config import AppSettings, settings
 from .ecosystem import BlockExplorer, Flare, FtsoV2
 from .ingestion import GithubIngestor
+from .ingestion.pdf_processor import PDFProcessor
+from .onchain.contract_poster import ContractPoster
 from .rag.vector import VectorRAGPipeline, create_vector_rag_pipeline
 from .social import TelegramClient, XClient
 
@@ -33,6 +35,21 @@ class FlareAIKit:
         self._telegram = None
         self._github_ingestor = None
         self._x_client = None
+        self._pdf_processor = None
+
+    # ... (existing properties)
+
+    # New property for PDF Processor
+    @property
+    def pdf_processor(self) -> PDFProcessor:
+        """Access the PDF ingestion and on-chain posting service."""
+        if self._pdf_processor is None:
+            if not self.settings.ingestion.pdf_ingestion:
+                raise ValueError("PDF ingestion settings are not configured.")
+            flare_instance = self.flare
+            contract_poster = ContractPoster(self.settings.ingestion.pdf_ingestion.contract_settings, flare_instance)
+            self._pdf_processor = PDFProcessor(self.settings.ingestion.pdf_ingestion, contract_poster)
+        return self._pdf_processor
 
     # Ecosystem Interaction Methods
     @property

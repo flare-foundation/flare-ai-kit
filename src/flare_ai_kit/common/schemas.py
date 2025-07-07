@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import override
+from typing import override, Any
+from pydantic import BaseModel, Field, field_validator
 
 
 # --- Schemas for Text Chunking and Embeddings ---
@@ -88,3 +89,30 @@ class Prediction:
     agent_id: str
     prediction: float | str
     confidence: float = 1.0
+
+
+# --- PDF Ingestion ---
+
+class PDFData(BaseModel):
+    """
+    Pydantic model for validating and coercing extracted PDF data.
+    """
+    invoice_id: str = Field(..., description="The unique identifier for the invoice.")
+    amount_due: int = Field(..., description="The total amount due.")
+    issue_date: str = Field(..., description="The date the invoice was issued.")
+
+    @field_validator("amount_due", mode='before')
+    @classmethod
+    def clean_amount(cls, v: Any) -> int:
+        """
+        Validator to strip non-numeric characters from the amount_due field
+        and convert it to an integer.
+        """
+        if isinstance(v, str):
+            # Remove common currency symbols, commas, and whitespace
+            cleaned_string = "".join(filter(str.isdigit, v.split('.')[0]))
+            if cleaned_string:
+                return int(cleaned_string)
+        if isinstance(v, (int, float)):
+            return int(v)
+        raise ValueError("Could not convert amount_due to an integer")

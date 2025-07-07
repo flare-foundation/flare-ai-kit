@@ -1,6 +1,7 @@
 """Settings for Vector RAG."""
 
-from pydantic import BaseModel, Field, PositiveInt, model_validator
+from pydantic import BaseModel, Field, PositiveInt, model_validator, FilePath
+from typing import List
 
 DEFAULT_ALLOWED_EXTENSIONS = {
     ".py",
@@ -59,6 +60,36 @@ DEFAULT_IGNORED_FILES = {
 }
 
 
+class PDFFieldExtractionSettings(BaseModel):
+    """Specifies fields to extract from a PDF and their locations."""
+    field_name: str = Field(description="The name of the field to extract.")
+    x0: int = Field(description="The starting x-coordinate of the bounding box.")
+    y0: int = Field(description="The starting y-coordinate of the bounding box.")
+    x1: int = Field(description="The ending x-coordinate of the bounding box.")
+    y1: int = Field(description="The ending y-coordinate of the bounding box.")
+    data_type: str = Field("string", description="The data type of the field (e.g., 'string', 'integer', 'date').")
+
+
+class PDFTemplateSettings(BaseModel):
+    """Defines a template for a specific type of PDF document."""
+    template_name: str = Field(description="A unique name for this PDF template.")
+    fields: List[PDFFieldExtractionSettings] = Field(description="A list of fields to extract from this template.")
+
+
+class OnchainContractSettings(BaseModel):
+    """Settings for the smart contract to post data to."""
+    contract_address: str = Field(description="The address of the OnchainDataRegistry smart contract.")
+    abi_path: FilePath = Field(description="The path to the ABI file for the smart contract.")
+    function_name: str = Field("registerDocument", description="The name of the function to call on the smart contract.")
+
+
+class PDFIngestionSettings(BaseModel):
+    """Settings for the PDF ingestion and on-chain posting service."""
+    templates: List[PDFTemplateSettings] = Field(description="A list of PDF templates to use for extraction.")
+    contract_settings: OnchainContractSettings = Field(description="Settings for the on-chain contract.")
+    use_ocr: bool = Field(False, description="Whether to use OCR for text extraction.")
+
+
 class IngestionSettingsModel(BaseModel):
     """Configuration for Vector Database connections used in RAG."""
 
@@ -82,6 +113,8 @@ class IngestionSettingsModel(BaseModel):
     github_ignored_files: set[str] = Field(
         DEFAULT_IGNORED_FILES, description="Files ignored by the indexer."
     )
+    pdf_ingestion: PDFIngestionSettings | None = Field(None, description="Settings for PDF ingestion.")
+
 
     @model_validator(mode="after")
     def check_chunk_overlap_less_than_size(self) -> "IngestionSettingsModel":
