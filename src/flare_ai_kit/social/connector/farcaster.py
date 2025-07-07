@@ -1,4 +1,4 @@
-""""# Farcaster Connector for Flare AI Kit."""
+"""Farcaster Connector for Flare AI Kit."""
 
 import os
 

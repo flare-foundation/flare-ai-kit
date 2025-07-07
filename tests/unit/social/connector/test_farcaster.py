@@ -56,4 +56,3 @@ async def test_fetch_mentions_handles_error(mock_get):
     connector = FarcasterConnector()
     results = await connector.fetch_mentions("flare")
     assert results == []
-

@@ -1,4 +1,4 @@
-"""# Telegram Connector for Flare AI Kit."""
+"""Telegram Connector for Flare AI Kit."""
 
 import logging
 import os

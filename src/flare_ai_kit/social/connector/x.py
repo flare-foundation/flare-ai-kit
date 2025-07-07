@@ -1,4 +1,4 @@
-""""X Connector for Flare AI Kit."""
+"""Connector for Flare AI Kit."""
 
 import os
 
@@ -18,7 +18,6 @@ class XConnector(SocialConnector):
     def __init__(self) -> None:
         self.bearer_token = os.getenv("SOCIAL__X_API_KEY")
         self.client = AsyncClient(bearer_token=self.bearer_token)
-
 
         self.auth = OAuth1UserHandler(
             os.getenv("SOCIAL__X_API_KEY"),

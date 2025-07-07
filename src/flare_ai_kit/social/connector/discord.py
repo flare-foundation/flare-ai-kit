@@ -1,4 +1,4 @@
-"""# Discord Connector for Flare AI Kit."""
+"""Discord Connector for Flare AI Kit."""
 
 import asyncio
 import os

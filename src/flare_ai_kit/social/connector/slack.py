@@ -1,4 +1,4 @@
-""""# Slack Connector for Flare AI Kit."""
+"""Slack Connector for Flare AI Kit."""
 
 import logging
 import os
