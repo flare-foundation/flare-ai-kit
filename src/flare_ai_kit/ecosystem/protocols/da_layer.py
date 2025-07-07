@@ -84,7 +84,7 @@ class VotingRoundData:
 class DataAvailabilityLayer(Flare):
     """
     Connector for interacting with the Flare Data Availability (DA) Layer.
-    
+
     This class provides methods to:
     - Retrieve attestation data committed via Flare State Protocol (FSP)
     - Fetch and verify Merkle proofs for attestation data
@@ -118,15 +118,16 @@ class DataAvailabilityLayer(Flare):
             timeout=instance.timeout,
             headers={
                 "Content-Type": "application/json",
-                "User-Agent": "flare-ai-kit/1.0.0"
-            }
+                "User-Agent": "flare-ai-kit/1.0.0",
+            },
         )
 
         # Verify connection to DA Layer
         await instance._verify_connection()
 
-        logger.debug("DataAvailabilityLayer initialized",
-                    base_url=instance.da_layer_base_url)
+        logger.debug(
+            "DataAvailabilityLayer initialized", base_url=instance.da_layer_base_url
+        )
         return instance
 
     async def __aenter__(self) -> Self:
@@ -136,8 +137,8 @@ class DataAvailabilityLayer(Flare):
                 timeout=self.timeout,
                 headers={
                     "Content-Type": "application/json",
-                    "User-Agent": "flare-ai-kit/1.0.0"
-                }
+                    "User-Agent": "flare-ai-kit/1.0.0",
+                },
             )
         return self
 
@@ -171,20 +172,20 @@ class DataAvailabilityLayer(Flare):
         method: str,
         endpoint: str,
         params: dict[str, Any] | None = None,
-        data: dict[str, Any] | None = None
+        data: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Make HTTP request to DA Layer API.
-        
+
         Args:
             method: HTTP method (GET, POST, etc.)
             endpoint: API endpoint
             params: Query parameters
             data: Request body data
-            
+
         Returns:
             Response data as dictionary
-            
+
         Raises:
             DALayerError: If request fails
 
@@ -196,20 +197,20 @@ class DataAvailabilityLayer(Flare):
 
         try:
             async with self.session.request(
-                method=method,
-                url=url,
-                params=params,
-                json=data
+                method=method, url=url, params=params, json=data
             ) as response:
-
                 if response.status == 404:
                     raise AttestationNotFoundError(f"Resource not found: {endpoint}")
 
                 response.raise_for_status()
                 result = await response.json()
 
-                logger.debug("DA Layer API request successful",
-                           method=method, endpoint=endpoint, status=response.status)
+                logger.debug(
+                    "DA Layer API request successful",
+                    method=method,
+                    endpoint=endpoint,
+                    status=response.status,
+                )
 
                 return result
 
@@ -223,20 +224,18 @@ class DataAvailabilityLayer(Flare):
             raise DALayerError(msg) from e
 
     async def get_attestation_data(
-        self,
-        voting_round: int,
-        attestation_index: int
+        self, voting_round: int, attestation_index: int
     ) -> AttestationData:
         """
         Retrieve attestation data for a specific voting round and index.
-        
+
         Args:
             voting_round: The voting round ID
             attestation_index: Index of the attestation in the round
-            
+
         Returns:
             Complete attestation data including response and Merkle proof
-            
+
         Raises:
             AttestationNotFoundError: If attestation is not found
             DALayerError: If request fails
@@ -253,19 +252,21 @@ class DataAvailabilityLayer(Flare):
                 voting_round=data["response"]["votingRound"],
                 lowest_used_timestamp=data["response"]["lowestUsedTimestamp"],
                 request_body=data["response"]["requestBody"],
-                response_body=data["response"]["responseBody"]
+                response_body=data["response"]["responseBody"],
             )
 
             proof = MerkleProof(
                 merkle_proof=data["proof"]["merkleProof"],
                 leaf_index=data["proof"]["leafIndex"],
-                total_leaves=data["proof"]["totalLeaves"]
+                total_leaves=data["proof"]["totalLeaves"],
             )
 
-            logger.info("Retrieved attestation data",
-                       voting_round=voting_round,
-                       attestation_index=attestation_index,
-                       attestation_type=response.attestation_type)
+            logger.info(
+                "Retrieved attestation data",
+                voting_round=voting_round,
+                attestation_index=attestation_index,
+                attestation_type=response.attestation_type,
+            )
 
             return AttestationData(response=response, proof=proof)
 
@@ -284,30 +285,27 @@ class DataAvailabilityLayer(Flare):
         source_id: str | None = None,
         start_round: int | None = None,
         end_round: int | None = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> list[AttestationData]:
         """
         Retrieve attestations by type with optional filtering.
-        
+
         Args:
             attestation_type: Type of attestation (e.g., "Payment", "EVMTransaction")
             source_id: Optional source identifier filter
             start_round: Optional starting voting round
             end_round: Optional ending voting round
             limit: Maximum number of results to return
-            
+
         Returns:
             List of matching attestation data
-            
+
         Raises:
             DALayerError: If request fails
 
         """
         endpoint = "attestations/search"
-        params = {
-            "attestationType": attestation_type,
-            "limit": limit
-        }
+        params = {"attestationType": attestation_type, "limit": limit}
 
         if source_id:
             params["sourceId"] = source_id
@@ -327,21 +325,23 @@ class DataAvailabilityLayer(Flare):
                     voting_round=item["response"]["votingRound"],
                     lowest_used_timestamp=item["response"]["lowestUsedTimestamp"],
                     request_body=item["response"]["requestBody"],
-                    response_body=item["response"]["responseBody"]
+                    response_body=item["response"]["responseBody"],
                 )
 
                 proof = MerkleProof(
                     merkle_proof=item["proof"]["merkleProof"],
                     leaf_index=item["proof"]["leafIndex"],
-                    total_leaves=item["proof"]["totalLeaves"]
+                    total_leaves=item["proof"]["totalLeaves"],
                 )
 
                 attestations.append(AttestationData(response=response, proof=proof))
 
-            logger.info("Retrieved attestations by type",
-                       attestation_type=attestation_type,
-                       source_id=source_id,
-                       count=len(attestations))
+            logger.info(
+                "Retrieved attestations by type",
+                attestation_type=attestation_type,
+                source_id=source_id,
+                count=len(attestations),
+            )
 
             return attestations
 
@@ -350,21 +350,19 @@ class DataAvailabilityLayer(Flare):
             raise DALayerError(msg) from e
 
     async def verify_merkle_proof(
-        self,
-        attestation_data: AttestationData,
-        expected_merkle_root: str | None = None
+        self, attestation_data: AttestationData, expected_merkle_root: str | None = None
     ) -> bool:
         """
         Verify a Merkle proof for attestation data.
-        
+
         Args:
             attestation_data: Attestation data with proof to verify
             expected_merkle_root: Optional expected root (fetched from chain if not
                 provided)
-            
+
         Returns:
             True if proof is valid, False otherwise
-            
+
         Raises:
             MerkleProofError: If verification fails due to invalid data
             DALayerError: If request fails
@@ -393,16 +391,18 @@ class DataAvailabilityLayer(Flare):
                         attestation_data.response.lowest_used_timestamp
                     ),
                     "requestBody": attestation_data.response.request_body,
-                    "responseBody": attestation_data.response.response_body
-                }
+                    "responseBody": attestation_data.response.response_body,
+                },
             }
 
             result = await self._make_request("POST", endpoint, data=verification_data)
             is_valid = result.get("valid", False)
 
-            logger.info("Merkle proof verification completed",
-                       voting_round=attestation_data.response.voting_round,
-                       valid=is_valid)
+            logger.info(
+                "Merkle proof verification completed",
+                voting_round=attestation_data.response.voting_round,
+                valid=is_valid,
+            )
 
             return is_valid
 
@@ -414,13 +414,13 @@ class DataAvailabilityLayer(Flare):
     async def get_voting_round_data(self, voting_round: int) -> VotingRoundData:
         """
         Retrieve metadata for a specific voting round.
-        
+
         Args:
             voting_round: The voting round ID
-            
+
         Returns:
             Voting round metadata
-            
+
         Raises:
             DALayerError: If request fails
 
@@ -435,13 +435,15 @@ class DataAvailabilityLayer(Flare):
                 merkle_root=data["merkleRoot"],
                 timestamp=data["timestamp"],
                 total_attestations=data["totalAttestations"],
-                finalized=data["finalized"]
+                finalized=data["finalized"],
             )
 
-            logger.info("Retrieved voting round data",
-                       voting_round=voting_round,
-                       finalized=round_data.finalized,
-                       total_attestations=round_data.total_attestations)
+            logger.info(
+                "Retrieved voting round data",
+                voting_round=voting_round,
+                finalized=round_data.finalized,
+                total_attestations=round_data.total_attestations,
+            )
 
             return round_data
 
@@ -455,21 +457,21 @@ class DataAvailabilityLayer(Flare):
         end_timestamp: int,
         attestation_types: list[str] | None = None,
         source_ids: list[str] | None = None,
-        limit: int = 1000
+        limit: int = 1000,
     ) -> list[AttestationData]:
         """
         Retrieve historical attestation data within a time range.
-        
+
         Args:
             start_timestamp: Start timestamp (Unix timestamp)
             end_timestamp: End timestamp (Unix timestamp)
             attestation_types: Optional list of attestation types to filter
             source_ids: Optional list of source IDs to filter
             limit: Maximum number of results to return
-            
+
         Returns:
             List of historical attestation data
-            
+
         Raises:
             DALayerError: If request fails
 
@@ -478,7 +480,7 @@ class DataAvailabilityLayer(Flare):
         params = {
             "startTimestamp": start_timestamp,
             "endTimestamp": end_timestamp,
-            "limit": limit
+            "limit": limit,
         }
 
         if attestation_types:
@@ -497,23 +499,23 @@ class DataAvailabilityLayer(Flare):
                     voting_round=item["response"]["votingRound"],
                     lowest_used_timestamp=item["response"]["lowestUsedTimestamp"],
                     request_body=item["response"]["requestBody"],
-                    response_body=item["response"]["responseBody"]
+                    response_body=item["response"]["responseBody"],
                 )
 
                 proof = MerkleProof(
                     merkle_proof=item["proof"]["merkleProof"],
                     leaf_index=item["proof"]["leafIndex"],
-                    total_leaves=item["proof"]["totalLeaves"]
+                    total_leaves=item["proof"]["totalLeaves"],
                 )
 
                 attestations.append(AttestationData(response=response, proof=proof))
 
-            logger.info("Retrieved historical attestation data",
-                       start_time=datetime.fromtimestamp(
-                           start_timestamp, tz=timezone.utc
-                       ),
-                       end_time=datetime.fromtimestamp(end_timestamp, tz=timezone.utc),
-                       count=len(attestations))
+            logger.info(
+                "Retrieved historical attestation data",
+                start_time=datetime.fromtimestamp(start_timestamp, tz=timezone.utc),
+                end_time=datetime.fromtimestamp(end_timestamp, tz=timezone.utc),
+                count=len(attestations),
+            )
 
             return attestations
 
@@ -524,10 +526,10 @@ class DataAvailabilityLayer(Flare):
     async def get_supported_attestation_types(self) -> list[dict[str, Any]]:
         """
         Retrieve list of supported attestation types and their configurations.
-        
+
         Returns:
             List of supported attestation types with metadata
-            
+
         Raises:
             DALayerError: If request fails
 
@@ -538,8 +540,9 @@ class DataAvailabilityLayer(Flare):
             data = await self._make_request("GET", endpoint)
             attestation_types = data.get("attestationTypes", [])
 
-            logger.info("Retrieved supported attestation types",
-                       count=len(attestation_types))
+            logger.info(
+                "Retrieved supported attestation types", count=len(attestation_types)
+            )
 
             return attestation_types
 
