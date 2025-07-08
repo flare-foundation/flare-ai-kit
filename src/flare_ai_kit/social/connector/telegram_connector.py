@@ -1,8 +1,8 @@
 """Telegram Connector for Flare AI Kit."""
 
+import asyncio
 import logging
 import os
-import asyncio
 
 from dotenv import load_dotenv
 from telegram import Update
@@ -37,7 +37,6 @@ class TelegramConnector(SocialConnector):
 
     async def fetch_mentions(self, query: str = "", limit: int = 10) -> list[dict]:
         """Starts polling and filters collected messages by query."""
-
         await self.app.initialize()
         await self.app.start()
         await asyncio.sleep(1)  # collect messages

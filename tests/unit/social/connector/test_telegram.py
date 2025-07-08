@@ -1,4 +1,5 @@
 from unittest.mock import AsyncMock
+
 import pytest
 from dotenv import load_dotenv
 
@@ -10,8 +11,8 @@ load_dotenv()
 
 @pytest.fixture(autouse=True)
 def mock_env(monkeypatch):
-    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "fake-token")
-    monkeypatch.setenv("TELEGRAM_CHAT_ID", "123456")
+    monkeypatch.setenv("SOCIAL__TELEGRAM_BOT_TOKEN", "fake-token")
+    monkeypatch.setenv("SOCIAL__TELEGRAM_CHAT_ID", "123456")
 
 
 def test_inherits_base_class():
