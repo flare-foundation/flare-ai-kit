@@ -95,7 +95,7 @@ class FAssetType(str, Enum):
     """Enum for supported FAsset types."""
 
     FXRP = "FXRP"
-    FBTC = "FBTC" 
+    FBTC = "FBTC"
     FDOGE = "FDOGE"
 
 
@@ -112,8 +112,8 @@ class CollateralType(str, Enum):
     """Enum for collateral types in FAssets."""
 
     VAULT_COLLATERAL = "VAULT_COLLATERAL"  # FLR/SGB
-    POOL_COLLATERAL = "POOL_COLLATERAL"   # Stablecoins
-    UNDERLYING = "UNDERLYING"             # BTC/XRP/DOGE
+    POOL_COLLATERAL = "POOL_COLLATERAL"  # Stablecoins
+    UNDERLYING = "UNDERLYING"  # BTC/XRP/DOGE
 
 
 @dataclass(frozen=True)

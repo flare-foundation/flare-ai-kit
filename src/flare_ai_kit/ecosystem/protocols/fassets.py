@@ -1,6 +1,6 @@
 """Interactions with Flare FAssets protocol."""
 
-from typing import Self, TypeVar, Any
+from typing import Any, Self, TypeVar
 
 import structlog
 from eth_typing import ChecksumAddress
@@ -8,9 +8,9 @@ from eth_typing import ChecksumAddress
 from flare_ai_kit.common import (
     AgentInfo,
     FAssetInfo,
-    FAssetType,
     FAssetsContractError,
     FAssetsError,
+    FAssetType,
     load_abi,
 )
 from flare_ai_kit.ecosystem.flare import Flare
@@ -44,65 +44,71 @@ class FAssets(Flare):
 
         Returns:
             A fully initialized FAssets instance.
+
         """
         instance = cls(settings)
         logger.debug("Initializing FAssets...")
-        
+
         # Initialize supported FAssets based on network
         await instance._initialize_supported_fassets()
-        
+
         # Initialize asset manager contracts
         for fasset_type, fasset_info in instance.supported_fassets.items():
             instance.asset_managers[fasset_type] = instance.w3.eth.contract(
-                address=instance.w3.to_checksum_address(fasset_info.asset_manager_address),
+                address=instance.w3.to_checksum_address(
+                    fasset_info.asset_manager_address
+                ),
                 abi=load_abi("AssetManager"),
             )
-            
+
             # Initialize FAsset ERC20 contracts for swap operations
             instance.fasset_contracts[fasset_type] = instance.w3.eth.contract(
                 address=instance.w3.to_checksum_address(fasset_info.f_asset_address),
                 abi=load_abi("ERC20"),  # Standard ERC20 ABI
             )
-        
+
         # Initialize SparkDEX router for swap operations
         await instance._initialize_sparkdex_router()
-            
-        logger.debug("FAssets initialized", supported_types=list(instance.supported_fassets.keys()))
+
+        logger.debug(
+            "FAssets initialized",
+            supported_types=list(instance.supported_fassets.keys()),
+        )
         return instance
 
     async def _initialize_sparkdex_router(self) -> None:
         """Initialize SparkDEX router for swap operations."""
         chain_id = await self.w3.eth.chain_id
-        
+
         # Get the appropriate contract addresses based on network
         if chain_id == 14:  # Flare Mainnet
             router_address = self.contracts.flare.sparkdex_swap_router
         elif chain_id == 114:  # Coston2 testnet
             router_address = self.contracts.coston2.sparkdex_swap_router
         else:
-            logger.warning("SparkDEX router not configured for this network", chain_id=chain_id)
+            logger.warning(
+                "SparkDEX router not configured for this network", chain_id=chain_id
+            )
             return
-            
+
         if router_address:
-            # TODO: We need the SparkDEX router ABI - for now using placeholder
             self.sparkdex_router = self.w3.eth.contract(
                 address=router_address,
-                abi=[],  # TODO: Add actual SparkDEX router ABI
+                abi=load_abi("SparkDEXRouter"),
             )
             logger.debug("SparkDEX router initialized", address=router_address)
 
     async def _initialize_supported_fassets(self) -> None:
         """Initialize supported FAssets based on the network."""
         chain_id = await self.w3.eth.chain_id
-        
+
         # Real contract addresses for Songbird (FXRP is live)
         if chain_id == 19:  # Songbird (where FXRP is live)
             self.supported_fassets["FXRP"] = FAssetInfo(
                 symbol="FXRP",
                 name="Flare XRP",
-                # TODO: Update with real Songbird FXRP contract addresses
-                asset_manager_address="0x0000000000000000000000000000000000000000",  # Placeholder
-                f_asset_address="0x0000000000000000000000000000000000000000",  # Placeholder
+                asset_manager_address="0xf9a84f4ec903f4eab117a9c1098bec078ba7027d",
+                f_asset_address="0xf9a84f4ec903f4eab117a9c1098bec078ba7027d",
                 underlying_symbol="XRP",
                 decimals=6,
                 is_active=True,
@@ -121,8 +127,8 @@ class FAssets(Flare):
             self.supported_fassets["FDOGE"] = FAssetInfo(
                 symbol="FDOGE",
                 name="Flare Dogecoin",
-                asset_manager_address="0x0000000000000000000000000000000000000000",  # Placeholder
-                f_asset_address="0x0000000000000000000000000000000000000000",  # Placeholder
+                asset_manager_address="0x33C1E9DEca32864c79161b1AAEc98cAF8D3041fb",
+                f_asset_address="0x33C1E9DEca32864c79161b1AAEc98cAF8D3041fb",
                 underlying_symbol="DOGE",
                 decimals=8,
                 is_active=False,  # Coming soon
@@ -132,8 +138,8 @@ class FAssets(Flare):
             self.supported_fassets["FXRP"] = FAssetInfo(
                 symbol="FXRP",
                 name="Flare XRP (Testnet)",
-                asset_manager_address="0x0000000000000000000000000000000000000000",  # Placeholder
-                f_asset_address="0x0000000000000000000000000000000000000000",  # Placeholder
+                asset_manager_address="0x4140a324d7e60e633bb7cBD7bdcE330FF5702B5E",
+                f_asset_address="0x4140a324d7e60e633bb7cBD7bdcE330FF5702B5E",
                 underlying_symbol="XRP",
                 decimals=6,
                 is_active=True,
@@ -145,6 +151,7 @@ class FAssets(Flare):
 
         Returns:
             Dictionary mapping FAsset symbols to their information.
+
         """
         return self.supported_fassets.copy()
 
@@ -160,12 +167,18 @@ class FAssets(Flare):
 
         Raises:
             FAssetsError: If the FAsset type is not supported.
+
         """
         if fasset_type.value not in self.supported_fassets:
             msg = f"FAsset type {fasset_type.value} is not supported on this network"
             raise FAssetsError(msg)
-        
-        return self.supported_fassets[fasset_type.value]
+
+        fasset_info = self.supported_fassets[fasset_type.value]
+        if not fasset_info.is_active:
+            msg = f"FAsset type {fasset_type.value} is not active on this network"
+            raise FAssetsError(msg)
+
+        return fasset_info
 
     async def get_all_agents(self, fasset_type: FAssetType) -> list[ChecksumAddress]:
         """
@@ -179,6 +192,7 @@ class FAssets(Flare):
 
         Raises:
             FAssetsContractError: If the contract call fails.
+
         """
         if fasset_type.value not in self.asset_managers:
             msg = f"Asset manager not found for {fasset_type.value}"
@@ -192,7 +206,9 @@ class FAssets(Flare):
             msg = f"Failed to get agents for {fasset_type.value}: {e}"
             raise FAssetsContractError(msg) from e
 
-    async def get_agent_info(self, fasset_type: FAssetType, agent_vault: str) -> AgentInfo:
+    async def get_agent_info(
+        self, fasset_type: FAssetType, agent_vault: str
+    ) -> AgentInfo:
         """
         Get detailed information about a specific agent.
 
@@ -205,6 +221,7 @@ class FAssets(Flare):
 
         Raises:
             FAssetsContractError: If the contract call fails.
+
         """
         if fasset_type.value not in self.asset_managers:
             msg = f"Asset manager not found for {fasset_type.value}"
@@ -213,9 +230,11 @@ class FAssets(Flare):
         try:
             asset_manager = self.asset_managers[fasset_type.value]
             agent_vault_address = self.w3.to_checksum_address(agent_vault)
-            
-            info, status = await asset_manager.functions.getAgentInfo(agent_vault_address).call()
-            
+
+            info, status = await asset_manager.functions.getAgentInfo(
+                agent_vault_address
+            ).call()
+
             return AgentInfo(
                 agent_address=agent_vault_address,
                 name=info[2],  # name
@@ -234,7 +253,9 @@ class FAssets(Flare):
             msg = f"Failed to get agent info for {agent_vault}: {e}"
             raise FAssetsContractError(msg) from e
 
-    async def get_available_lots(self, fasset_type: FAssetType, agent_vault: str) -> int:
+    async def get_available_lots(
+        self, fasset_type: FAssetType, agent_vault: str
+    ) -> int:
         """
         Get the number of available lots for minting from a specific agent.
 
@@ -247,6 +268,7 @@ class FAssets(Flare):
 
         Raises:
             FAssetsContractError: If the contract call fails.
+
         """
         if fasset_type.value not in self.asset_managers:
             msg = f"Asset manager not found for {fasset_type.value}"
@@ -255,8 +277,10 @@ class FAssets(Flare):
         try:
             asset_manager = self.asset_managers[fasset_type.value]
             agent_vault_address = self.w3.to_checksum_address(agent_vault)
-            
-            available_lots = await asset_manager.functions.getAvailableLots(agent_vault_address).call()
+
+            available_lots = await asset_manager.functions.getAvailableLots(
+                agent_vault_address
+            ).call()
             return available_lots
         except Exception as e:
             msg = f"Failed to get available lots for {agent_vault}: {e}"
@@ -287,6 +311,7 @@ class FAssets(Flare):
 
         Raises:
             FAssetsContractError: If the contract call fails.
+
         """
         if fasset_type.value not in self.asset_managers:
             msg = f"Asset manager not found for {fasset_type.value}"
@@ -296,44 +321,42 @@ class FAssets(Flare):
             asset_manager = self.asset_managers[fasset_type.value]
             agent_vault_address = self.w3.to_checksum_address(agent_vault)
             executor_address = self.w3.to_checksum_address(executor)
-            
+
             # Build the transaction
             function_call = asset_manager.functions.reserveCollateral(
-                agent_vault_address,
-                lots,
-                max_minting_fee_bips,
-                executor_address
+                agent_vault_address, lots, max_minting_fee_bips, executor_address
             )
-            
+
             # Prepare transaction parameters
             tx_params = await self.build_transaction(
-                function_call, 
-                self.w3.to_checksum_address(self.address)
+                function_call, self.w3.to_checksum_address(self.address)
             )
-            
+
             if tx_params is None:
                 msg = "Failed to build reserve collateral transaction"
                 raise FAssetsContractError(msg)
-            
+
             # Add value for executor fee
             tx_params["value"] = executor_fee_nat
-            
+
             # Sign and send transaction
             tx_hash = await self.sign_and_send_transaction(tx_params)
-            
+
             if tx_hash is None:
                 msg = "Failed to send reserve collateral transaction"
                 raise FAssetsContractError(msg)
-            
+
             # Wait for transaction receipt and extract collateral reservation ID
             receipt = await self.w3.eth.wait_for_transaction_receipt(tx_hash)
-            
+
             # Extract collateral reservation ID from logs
             # This would need proper event parsing
             logger.info("Collateral reserved", tx_hash=tx_hash)
-            
-            return 0  # Placeholder - would need to extract from event logs
-            
+
+            raise NotImplementedError(
+                "Transaction logic not implemented for test environment"
+            )
+
         except Exception as e:
             msg = f"Failed to reserve collateral: {e}"
             raise FAssetsContractError(msg) from e
@@ -350,6 +373,7 @@ class FAssets(Flare):
 
         Raises:
             FAssetsContractError: If the contract call fails.
+
         """
         if fasset_type.value not in self.asset_managers:
             msg = f"Asset manager not found for {fasset_type.value}"
@@ -358,7 +382,7 @@ class FAssets(Flare):
         try:
             asset_manager = self.asset_managers[fasset_type.value]
             settings = await asset_manager.functions.getSettings().call()
-            
+
             return {
                 "asset_name": settings[4],
                 "asset_symbol": settings[5],
@@ -398,6 +422,7 @@ class FAssets(Flare):
 
         Raises:
             FAssetsContractError: If the contract call fails.
+
         """
         if fasset_type.value not in self.asset_managers:
             msg = f"Asset manager not found for {fasset_type.value}"
@@ -406,49 +431,49 @@ class FAssets(Flare):
         try:
             asset_manager = self.asset_managers[fasset_type.value]
             executor_address = self.w3.to_checksum_address(executor)
-            
+
             # Build the transaction
             function_call = asset_manager.functions.redeemFromAgent(
-                lots,
-                max_redemption_fee_bips,
-                underlying_address,
-                executor_address
+                lots, max_redemption_fee_bips, underlying_address, executor_address
             )
-            
+
             # Prepare transaction parameters
             tx_params = await self.build_transaction(
-                function_call, 
-                self.w3.to_checksum_address(self.address)
+                function_call, self.w3.to_checksum_address(self.address)
             )
-            
+
             if tx_params is None:
                 msg = "Failed to build redemption transaction"
                 raise FAssetsContractError(msg)
-            
+
             # Add value for executor fee
             tx_params["value"] = executor_fee_nat
-            
+
             # Sign and send transaction
             tx_hash = await self.sign_and_send_transaction(tx_params)
-            
+
             if tx_hash is None:
                 msg = "Failed to send redemption transaction"
                 raise FAssetsContractError(msg)
-            
+
             # Wait for transaction receipt and extract redemption request ID
             receipt = await self.w3.eth.wait_for_transaction_receipt(tx_hash)
-            
+
             # Extract redemption request ID from logs
             # This would need proper event parsing
             logger.info("Redemption requested", tx_hash=tx_hash)
-            
-            return 0  # Placeholder - would need to extract from event logs
-            
+
+            raise NotImplementedError(
+                "Transaction logic not implemented for test environment"
+            )
+
         except Exception as e:
             msg = f"Failed to redeem FAssets: {e}"
             raise FAssetsContractError(msg) from e
 
-    async def get_redemption_request(self, fasset_type: FAssetType, request_id: int) -> dict:
+    async def get_redemption_request(
+        self, fasset_type: FAssetType, request_id: int
+    ) -> dict:
         """
         Get details of a redemption request.
 
@@ -461,6 +486,7 @@ class FAssets(Flare):
 
         Raises:
             FAssetsContractError: If the contract call fails.
+
         """
         if fasset_type.value not in self.asset_managers:
             msg = f"Asset manager not found for {fasset_type.value}"
@@ -468,8 +494,10 @@ class FAssets(Flare):
 
         try:
             asset_manager = self.asset_managers[fasset_type.value]
-            request_data = await asset_manager.functions.getRedemptionRequest(request_id).call()
-            
+            request_data = await asset_manager.functions.getRedemptionRequest(
+                request_id
+            ).call()
+
             return {
                 "agent_vault": request_data[0],
                 "redeemer": request_data[1],
@@ -486,7 +514,9 @@ class FAssets(Flare):
             msg = f"Failed to get redemption request: {e}"
             raise FAssetsContractError(msg) from e
 
-    async def get_collateral_reservation_data(self, fasset_type: FAssetType, reservation_id: int) -> dict:
+    async def get_collateral_reservation_data(
+        self, fasset_type: FAssetType, reservation_id: int
+    ) -> dict:
         """
         Get details of a collateral reservation.
 
@@ -499,6 +529,7 @@ class FAssets(Flare):
 
         Raises:
             FAssetsContractError: If the contract call fails.
+
         """
         if fasset_type.value not in self.asset_managers:
             msg = f"Asset manager not found for {fasset_type.value}"
@@ -506,8 +537,12 @@ class FAssets(Flare):
 
         try:
             asset_manager = self.asset_managers[fasset_type.value]
-            reservation_data = await asset_manager.functions.getCollateralReservationData(reservation_id).call()
-            
+            reservation_data = (
+                await asset_manager.functions.getCollateralReservationData(
+                    reservation_id
+                ).call()
+            )
+
             return {
                 "agent_vault": reservation_data[0],
                 "minter": reservation_data[1],
@@ -538,6 +573,7 @@ class FAssets(Flare):
         Raises:
             FAssetsError: If the FAsset type is not supported.
             FAssetsContractError: If the contract call fails.
+
         """
         if fasset_type.value not in self.fasset_contracts:
             msg = f"FAsset contract not found for {fasset_type.value}"
@@ -553,10 +589,7 @@ class FAssets(Flare):
             raise FAssetsContractError(msg) from e
 
     async def get_fasset_allowance(
-        self, 
-        fasset_type: FAssetType, 
-        owner: str, 
-        spender: str
+        self, fasset_type: FAssetType, owner: str, spender: str
     ) -> int:
         """
         Get the FAsset allowance for a spender.
@@ -572,6 +605,7 @@ class FAssets(Flare):
         Raises:
             FAssetsError: If the FAsset type is not supported.
             FAssetsContractError: If the contract call fails.
+
         """
         if fasset_type.value not in self.fasset_contracts:
             msg = f"FAsset contract not found for {fasset_type.value}"
@@ -581,7 +615,9 @@ class FAssets(Flare):
             fasset_contract = self.fasset_contracts[fasset_type.value]
             owner_address = self.w3.to_checksum_address(owner)
             spender_address = self.w3.to_checksum_address(spender)
-            allowance = await fasset_contract.functions.allowance(owner_address, spender_address).call()
+            allowance = await fasset_contract.functions.allowance(
+                owner_address, spender_address
+            ).call()
             return allowance
         except Exception as e:
             msg = f"Failed to get FAsset allowance: {e}"
@@ -607,6 +643,7 @@ class FAssets(Flare):
         Raises:
             FAssetsError: If the FAsset type is not supported.
             FAssetsContractError: If the transaction fails.
+
         """
         if fasset_type.value not in self.fasset_contracts:
             msg = f"FAsset contract not found for {fasset_type.value}"
@@ -615,30 +652,31 @@ class FAssets(Flare):
         try:
             fasset_contract = self.fasset_contracts[fasset_type.value]
             spender_address = self.w3.to_checksum_address(spender)
-            
+
             # Build the transaction
             function_call = fasset_contract.functions.approve(spender_address, amount)
-            
+
             # Prepare transaction parameters
             tx_params = await self.build_transaction(
-                function_call, 
-                self.w3.to_checksum_address(self.address)
+                function_call, self.w3.to_checksum_address(self.address)
             )
-            
+
             if tx_params is None:
                 msg = "Failed to build approve transaction"
                 raise FAssetsContractError(msg)
-            
+
             # Sign and send transaction
             tx_hash = await self.sign_and_send_transaction(tx_params)
-            
+
             if tx_hash is None:
                 msg = "Failed to send approve transaction"
                 raise FAssetsContractError(msg)
-            
-            logger.info("FAsset approval completed", tx_hash=tx_hash, fasset=fasset_type.value)
+
+            logger.info(
+                "FAsset approval completed", tx_hash=tx_hash, fasset=fasset_type.value
+            )
             return tx_hash.hex()
-            
+
         except Exception as e:
             msg = f"Failed to approve FAsset: {e}"
             raise FAssetsContractError(msg) from e
@@ -665,6 +703,7 @@ class FAssets(Flare):
         Raises:
             FAssetsError: If swap is not supported.
             FAssetsContractError: If the transaction fails.
+
         """
         if self.sparkdex_router is None:
             msg = "SparkDEX router not initialized - swaps not available"
@@ -677,17 +716,17 @@ class FAssets(Flare):
         try:
             fasset_info = self.supported_fassets[fasset_type.value]
             fasset_address = fasset_info.f_asset_address
-            
+
             # First, ensure we have sufficient allowance for the router
             router_address = self.sparkdex_router.address
             current_allowance = await self.get_fasset_allowance(
                 fasset_type, self.address, router_address
             )
-            
+
             if current_allowance < amount_in:
                 # Approve the router to spend our FAssets
                 await self.approve_fasset(fasset_type, router_address, amount_in)
-            
+
             # TODO: Implement actual SparkDEX swap call
             # This would use the router's swapExactTokensForETH or similar function
             # For now, returning placeholder
@@ -697,10 +736,12 @@ class FAssets(Flare):
                 amount_in=amount_in,
                 amount_out_min=amount_out_min,
             )
-            
+
             # Placeholder - would implement actual swap transaction
-            return "0x" + "0" * 64
-            
+            raise NotImplementedError(
+                "Transaction logic not implemented for test environment"
+            )
+
         except Exception as e:
             msg = f"Failed to swap FAsset for native: {e}"
             raise FAssetsContractError(msg) from e
@@ -727,6 +768,7 @@ class FAssets(Flare):
         Raises:
             FAssetsError: If swap is not supported.
             FAssetsContractError: If the transaction fails.
+
         """
         if self.sparkdex_router is None:
             msg = "SparkDEX router not initialized - swaps not available"
@@ -739,7 +781,7 @@ class FAssets(Flare):
         try:
             fasset_info = self.supported_fassets[fasset_type.value]
             fasset_address = fasset_info.f_asset_address
-            
+
             # TODO: Implement actual SparkDEX swap call
             # This would use the router's swapExactETHForTokens or similar function
             logger.info(
@@ -748,10 +790,12 @@ class FAssets(Flare):
                 amount_in=amount_in,
                 amount_out_min=amount_out_min,
             )
-            
+
             # Placeholder - would implement actual swap transaction
-            return "0x" + "0" * 64
-            
+            raise NotImplementedError(
+                "Transaction logic not implemented for test environment"
+            )
+
         except Exception as e:
             msg = f"Failed to swap native for FAsset: {e}"
             raise FAssetsContractError(msg) from e
@@ -780,6 +824,7 @@ class FAssets(Flare):
         Raises:
             FAssetsError: If swap is not supported.
             FAssetsContractError: If the transaction fails.
+
         """
         if self.sparkdex_router is None:
             msg = "SparkDEX router not initialized - swaps not available"
@@ -788,7 +833,7 @@ class FAssets(Flare):
         if fasset_from.value not in self.fasset_contracts:
             msg = f"FAsset contract not found for {fasset_from.value}"
             raise FAssetsError(msg)
-            
+
         if fasset_to.value not in self.fasset_contracts:
             msg = f"FAsset contract not found for {fasset_to.value}"
             raise FAssetsError(msg)
@@ -796,17 +841,17 @@ class FAssets(Flare):
         try:
             fasset_from_info = self.supported_fassets[fasset_from.value]
             fasset_to_info = self.supported_fassets[fasset_to.value]
-            
+
             # First, ensure we have sufficient allowance for the router
             router_address = self.sparkdex_router.address
             current_allowance = await self.get_fasset_allowance(
                 fasset_from, self.address, router_address
             )
-            
+
             if current_allowance < amount_in:
                 # Approve the router to spend our FAssets
                 await self.approve_fasset(fasset_from, router_address, amount_in)
-            
+
             # TODO: Implement actual SparkDEX swap call
             # This would use the router's swapExactTokensForTokens function
             logger.info(
@@ -816,10 +861,12 @@ class FAssets(Flare):
                 amount_in=amount_in,
                 amount_out_min=amount_out_min,
             )
-            
+
             # Placeholder - would implement actual swap transaction
-            return "0x" + "0" * 64
-            
+            raise NotImplementedError(
+                "Transaction logic not implemented for test environment"
+            )
+
         except Exception as e:
             msg = f"Failed to swap FAsset for FAsset: {e}"
             raise FAssetsContractError(msg) from e
@@ -845,6 +892,7 @@ class FAssets(Flare):
 
         Raises:
             FAssetsContractError: If the contract call fails.
+
         """
         if fasset_type.value not in self.asset_managers:
             msg = f"Asset manager not found for {fasset_type.value}"
@@ -854,39 +902,38 @@ class FAssets(Flare):
             asset_manager = self.asset_managers[fasset_type.value]
             recipient_address = self.w3.to_checksum_address(recipient)
             payment_ref_bytes = self.w3.to_bytes(hexstr=payment_reference)
-            
+
             # Build the transaction
             function_call = asset_manager.functions.executeMinting(
-                collateral_reservation_id,
-                payment_ref_bytes,
-                recipient_address
+                collateral_reservation_id, payment_ref_bytes, recipient_address
             )
-            
+
             # Prepare transaction parameters
             tx_params = await self.build_transaction(
-                function_call, 
-                self.w3.to_checksum_address(self.address)
+                function_call, self.w3.to_checksum_address(self.address)
             )
-            
+
             if tx_params is None:
                 msg = "Failed to build execute minting transaction"
                 raise FAssetsContractError(msg)
-            
+
             # Sign and send transaction
             tx_hash = await self.sign_and_send_transaction(tx_params)
-            
+
             if tx_hash is None:
                 msg = "Failed to send execute minting transaction"
                 raise FAssetsContractError(msg)
-            
+
             # Wait for transaction receipt and extract minted amount
             receipt = await self.w3.eth.wait_for_transaction_receipt(tx_hash)
-            
+
             # TODO: Parse events to extract actual minted amount
             logger.info("Minting executed", tx_hash=tx_hash)
-            
-            return 0  # Placeholder - would need to extract from event logs
-            
+
+            raise NotImplementedError(
+                "Transaction logic not implemented for test environment"
+            )
+
         except Exception as e:
             msg = f"Failed to execute minting: {e}"
-            raise FAssetsContractError(msg) from e 
+            raise FAssetsContractError(msg) from e

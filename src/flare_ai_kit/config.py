@@ -1,9 +1,7 @@
 """Settings for Flare AI Kit."""
 
-import warnings
 from typing import Literal
 
-import structlog
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -39,17 +37,3 @@ class AppSettings(BaseSettings):
     social: SocialSettingsModel = Field(default_factory=SocialSettingsModel)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
     tee: TeeSettingsModel = Field(default_factory=TeeSettingsModel)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
     ingestion: IngestionSettingsModel = Field(default_factory=IngestionSettingsModel)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
-
-
-# This single instance will be imported by other modules
-try:
-    settings = AppSettings()  # pyright: ignore[reportCallIssue]
-    structlog.configure(
-        wrapper_class=structlog.make_filtering_bound_logger(settings.log_level)
-    )
-except Exception as e:  # noqa: BLE001
-    msg = f"Could not load settings (missing .env file or environment variables): {e}"
-    warnings.warn(msg, stacklevel=2)
-    # Let Pydantic raise validation errors if required fields are missing
-    # Attempt again, will likely fail if required fields are missing without defaults
-    settings = AppSettings()  # pyright: ignore[reportCallIssue]
