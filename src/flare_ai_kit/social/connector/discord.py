@@ -2,66 +2,61 @@
 
 import asyncio
 import os
+from typing import Any
 
-import discord
-from dotenv import load_dotenv
+from discord import Client, Intents, Message
 
 from flare_ai_kit.social.connector import SocialConnector
 
-load_dotenv()
-
 
 class DiscordConnector(SocialConnector):
-    """Discord Connector for Flare AI Kit."""
+    """Discord connector implementation."""
 
     def __init__(self) -> None:
-        self.token = os.getenv("DISCORD_BOT_TOKEN")
-        self.guild_id = int(os.getenv("DISCORD_GUILD_ID"))
-        self.channel_id = int(os.getenv("DISCORD_CHANNEL_ID"))
+        self.token: str = os.getenv("SOCIAL__DISCORD_BOT_TOKEN") or ""
+        self.channel_id: int = int(os.getenv("SOCIAL__DISCORD_CHANNEL_ID") or 0)
+        self.client: Client = Client(intents=Intents.default())
+        self._ready_event: asyncio.Event = asyncio.Event()
+        self._messages: list[dict[str, Any]] = []
 
-        self._messages: list[dict] = []
-        self._client_task: asyncio.Task | None = None
-        self._ready_event = asyncio.Event()
+        # Explicitly register event handlers
+        self.client.event(self._on_ready)
+        self.client.event(self._on_message)
 
-        intents = discord.Intents.default()
-        intents.messages = True
-        intents.guilds = True
-        self.client = discord.Client(intents=intents)
+    async def _on_ready(self) -> None:
+        """Handle bot ready event."""
+        self._ready_event.set()
 
-        @self.client.event
-        async def on_ready() -> None:
-            self._ready_event.set()
+    async def _on_message(self, message: Message) -> None:
+        """Handle new messages."""
+        if message.author == self.client.user:
+            return
 
-        @self.client.event
-        async def on_message(message: discord.Message) -> None:
-            await self._on_message(message)
-
-    async def _on_message(self, message: discord.Message) -> None:
-        if message.channel.id == self.channel_id and not message.author.bot:
-            self._messages.append(
-                {
-                    "platform": "discord",
-                    "content": message.content,
-                    "author_id": str(message.author.id),
-                    "timestamp": message.created_at.isoformat(),
-                }
-            )
+        self._messages.append({
+            "platform": "discord",
+            "content": message.content,
+            "author_id": str(message.author.id),
+            "timestamp": str(message.created_at),
+        })
 
     @property
     def platform(self) -> str:
         """Return the platform name."""
         return "discord"
 
-    async def fetch_mentions(self, query: str = "", limit: int = 10) -> list[dict]:
-        """Fetch messages from Discord channel that match the query."""
-        await self._start_if_needed()
-        await asyncio.sleep(1)
-        results = [
-            msg for msg in self._messages if query.lower() in msg["content"].lower()
-        ]
-        return results[-limit:]
-
     async def _start_if_needed(self) -> None:
         if not self.client.is_ready():
-            self._client_task = asyncio.create_task(self.client.start(self.token))
+            asyncio.create_task(self.client.start(self.token))
             await self._ready_event.wait()
+
+    async def fetch_mentions(self, query: str = "", limit: int = 10) -> list[dict[str, Any]]:
+        await self._start_if_needed()
+        await asyncio.sleep(1)  # let messages collect
+
+        results: list[dict[str, Any]] = []
+        for msg in self._messages:
+            if query.lower() in msg["content"].lower():
+                results.append(msg)
+                if len(results) >= limit:
+                    break
+        return results

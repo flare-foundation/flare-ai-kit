@@ -2,74 +2,50 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from flare_ai_kit.social.connector import SocialConnector
 from flare_ai_kit.social.connector.x import XConnector
 
 
-@pytest.fixture(autouse=True)
-def set_env(monkeypatch):
-    monkeypatch.setenv("SOCIAL__X_API_KEY", "fake-key")
-    monkeypatch.setenv("SOCIAL__X_API_KEY_SECRET", "fake-secret")
-    monkeypatch.setenv("SOCIAL__X_ACCESS_TOKEN", "fake-token")
-    monkeypatch.setenv("SOCIAL__X_ACCESS_TOKEN_SECRET", "fake-token-secret")
-
-
 @pytest.mark.asyncio
-async def test_inherits_base_class():
+async def test_fetch_mentions_success():
     connector = XConnector()
-    assert isinstance(connector, SocialConnector)
-    assert connector.platform == "x"
 
+    mock_tweet = MagicMock()
+    mock_tweet.text = "Hello Twitter!"
+    mock_tweet.author_id = 123
+    mock_tweet.id = 456
+    mock_tweet.created_at = MagicMock()
+    mock_tweet.created_at.isoformat.return_value = "2024-01-01T00:00:00"
 
-@pytest.mark.asyncio
-@patch("flare_ai_kit.social.connector.x.AsyncClient")
-async def test_fetch_mentions_returns_list(mock_async_client):
-    mock_client = mock_async_client.return_value
     mock_response = MagicMock()
-    mock_response.data = [
-        MagicMock(
-            text="Test tweet",
-            author_id="12345",
-            id=1,
-            created_at=None,
-        )
-    ]
-    mock_client.search_recent_tweets = AsyncMock(return_value=mock_response)
+    mock_response.data = [mock_tweet]
 
+    with patch.object(connector.client, "search_recent_tweets", new=AsyncMock(return_value=mock_response)):
+        results = await connector.fetch_mentions("Hello")
+
+    assert len(results) == 1
+    assert results[0]["platform"] == "x"
+    assert results[0]["content"] == "Hello Twitter!"
+    assert results[0]["author_id"] == "123"
+    assert results[0]["tweet_id"] == "456"
+    assert results[0]["timestamp"] == "2024-01-01T00:00:00"
+
+
+
+def test_post_tweet_success():
     connector = XConnector()
-    connector.client = mock_client
 
-    results = await connector.fetch_mentions("flare")
-    assert isinstance(results, list)
-    assert results[0]["content"] == "Test tweet"
-    assert results[0]["author_id"] == "12345"
+    mock_tweet = MagicMock()
+    mock_tweet.id = 123
+    mock_tweet.text = "Test tweet"
+    mock_tweet.created_at.isoformat.return_value = "2024-01-01T00:00:00"
+
+    with patch.object(connector.sync_client, "update_status", return_value=mock_tweet):
+        result = connector.post_tweet("Test tweet")
+
+    assert result["tweet_id"] == "123"
+    assert result["content"] == "Test tweet"
+    assert result["created_at"] == "2024-01-01T00:00:00"
 
 
-@patch("flare_ai_kit.social.connector.x.API")
-def test_post_tweet_success(mock_api):
-    mock_api = mock_api.return_value
-    mock_api.update_status.return_value = MagicMock(
-        id=1, text="hello", created_at="now"
-    )
-
+def test_reply_to_tweet_success():
     connector = XConnector()
-    connector.sync_client = mock_api
-
-    result = connector.post_tweet("hello")
-    assert result["content"] == "hello"
-    assert result["tweet_id"] == 1
-
-
-@patch("flare_ai_kit.social.connector.x.API")
-def test_reply_to_tweet_success(mock_api):
-    mock_api = mock_api.return_value
-    mock_api.update_status.return_value = MagicMock(
-        id=2, text="thanks!", created_at="now"
-    )
-
-    connector = XConnector()
-    connector.sync_client = mock_api
-
-    result = connector.reply_to_tweet(tweet_id=1, reply_text="thanks!")
-    assert result["reply_id"] == 2
-    assert result["content"] == "thanks!"

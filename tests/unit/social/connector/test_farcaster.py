@@ -1,58 +1,70 @@
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
+import httpx
 import pytest
-from httpx import HTTPError
 
 from flare_ai_kit.social.connector import SocialConnector
 from flare_ai_kit.social.connector.farcaster import FarcasterConnector
 
 
-@pytest.fixture(autouse=True)
-def mock_env(monkeypatch):
-    monkeypatch.setenv("FARCASTER_API_KEY", "test-api-key")
-
-
-def test_inherits_base_class():
+def test_inherits_base_class(monkeypatch):
+    monkeypatch.setenv("SOCIAL__FARCASTER_API_KEY", "fake-key")
     connector = FarcasterConnector()
     assert isinstance(connector, SocialConnector)
     assert connector.platform == "farcaster"
 
 
 @pytest.mark.asyncio
-@patch("flare_ai_kit.social.connector.farcaster.httpx.AsyncClient.get")
-async def test_fetch_mentions_success(mock_get):
-    # Prepare async .json() response
-    mock_response = AsyncMock()
-    mock_response.status_code = 200
-    mock_response.json = AsyncMock(
-        return_value={
-            "casts": [
-                {
-                    "text": "Flare Network update",
-                    "author": {"fid": "123"},
-                    "timestamp": "2025-06-30T12:00:00Z",
-                },
-                {
-                    "text": "Another cast",
-                    "author": {"fid": "456"},
-                    "timestamp": "2025-06-30T13:00:00Z",
-                },
-            ]
-        }
-    )
-    mock_get.return_value = mock_response
+async def test_fetch_mentions_returns_results(monkeypatch):
+    monkeypatch.setenv("SOCIAL__FARCASTER_API_KEY", "fake-key")
 
-    connector = FarcasterConnector()
+    mock_response = MagicMock()
+    mock_response.raise_for_status = MagicMock()
+    mock_response.json = MagicMock(return_value={
+        "casts": [
+            {
+                "text": "flare alpha",
+                "author": {"fid": "123"},
+                "timestamp": "2025-07-01T12:00:00Z"
+            },
+            {
+                "text": "flare beta",
+                "author": {"fid": "456"},
+                "timestamp": "2025-07-01T13:00:00Z"
+            }
+        ]
+    })
+
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.return_value = mock_response
+
+    connector = FarcasterConnector(client=mock_client)
     results = await connector.fetch_mentions("flare")
+
     assert len(results) == 2
+    assert results[0]["content"] == "flare alpha"
+    assert results[0]["author_id"] == "123"
     assert results[0]["platform"] == "farcaster"
-    assert "flare" in results[0]["content"].lower()
 
 
-@patch("flare_ai_kit.social.connector.farcaster.httpx.AsyncClient.get")
 @pytest.mark.asyncio
-async def test_fetch_mentions_handles_error(mock_get):
-    mock_get.side_effect = HTTPError("API failed")
+async def test_fetch_mentions_handles_http_error(monkeypatch):
+    monkeypatch.setenv("SOCIAL__FARCASTER_API_KEY", "fake-key")
+
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.get.side_effect = httpx.HTTPError("API failed")
+
+    connector = FarcasterConnector(client=mock_client)
+    results = await connector.fetch_mentions("flare")
+
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_fetch_mentions_no_api_key(monkeypatch):
+    monkeypatch.delenv("SOCIAL__FARCASTER_API_KEY", raising=False)
+
     connector = FarcasterConnector()
     results = await connector.fetch_mentions("flare")
+
     assert results == []

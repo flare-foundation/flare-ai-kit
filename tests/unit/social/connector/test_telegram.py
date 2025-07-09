@@ -28,24 +28,25 @@ async def test_fetch_mentions_filters_and_limits(monkeypatch):
     connector._messages = [
         {
             "platform": "telegram",
-            "content": "Flare update",
+            "content": "Flare is rising fast",
             "author_id": "1",
-            "timestamp": "t1",
+            "timestamp": "2024-01-01T00:00:00",
         },
         {
             "platform": "telegram",
-            "content": "Other content",
+            "content": "Totally unrelated",
             "author_id": "2",
-            "timestamp": "t2",
+            "timestamp": "2024-01-01T01:00:00",
         },
         {
             "platform": "telegram",
-            "content": "Flare again",
+            "content": "Flare news!",
             "author_id": "3",
-            "timestamp": "t3",
+            "timestamp": "2024-01-01T02:00:00",
         },
     ]
 
+    # Mock methods to skip actual Telegram API calls
     monkeypatch.setattr(connector.app, "initialize", AsyncMock())
     monkeypatch.setattr(connector.app, "start", AsyncMock())
     monkeypatch.setattr(connector.app, "stop", AsyncMock())
