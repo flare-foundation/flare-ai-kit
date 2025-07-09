@@ -13,3 +13,7 @@ wheels/
 .pytest_cache
 .vscode
 .DS_Store
+
+# Logsnode_modules/
+/node_modules/
+
