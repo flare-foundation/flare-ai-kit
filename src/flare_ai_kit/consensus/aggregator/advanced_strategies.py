@@ -1,11 +1,10 @@
 """Advanced consensus strategies for detecting hallucinations and improving robustness."""
 
 import numpy as np
-from collections import Counter
-from typing import List, Tuple, Dict, Any, Optional
+from typing import List, Dict, Any, Union
 from dataclasses import dataclass
 from sklearn.cluster import DBSCAN, KMeans
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import cosine_similarity  # type: ignore
 from sklearn.preprocessing import StandardScaler
 import logging
 
@@ -22,8 +21,8 @@ class ClusterResult:
     dominant_cluster: List[Prediction]
     outlier_clusters: List[List[Prediction]]
     cluster_labels: List[int]
-    similarity_matrix: np.ndarray
-    centroid_embeddings: Dict[int, np.ndarray]
+    similarity_matrix: np.ndarray[Any, np.dtype[np.float64]]
+    centroid_embeddings: Dict[int, np.ndarray[Any, np.dtype[np.float64]]]
 
 
 def semantic_clustering_strategy(
@@ -54,11 +53,11 @@ def semantic_clustering_strategy(
     # Generate embeddings for all predictions
     texts = [str(p.prediction) for p in predictions]
     embeddings = embedding_model.embed_content(texts)
-    embeddings_array = np.array(embeddings)
+    embeddings_array = np.array(embeddings, dtype=np.float64)
     
     # Normalize embeddings for better clustering
     scaler = StandardScaler()
-    embeddings_normalized = scaler.fit_transform(embeddings_array)
+    embeddings_normalized = scaler.fit_transform(embeddings_array).astype(np.float64)  # type: ignore
     
     # Perform clustering
     if clustering_method.lower() == "dbscan":
@@ -74,30 +73,27 @@ def semantic_clustering_strategy(
     else:
         raise ValueError(f"Unsupported clustering method: {clustering_method}")
     
-    cluster_labels = clustering.fit_predict(embeddings_normalized)
+    cluster_labels: np.ndarray[Any, np.dtype[np.int64]] = clustering.fit_predict(embeddings_normalized)  # type: ignore
     
     # Group predictions by cluster
     clusters: Dict[int, List[Prediction]] = {}
     for i, label in enumerate(cluster_labels):
-        if label not in clusters:
-            clusters[label] = []
-        clusters[label].append(predictions[i])
+        label_int = int(label)
+        if label_int not in clusters:
+            clusters[label_int] = []
+        clusters[label_int].append(predictions[i])
     
     # Find dominant cluster (largest cluster)
     dominant_cluster_label = max(clusters.keys(), key=lambda k: len(clusters[k]))
     dominant_cluster = clusters[dominant_cluster_label]
-    outlier_clusters = [clusters[k] for k in clusters.keys() if k != dominant_cluster_label]
-    
-    # Calculate centroid for dominant cluster
-    dominant_embeddings = embeddings_array[cluster_labels == dominant_cluster_label]
-    centroid = np.mean(dominant_embeddings, axis=0)
     
     # Select best prediction from dominant cluster (highest confidence)
     best_prediction = max(dominant_cluster, key=lambda p: p.confidence)
     
     # Calculate consensus confidence based on cluster stability
-    cluster_similarities = cosine_similarity(dominant_embeddings)
-    avg_similarity = np.mean(cluster_similarities[np.triu_indices_from(cluster_similarities, k=1)])
+    dominant_embeddings = embeddings_array[cluster_labels == dominant_cluster_label]
+    cluster_similarities: np.ndarray[Any, np.dtype[np.float64]] = cosine_similarity(dominant_embeddings)  # type: ignore
+    avg_similarity = float(np.mean(cluster_similarities[np.triu_indices_from(cluster_similarities, k=1)]))
     
     # Adjust confidence based on cluster quality
     adjusted_confidence = min(best_prediction.confidence * avg_similarity, 1.0)
@@ -131,22 +127,22 @@ def shapley_value_strategy(
     # Generate embeddings
     texts = [str(p.prediction) for p in predictions]
     embeddings = embedding_model.embed_content(texts)
-    embeddings_array = np.array(embeddings)
+    embeddings_array = np.array(embeddings, dtype=np.float64)
     
     # Calculate pairwise similarities
-    similarity_matrix = cosine_similarity(embeddings_array)
+    similarity_matrix: np.ndarray[Any, np.dtype[np.float64]] = cosine_similarity(embeddings_array)
     
     # Monte Carlo approximation of Shapley values
-    shapley_values = np.zeros(len(predictions))
+    shapley_values: np.ndarray[Any, np.dtype[np.float64]] = np.zeros(len(predictions), dtype=np.float64)
     
     for _ in range(n_samples):
         # Random permutation of agents
-        permutation = np.random.permutation(len(predictions))
+        permutation: np.ndarray[Any, np.dtype[np.int64]] = np.random.permutation(len(predictions))
         
         # Calculate marginal contributions
-        current_set = set()
+        current_set: set[int] = set()
         for i, agent_idx in enumerate(permutation):
-            current_set.add(agent_idx)
+            current_set.add(int(agent_idx))
             
             # Calculate utility of current set
             if len(current_set) == 1:
@@ -155,14 +151,14 @@ def shapley_value_strategy(
                 # Calculate average similarity within the set
                 set_indices = list(current_set)
                 set_similarities = similarity_matrix[np.ix_(set_indices, set_indices)]
-                utility = np.mean(set_similarities[np.triu_indices_from(set_similarities, k=1)])
+                utility = float(np.mean(set_similarities[np.triu_indices_from(set_similarities, k=1)]))
             
             # Calculate marginal contribution
             if i == 0:
                 marginal_contribution = utility
             else:
                 # Calculate utility without this agent
-                prev_set = current_set - {agent_idx}
+                prev_set = current_set - {int(agent_idx)}
                 if len(prev_set) == 0:
                     prev_utility = 0.0
                 else:
@@ -171,38 +167,41 @@ def shapley_value_strategy(
                     if len(prev_indices) == 1:
                         prev_utility = 1.0
                     else:
-                        prev_utility = np.mean(prev_similarities[np.triu_indices_from(prev_similarities, k=1)])
+                        prev_utility = float(np.mean(prev_similarities[np.triu_indices_from(prev_similarities, k=1)]))
                 
                 marginal_contribution = utility - prev_utility
             
-            shapley_values[agent_idx] += marginal_contribution
+            shapley_values[int(agent_idx)] += marginal_contribution
     
     # Normalize Shapley values
     shapley_values /= n_samples
     
     # Weight predictions by Shapley values
-    total_weight = np.sum(shapley_values)
+    total_weight = float(np.sum(shapley_values))
     if total_weight == 0:
         # Fallback to equal weighting
-        weights = np.ones(len(predictions)) / len(predictions)
+        weights: np.ndarray[Any, np.dtype[np.float64]] = np.ones(len(predictions), dtype=np.float64) / len(predictions)
     else:
         weights = shapley_values / total_weight
     
     # For string predictions, use weighted voting
     if isinstance(predictions[0].prediction, str):
-        vote_counts = Counter()
+        vote_counts: Dict[str, float] = {}
         for pred, weight in zip(predictions, weights):
-            vote_counts[str(pred.prediction)] += weight
+            pred_str = str(pred.prediction)
+            vote_counts[pred_str] = vote_counts.get(pred_str, 0.0) + float(weight)
         
-        consensus_prediction = vote_counts.most_common(1)[0][0]
+        consensus_prediction = max(vote_counts.items(), key=lambda x: x[1])[0]
+        print(f"Consensus prediction: {consensus_prediction}")
     else:
         # For numerical predictions, use weighted average
         consensus_prediction = sum(
-            float(p.prediction) * weight for p, weight in zip(predictions, weights)
+            float(p.prediction) * float(weight) for p, weight in zip(predictions, weights)
         )
+        print(f"Consensus prediction: {consensus_prediction}")
     
     # Calculate weighted confidence
-    weighted_confidence = sum(p.confidence * weight for p, weight in zip(predictions, weights))
+    weighted_confidence = sum(p.confidence * float(weight) for p, weight in zip(predictions, weights))
     
     return Prediction(
         agent_id="shapley_consensus",
@@ -233,24 +232,24 @@ def entropy_based_strategy(
     # Generate embeddings
     texts = [str(p.prediction) for p in predictions]
     embeddings = embedding_model.embed_content(texts)
-    embeddings_array = np.array(embeddings)
+    embeddings_array = np.array(embeddings, dtype=np.float64)
     
     # Calculate pairwise similarities
-    similarity_matrix = cosine_similarity(embeddings_array)
+    similarity_matrix: np.ndarray[Any, np.dtype[np.float64]] = cosine_similarity(embeddings_array)
     
     # Calculate entropy of the similarity distribution
-    similarities = similarity_matrix[np.triu_indices_from(similarity_matrix, k=1)]
+    similarities: np.ndarray[Any, np.dtype[np.float64]] = similarity_matrix[np.triu_indices_from(similarity_matrix, k=1)]
     if len(similarities) > 0:
         # Normalize similarities to probabilities
         similarities = np.clip(similarities, 0, 1)
         similarities = similarities / np.sum(similarities)
         
         # Calculate entropy
-        entropy = -np.sum(similarities * np.log(similarities + 1e-10))
-        max_entropy = np.log(len(similarities))
-        normalized_entropy = entropy / max_entropy if max_entropy > 0 else 0
+        entropy = float(-np.sum(similarities * np.log(similarities + 1e-10)))
+        max_entropy = float(np.log(len(similarities)))
+        normalized_entropy = entropy / max_entropy if max_entropy > 0 else 0.0
     else:
-        normalized_entropy = 0
+        normalized_entropy = 0.0
     
     # Select prediction based on entropy
     if normalized_entropy > entropy_threshold:
@@ -260,20 +259,22 @@ def entropy_based_strategy(
         adjusted_confidence = best_prediction.confidence * (1 - normalized_entropy)
     else:
         # Low entropy: use similarity-weighted consensus
-        weights = np.mean(similarity_matrix, axis=1)
+        weights: np.ndarray[Any, np.dtype[np.float64]] = np.mean(similarity_matrix, axis=1)
         weights = weights / np.sum(weights)
         
         if isinstance(predictions[0].prediction, str):
-            vote_counts = Counter()
+            vote_counts: Dict[str, float] = {}
             for pred, weight in zip(predictions, weights):
-                vote_counts[str(pred.prediction)] += weight
+                pred_str = str(pred.prediction)
+                vote_counts[pred_str] = vote_counts.get(pred_str, 0.0) + float(weight)
             
-            consensus_prediction = vote_counts.most_common(1)[0][0]
+            consensus_prediction = max(vote_counts.items(), key=lambda x: x[1])[0]
+            print(f"Consensus prediction: {consensus_prediction}")
         else:
             consensus_prediction = sum(
-                float(p.prediction) * weight for p, weight in zip(predictions, weights)
+                float(p.prediction) * float(weight) for p, weight in zip(predictions, weights)
             )
-        
+            print(f"Consensus prediction: {consensus_prediction}")
         best_prediction = predictions[np.argmax(weights)]
         adjusted_confidence = best_prediction.confidence * (1 - normalized_entropy)
     
@@ -287,7 +288,7 @@ def entropy_based_strategy(
 def robust_consensus_strategy(
     predictions: List[Prediction],
     embedding_model: BaseEmbedding,
-    strategies: List[str] = None
+    strategies: Union[List[str], None] = None
 ) -> Prediction:
     """
     Robust consensus strategy that combines multiple approaches.
@@ -303,7 +304,7 @@ def robust_consensus_strategy(
     if strategies is None:
         strategies = ["semantic", "shapley", "entropy"]
     
-    strategy_results = []
+    strategy_results: List[Prediction] = []
     
     for strategy in strategies:
         try:
@@ -325,8 +326,11 @@ def robust_consensus_strategy(
     if not strategy_results:
         # Fallback to simple majority
         if isinstance(predictions[0].prediction, str):
-            vote_counts = Counter(str(p.prediction) for p in predictions)
-            consensus_prediction = vote_counts.most_common(1)[0][0]
+            vote_counts: Dict[str, int] = {}
+            for p in predictions:
+                pred_str = str(p.prediction)
+                vote_counts[pred_str] = vote_counts.get(pred_str, 0) + 1
+            consensus_prediction = max(vote_counts.items(), key=lambda x: x[1])[0]
         else:
             consensus_prediction = sum(float(p.prediction) for p in predictions) / len(predictions)
         
@@ -345,11 +349,12 @@ def robust_consensus_strategy(
     weights = [w / total_weight for w in weights]
     
     if isinstance(strategy_results[0].prediction, str):
-        vote_counts = Counter()
+        strategy_vote_counts: Dict[str, float] = {}
         for result, weight in zip(strategy_results, weights):
-            vote_counts[str(result.prediction)] += weight
+            pred_str = str(result.prediction)
+            strategy_vote_counts[pred_str] = strategy_vote_counts.get(pred_str, 0.0) + weight
         
-        consensus_prediction = vote_counts.most_common(1)[0][0]
+        consensus_prediction = max(strategy_vote_counts.items(), key=lambda x: x[1])[0]
     else:
         consensus_prediction = sum(
             float(r.prediction) * weight for r, weight in zip(strategy_results, weights)
