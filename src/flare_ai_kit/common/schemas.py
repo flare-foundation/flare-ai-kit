@@ -108,11 +108,18 @@ class PDFData(BaseModel):
         Validator to strip non-numeric characters from the amount_due field
         and convert it to an integer.
         """
-        if isinstance(v, str):
-            # Remove common currency symbols, commas, and whitespace
-            cleaned_string = "".join(filter(str.isdigit, v.split('.')[0]))
-            if cleaned_string:
-                return int(cleaned_string)
+        if not isinstance(v, (str, int, float)):
+             raise ValueError("Amount must be a string, integer, or float")
+
         if isinstance(v, (int, float)):
             return int(v)
+
+        # Handle string input
+        if not v or not v.strip():
+            raise ValueError("Amount string cannot be empty")
+            
+        cleaned_string = "".join(filter(str.isdigit, v.split('.')[0]))
+        if cleaned_string:
+            return int(cleaned_string)
+
         raise ValueError("Could not convert amount_due to an integer")

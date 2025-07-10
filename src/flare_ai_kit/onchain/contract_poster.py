@@ -8,6 +8,7 @@ from web3.types import TxParams
 
 from flare_ai_kit.common import FlareTxError
 from flare_ai_kit.ecosystem.flare import Flare
+from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
 from flare_ai_kit.ingestion.settings_models import OnchainContractSettings
 
 logger = structlog.get_logger(__name__)
@@ -16,24 +17,30 @@ logger = structlog.get_logger(__name__)
 class ContractPoster(Flare):
     """A class to post data to a specified smart contract."""
 
-    def __init__(self, settings: OnchainContractSettings, flare_instance: Flare):
+    def __init__(
+        self,
+        contract_settings: OnchainContractSettings,
+        ecosystem_settings: EcosystemSettingsModel,
+    ):
         """
         Initializes the ContractPoster.
 
         Args:
-            settings: The on-chain contract settings.
-            flare_instance: An instance of the Flare class for blockchain interactions.
+            contract_settings: The on-chain contract settings.
+            ecosystem_settings: The ecosystem settings for the parent Flare class.
         """
-        super().__init__(flare_instance.settings) # type: ignore
-        self.contract_settings = settings
-        with open(self.contract_settings.abi_path, "r") as f:
+        # Initialize the parent Flare class with the ecosystem settings
+        super().__init__(ecosystem_settings)
+
+        self.contract_settings = contract_settings
+        with open(self.contract_settings.abi_path) as f:
             abi = json.load(f)
         self.contract = self.w3.eth.contract(
             address=self.w3.to_checksum_address(self.contract_settings.contract_address),
             abi=abi,
         )
 
-    async def post_data(self, data: Dict[str, Any]) -> str:
+    async def post_data(self, data: Dict[str, Any]) -> str | None:
         """
         Posts data to the smart contract.
 
@@ -47,18 +54,22 @@ class ContractPoster(Flare):
             FlareTxError: If the transaction fails.
         """
         try:
-            function_call = self.contract.functions[self.contract_settings.function_name](
-                data.get("invoiceId", ""),
-                int(data.get("amountDue", 0)),
-                data.get("issueDate", ""),
+            function_name = self.contract_settings.function_name
+            invoice_id = data.get("invoice_id", "")
+            amount_due = int(data.get("amount_due", 0))
+            issue_date = data.get("issue_date", "")
+
+            function_call = self.contract.functions[function_name](
+                invoice_id,
+                amount_due,
+                issue_date,
             )
 
             tx_params: TxParams = await self.build_transaction(
                 function_call, self.w3.to_checksum_address(self.address) # type: ignore
-            ) # type: ignore
+            )
             tx_hash = await self.sign_and_send_transaction(tx_params)
-            if not tx_hash:
-                raise FlareTxError("Transaction failed and did not return a hash.")
+
             logger.info("Data posted to contract successfully", tx_hash=tx_hash)
             return tx_hash
         except Exception as e:
