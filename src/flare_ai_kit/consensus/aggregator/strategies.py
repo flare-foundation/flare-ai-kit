@@ -24,3 +24,5 @@ def weighted_average(predictions: list[Prediction]) -> float:
 
     weighted_sum = sum(float(p.prediction) * p.confidence for p in predictions)
     return weighted_sum / total_weight
+
+
