@@ -1,25 +1,25 @@
-from .ftsov2 import FtsoV2
 from .da_layer import (
-    DataAvailabilityLayer,
     AttestationData,
+    AttestationNotFoundError,
     AttestationRequest,
     AttestationResponse,
-    MerkleProof,
-    VotingRoundData,
     DALayerError,
-    AttestationNotFoundError,
+    DataAvailabilityLayer,
+    MerkleProof,
     MerkleProofError,
+    VotingRoundData,
 )
+from .ftsov2 import FtsoV2
 
 __all__ = [
-    "FtsoV2",
-    "DataAvailabilityLayer",
     "AttestationData",
+    "AttestationNotFoundError",
     "AttestationRequest",
     "AttestationResponse",
-    "MerkleProof",
-    "VotingRoundData",
     "DALayerError",
-    "AttestationNotFoundError",
+    "DataAvailabilityLayer",
+    "FtsoV2",
+    "MerkleProof",
     "MerkleProofError",
+    "VotingRoundData",
 ]

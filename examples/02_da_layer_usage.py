@@ -17,7 +17,7 @@ Requirements:
 
 import asyncio
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from flare_ai_kit.ecosystem.protocols import (
     AttestationData,
@@ -76,7 +76,9 @@ async def demonstrate_da_layer_basic_usage() -> None:
         print(f"❌ Unexpected error: {e}")
 
 
-async def demonstrate_supported_attestation_types(da_layer: DataAvailabilityLayer):
+async def demonstrate_supported_attestation_types(
+    da_layer: DataAvailabilityLayer,
+) -> None:
     """Show supported attestation types."""
     print("\n" + "=" * 60)
     print("📋 Supported Attestation Types")
@@ -102,7 +104,7 @@ async def demonstrate_supported_attestation_types(da_layer: DataAvailabilityLaye
         print(f"❌ Failed to retrieve attestation types: {e}")
 
 
-async def demonstrate_voting_rounds(da_layer: DataAvailabilityLayer):
+async def demonstrate_voting_rounds(da_layer: DataAvailabilityLayer) -> None:
     """Show recent voting rounds information."""
     print("\n" + "=" * 60)
     print("🗳️  Recent Voting Rounds")
@@ -118,7 +120,8 @@ async def demonstrate_voting_rounds(da_layer: DataAvailabilityLayer):
             try:
                 round_data = await da_layer.get_voting_round_data(round_num)
                 rounds.append(round_data)
-            except Exception:
+            except Exception as e:
+                logger.debug("Skipping round %d: %s", round_num, e)
                 continue  # Skip rounds that don't exist
 
         print(f"Latest {len(rounds)} voting rounds:")
@@ -126,12 +129,13 @@ async def demonstrate_voting_rounds(da_layer: DataAvailabilityLayer):
         print("-" * 60)
 
         for round_data in rounds:
-            timestamp = datetime.fromtimestamp(round_data.timestamp, tz=timezone.utc)
+            timestamp = datetime.fromtimestamp(round_data.timestamp, tz=UTC)
             finalized = "✅ Yes" if round_data.finalized else "⏳ No"
 
             print(
                 f"{round_data.voting_round:>8d} {finalized:>10} "
-                f"{round_data.total_attestations:>12d} {timestamp.strftime('%Y-%m-%d %H:%M'):>20}"
+                f"{round_data.total_attestations:>12d} "
+                f"{timestamp.strftime('%Y-%m-%d %H:%M'):>20}"
             )
 
         # Try to get detailed data for the latest finalized round
@@ -142,7 +146,9 @@ async def demonstrate_voting_rounds(da_layer: DataAvailabilityLayer):
         print(f"❌ Failed to retrieve voting rounds: {e}")
 
 
-async def demonstrate_round_details(da_layer: DataAvailabilityLayer, voting_round: int):
+async def demonstrate_round_details(
+    da_layer: DataAvailabilityLayer, voting_round: int
+) -> None:
     """Show detailed information for a specific round."""
     print(f"\n📊 Detailed information for voting round {voting_round}:")
 
@@ -152,7 +158,7 @@ async def demonstrate_round_details(da_layer: DataAvailabilityLayer, voting_roun
         print(f"  Voting Round: {round_data.voting_round}")
         print(f"  Merkle Root: {round_data.merkle_root}")
         print(
-            f"  Timestamp: {datetime.fromtimestamp(round_data.timestamp, tz=timezone.utc)}"
+            f"  Timestamp: {datetime.fromtimestamp(round_data.timestamp, tz=UTC)}"
         )
         print(f"  Total Attestations: {round_data.total_attestations}")
         print(f"  Finalized: {'Yes' if round_data.finalized else 'No'}")
@@ -176,7 +182,7 @@ async def demonstrate_round_details(da_layer: DataAvailabilityLayer, voting_roun
         print(f"❌ Failed to get round details: {e}")
 
 
-async def demonstrate_attestation_search(da_layer: DataAvailabilityLayer):
+async def demonstrate_attestation_search(da_layer: DataAvailabilityLayer) -> None:
     """Search for specific types of attestations."""
     print("\n" + "=" * 60)
     print("🔍 Attestation Search Examples")
@@ -221,10 +227,11 @@ async def demonstrate_attestation_search(da_layer: DataAvailabilityLayer):
 
 async def demonstrate_merkle_verification(
     da_layer: DataAvailabilityLayer, attestation: AttestationData
-):
+) -> None:
     """Demonstrate Merkle proof verification."""
     print(
-        f"\n🔐 Verifying Merkle proof for attestation in round {attestation.response.voting_round}..."
+        f"\n🔐 Verifying Merkle proof for attestation in round "
+        f"{attestation.response.voting_round}..."
     )
 
     try:
@@ -244,7 +251,7 @@ async def demonstrate_merkle_verification(
         print(f"  ❌ Unexpected error during verification: {e}")
 
 
-async def demonstrate_historical_data(da_layer: DataAvailabilityLayer):
+async def demonstrate_historical_data(da_layer: DataAvailabilityLayer) -> None:
     """Demonstrate historical data retrieval."""
     print("\n" + "=" * 60)
     print("📚 Historical Data Retrieval")
@@ -252,7 +259,7 @@ async def demonstrate_historical_data(da_layer: DataAvailabilityLayer):
 
     try:
         # Get data from the last 24 hours
-        end_time = datetime.now()
+        end_time = datetime.now(UTC)
         start_time = end_time - timedelta(hours=24)
 
         print(
@@ -286,7 +293,7 @@ async def demonstrate_historical_data(da_layer: DataAvailabilityLayer):
             print("\nFirst few attestations:")
             for i, attestation in enumerate(historical_data[:3], 1):
                 resp = attestation.response
-                timestamp = datetime.fromtimestamp(resp.lowest_used_timestamp)
+                timestamp = datetime.fromtimestamp(resp.lowest_used_timestamp, tz=UTC)
                 print(
                     f"  {i}. [{resp.attestation_type}] Round {resp.voting_round}, "
                     f"Time: {timestamp.strftime('%H:%M:%S')}"
@@ -296,7 +303,7 @@ async def demonstrate_historical_data(da_layer: DataAvailabilityLayer):
         print(f"❌ Failed to retrieve historical data: {e}")
 
 
-async def demonstrate_advanced_usage():
+async def demonstrate_advanced_usage() -> None:
     """Demonstrate advanced DA Layer usage patterns."""
     print("\n" + "=" * 80)
     print("🚀 Advanced Usage Patterns")
@@ -341,7 +348,7 @@ async def demonstrate_advanced_usage():
         print(f"❌ Advanced usage example failed: {e}")
 
 
-async def main():
+async def main() -> None:
     """Main function to run all examples."""
     print("🌟 Flare Data Availability Layer Connector Examples")
     print("This script demonstrates comprehensive usage of the DA Layer API")
