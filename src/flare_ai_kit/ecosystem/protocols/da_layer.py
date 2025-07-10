@@ -1,7 +1,7 @@
 """Interactions with Flare Data Availability (DA) Layer."""
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import TracebackType
 from typing import Any, Self, TypeVar
 from urllib.parse import urljoin
@@ -12,6 +12,9 @@ import structlog
 from flare_ai_kit.common import FlareAIKitError
 from flare_ai_kit.ecosystem.flare import Flare
 from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
+
+# HTTP Status Codes
+HTTP_NOT_FOUND = 404
 
 logger = structlog.get_logger(__name__)
 
@@ -167,6 +170,11 @@ class DataAvailabilityLayer(Flare):
             logger.exception(msg)
             raise DALayerError(msg) from e
 
+    def _raise_not_found_error(self, endpoint: str) -> None:
+        """Helper method to raise AttestationNotFoundError."""
+        msg = f"Resource not found: {endpoint}"
+        raise AttestationNotFoundError(msg)
+
     async def _make_request(
         self,
         method: str,
@@ -191,7 +199,8 @@ class DataAvailabilityLayer(Flare):
 
         """
         if not self.session:
-            raise DALayerError("HTTP session not initialized. Use create() method.")
+            msg = "HTTP session not initialized. Use create() method."
+            raise DALayerError(msg)
 
         url = urljoin(self.da_layer_base_url, endpoint)
 
@@ -199,8 +208,8 @@ class DataAvailabilityLayer(Flare):
             async with self.session.request(
                 method=method, url=url, params=params, json=data
             ) as response:
-                if response.status == 404:
-                    raise AttestationNotFoundError(f"Resource not found: {endpoint}")
+                if response.status == HTTP_NOT_FOUND:
+                    self._raise_not_found_error(endpoint)
 
                 response.raise_for_status()
                 result = await response.json()
@@ -512,8 +521,8 @@ class DataAvailabilityLayer(Flare):
 
             logger.info(
                 "Retrieved historical attestation data",
-                start_time=datetime.fromtimestamp(start_timestamp, tz=timezone.utc),
-                end_time=datetime.fromtimestamp(end_timestamp, tz=timezone.utc),
+                start_time=datetime.fromtimestamp(start_timestamp, tz=UTC),
+                end_time=datetime.fromtimestamp(end_timestamp, tz=UTC),
                 count=len(attestations),
             )
 
