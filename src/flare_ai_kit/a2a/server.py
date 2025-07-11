@@ -66,14 +66,15 @@ class A2ARequestHandler:
 
             if inspect.isawaitable(result):
                 return await result
-            else:
-                return result
 
         except (json.JSONDecodeError, ValidationError) as e:
             return JSONRPCResponse(
                 id=getattr(request_data, "id", None),
                 error=InternalError(data=str(e)),
             )
+        else:
+            return result
+
 
 
 def create_app(service: A2AService, agent_card: AgentCard | None = None) -> FastAPI:

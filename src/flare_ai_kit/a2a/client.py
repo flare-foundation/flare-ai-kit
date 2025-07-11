@@ -40,43 +40,21 @@ class A2AClient:
         self.task_manager = TaskManager(db_path)
         self.agent_cards: dict[str, AgentCard] = {}
         self.available_skills: list[AgentSkill] = []
-        self.skill_to_agents: dict[
-            str, list[str]
-        ] = {}  # skill name -> list of agent URLs
-
-
-    # def send_message(
-    #     self, agent_base_url: str, message: SendMessageRequest, *, timeout: float = 5.0
-    # ) -> SendMessageResponse:
-    #     """Send a message to the agent and manage task tracking."""
-    #     message.params.message.messageId = self._generate_message_id()
-
-    #     with httpx.Client(timeout=timeout) as client:
-    #         response = client.post(agent_base_url, json=message.model_dump())
-
-    #         print(response)
-    #         if response.status_code == httpx.codes.OK:
-    #             send_msg_response = SendMessageResponse.model_validate_json(
-    #                 response.text
-    #             )
-
-    #             if isinstance(send_msg_response.result, Task):
-    #                 task = send_msg_response.result
-    #                 self.task_manager.upsert_task(task.id, task.status.state)
-
-    #             return send_msg_response
-    #         error_message = f"Error: {response.status_code}"
-    #         raise A2AClientError(error_message)
-
+        self.skill_to_agents: dict[str, list[str]] = (
+            {}
+        )  # skill name -> list of agent URLs
 
     async def send_message(
-        self, agent_base_url: str, message: SendMessageRequest, *, timeout: float = 30.0
+        self,
+        agent_base_url: str,
+        message: SendMessageRequest,
+        *,
+        timeout_seconds: float = 30.0,
     ) -> SendMessageResponse:
         """Send a message to the agent and manage task tracking."""
-        message.params.message.messageId = self._generate_message_id()
+        message.params.message.message_id = self._generate_message_id()
 
-        # Send the message to the agent
-        async with httpx.AsyncClient(timeout=timeout) as client:
+        async with httpx.AsyncClient(timeout=timeout_seconds) as client:
             response = await client.post(agent_base_url, json=message.model_dump())
 
             if response.status_code == httpx.codes.OK:
