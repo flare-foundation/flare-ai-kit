@@ -7,7 +7,6 @@ from pydantic import SecretStr
 
 from flare_ai_kit.agent.settings_models import AgentSettingsModel
 from flare_ai_kit.common import (
-    FAssetsContractError,
     FAssetsError,
     FAssetType,
 )
@@ -40,7 +39,9 @@ async def fassets_instance(monkeypatch: "MonkeyPatch") -> FAssets:  # type: igno
     # Use the async factory method
     instance = await FAssets.create(settings.ecosystem)
     # Set a proper checksum address
-    instance.address = instance.w3.to_checksum_address("0x0000000000000000000000000000000000000001")
+    instance.address = instance.w3.to_checksum_address(
+        "0x0000000000000000000000000000000000000001"
+    )
 
     yield instance  # type: ignore[reportReturnType]
 
@@ -140,16 +141,16 @@ async def test_error_handling(fassets_instance: FAssets) -> None:
     if not hasattr(fassets_instance, "get_agent_info"):
         pytest.skip("get_agent_info method not implemented")
 
-    # Test with non-existent agent - should raise FAssetsError for unsupported type
+    # Test with unsupported FAsset type (FBTC is not available in test)
     with pytest.raises(FAssetsError, match="Asset manager not found"):
         await fassets_instance.get_agent_info(
-            FAssetType.FXRP, "0x0000000000000000000000000000000000000000"
+            FAssetType.FBTC, "0x0000000000000000000000000000000000000000"
         )
 
-    # Test with invalid reservation ID - should raise FAssetsError for unsupported type
+    # Test with invalid reservation ID for unsupported type
     if hasattr(fassets_instance, "get_collateral_reservation_data"):
         with pytest.raises(FAssetsError, match="Asset manager not found"):
-            await fassets_instance.get_collateral_reservation_data(FAssetType.FXRP, 999999)
+            await fassets_instance.get_collateral_reservation_data(FAssetType.FBTC, 999999)
 
 
 @pytest.mark.asyncio
@@ -244,8 +245,8 @@ async def test_swap_fasset_for_native_no_router(fassets_instance: FAssets) -> No
         await fassets_instance.swap_fasset_for_native(
             FAssetType.FXRP,
             amount_in=1000000,
-            amount_out_min=500000000000000000,
-            deadline=1234567890,
+            _amount_out_min=500000000000000000,
+            _deadline=1234567890,
         )
 
 
@@ -262,9 +263,9 @@ async def test_swap_native_for_fasset_no_router(fassets_instance: FAssets) -> No
     with pytest.raises(FAssetsError, match="SparkDEX router not initialized"):
         await fassets_instance.swap_native_for_fasset(
             FAssetType.FXRP,
-            amount_out_min=900000,
-            deadline=1234567890,
-            amount_in=1000000000000000000,
+            _amount_out_min=900000,
+            _deadline=1234567890,
+            _amount_in=1000000000000000000,
         )
 
 
@@ -282,9 +283,9 @@ async def test_swap_fasset_for_fasset_no_router(fassets_instance: FAssets) -> No
         await fassets_instance.swap_fasset_for_fasset(
             FAssetType.FXRP,
             FAssetType.FBTC,
-            amount_in=1000000,
-            amount_out_min=500000,
-            deadline=1234567890,
+            _amount_in=1000000,
+            _amount_out_min=500000,
+            _deadline=1234567890,
         )
 
 
@@ -301,7 +302,8 @@ async def test_swap_fasset_for_native_unsupported(
     class MockRouter:
         address = "0x1111111111111111111111111111111111111111"
 
-    fassets_instance.sparkdex_router = MockRouter()
+    mock_router = MockRouter()
+    monkeypatch.setattr(fassets_instance, "sparkdex_router", mock_router)
 
     # Mock get_fasset_allowance and approve_fasset
     monkeypatch.setattr(
@@ -313,15 +315,16 @@ async def test_swap_fasset_for_native_unsupported(
         fassets_instance, "approve_fasset", AsyncMock(return_value="0x" + "1" * 64)
     )
 
+    # FBTC is not supported, so it should raise FAssetsError for contract not found
     with pytest.raises(
-        FAssetsContractError,
-        match="Swap FAsset for native failed: Transaction logic not implemented for test environment",
+        FAssetsError,
+        match="FAsset contract not found",
     ):
         await fassets_instance.swap_fasset_for_native(
             FAssetType.FBTC,  # Unsupported on most networks
             amount_in=1000000,
-            amount_out_min=500000000000000000,
-            deadline=1234567890,
+            _amount_out_min=500000000000000000,
+            _deadline=1234567890,
         )
 
 
@@ -338,15 +341,16 @@ async def test_swap_fasset_for_fasset_unsupported_from(
     class MockRouter:
         address = "0x1111111111111111111111111111111111111111"
 
-    fassets_instance.sparkdex_router = MockRouter()
+    mock_router = MockRouter()
+    monkeypatch.setattr(fassets_instance, "sparkdex_router", mock_router)
 
     with pytest.raises(FAssetsError, match="FAsset contract not found"):
         await fassets_instance.swap_fasset_for_fasset(
             FAssetType.FBTC,  # Unsupported from
             FAssetType.FXRP,
-            amount_in=1000000,
-            amount_out_min=500000,
-            deadline=1234567890,
+            _amount_in=1000000,
+            _amount_out_min=500000,
+            _deadline=1234567890,
         )
 
 
@@ -363,15 +367,16 @@ async def test_swap_fasset_for_fasset_unsupported_to(
     class MockRouter:
         address = "0x1111111111111111111111111111111111111111"
 
-    fassets_instance.sparkdex_router = MockRouter()
+    mock_router = MockRouter()
+    monkeypatch.setattr(fassets_instance, "sparkdex_router", mock_router)
 
     with pytest.raises(FAssetsError, match="FAsset contract not found"):
         await fassets_instance.swap_fasset_for_fasset(
             FAssetType.FXRP,
             FAssetType.FBTC,  # Unsupported to
-            amount_in=1000000,
-            amount_out_min=500000,
-            deadline=1234567890,
+            _amount_in=1000000,
+            _amount_out_min=500000,
+            _deadline=1234567890,
         )
 
 
@@ -397,9 +402,9 @@ async def test_execute_minting_unsupported(
     with pytest.raises(FAssetsError, match="Asset manager not found"):
         await fassets_instance.execute_minting(
             FAssetType.FBTC,
-            collateral_reservation_id=123,
-            payment_reference="0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-            recipient="0x0000000000000000000000000000000000000000",
+            _collateral_reservation_id=123,
+            _payment_reference="0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+            _recipient="0x0000000000000000000000000000000000000000",
         )
 
 
