@@ -19,7 +19,11 @@ async def test_fetch_mentions_success():
     mock_response = MagicMock()
     mock_response.data = [mock_tweet]
 
-    with patch.object(connector.client, "search_recent_tweets", new=AsyncMock(return_value=mock_response)):
+    with patch.object(
+        connector.client,
+        "search_recent_tweets",
+        new=AsyncMock(return_value=mock_response),
+    ):
         results = await connector.fetch_mentions("Hello")
 
     assert len(results) == 1
@@ -28,7 +32,6 @@ async def test_fetch_mentions_success():
     assert results[0]["author_id"] == "123"
     assert results[0]["tweet_id"] == "456"
     assert results[0]["timestamp"] == "2024-01-01T00:00:00"
-
 
 
 def test_post_tweet_success():

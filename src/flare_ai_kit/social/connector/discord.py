@@ -32,12 +32,14 @@ class DiscordConnector(SocialConnector):
         if message.author == self.client.user:
             return
 
-        self._messages.append({
-            "platform": "discord",
-            "content": message.content,
-            "author_id": str(message.author.id),
-            "timestamp": str(message.created_at),
-        })
+        self._messages.append(
+            {
+                "platform": "discord",
+                "content": message.content,
+                "author_id": str(message.author.id),
+                "timestamp": str(message.created_at),
+            }
+        )
 
     @property
     def platform(self) -> str:
@@ -49,7 +51,9 @@ class DiscordConnector(SocialConnector):
             asyncio.create_task(self.client.start(self.token))
             await self._ready_event.wait()
 
-    async def fetch_mentions(self, query: str = "", limit: int = 10) -> list[dict[str, Any]]:
+    async def fetch_mentions(
+        self, query: str = "", limit: int = 10
+    ) -> list[dict[str, Any]]:
         await self._start_if_needed()
         await asyncio.sleep(1)  # let messages collect
 

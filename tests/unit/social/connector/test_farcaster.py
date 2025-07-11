@@ -20,20 +20,22 @@ async def test_fetch_mentions_returns_results(monkeypatch):
 
     mock_response = MagicMock()
     mock_response.raise_for_status = MagicMock()
-    mock_response.json = MagicMock(return_value={
-        "casts": [
-            {
-                "text": "flare alpha",
-                "author": {"fid": "123"},
-                "timestamp": "2025-07-01T12:00:00Z"
-            },
-            {
-                "text": "flare beta",
-                "author": {"fid": "456"},
-                "timestamp": "2025-07-01T13:00:00Z"
-            }
-        ]
-    })
+    mock_response.json = MagicMock(
+        return_value={
+            "casts": [
+                {
+                    "text": "flare alpha",
+                    "author": {"fid": "123"},
+                    "timestamp": "2025-07-01T12:00:00Z",
+                },
+                {
+                    "text": "flare beta",
+                    "author": {"fid": "456"},
+                    "timestamp": "2025-07-01T13:00:00Z",
+                },
+            ]
+        }
+    )
 
     mock_client = AsyncMock(spec=httpx.AsyncClient)
     mock_client.get.return_value = mock_response

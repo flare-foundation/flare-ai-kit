@@ -25,13 +25,15 @@ class SlackConnector(SocialConnector):
     def platform(self) -> str:
         return "slack"
 
-    async def fetch_mentions(self, query: str = "", limit: int = 10) -> list[dict[str, Any]]:
+    async def fetch_mentions(
+        self, query: str = "", limit: int = 10
+    ) -> list[dict[str, Any]]:
         """Fetch messages from Slack channel that match the query."""
         if not self.token or not self.channel_id:
             return []
 
         try:
-            response = self.client.conversations_history( # type: ignore[reportUnknownMemberType]
+            response = self.client.conversations_history(  # type: ignore[reportUnknownMemberType]
                 channel=self.channel_id,
                 limit=100,
             )

@@ -20,13 +20,13 @@ async def test_fetch_mentions_filters_query(monkeypatch):
             "platform": "discord",
             "content": "Flare is awesome",
             "author_id": "123",
-            "timestamp": "2025-07-01T12:00:00Z"
+            "timestamp": "2025-07-01T12:00:00Z",
         },
         {
             "platform": "discord",
             "content": "Other topic",
             "author_id": "456",
-            "timestamp": "2025-07-01T13:00:00Z"
+            "timestamp": "2025-07-01T13:00:00Z",
         },
     ]
 
@@ -46,19 +46,19 @@ async def test_fetch_mentions_limit(monkeypatch):
             "platform": "discord",
             "content": "flare 1",
             "author_id": "1",
-            "timestamp": "t1"
+            "timestamp": "t1",
         },
         {
             "platform": "discord",
             "content": "flare 2",
             "author_id": "2",
-            "timestamp": "t2"
+            "timestamp": "t2",
         },
         {
             "platform": "discord",
             "content": "flare 3",
             "author_id": "3",
-            "timestamp": "t3"
+            "timestamp": "t3",
         },
     ]
 

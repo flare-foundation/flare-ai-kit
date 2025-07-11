@@ -38,7 +38,9 @@ class TelegramConnector(SocialConnector):
         """Return the platform name."""
         return "telegram"
 
-    async def fetch_mentions(self, query: str = "", limit: int = 10) -> list[dict[str, Any]]:
+    async def fetch_mentions(
+        self, query: str = "", limit: int = 10
+    ) -> list[dict[str, Any]]:
         """Starts polling and filters collected messages by query."""
         await self.app.initialize()
         await self.app.start()
@@ -51,7 +53,9 @@ class TelegramConnector(SocialConnector):
         ]
         return filtered[-limit:]
 
-    async def _on_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def _on_message(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         """Handle incoming messages."""
         message = update.message
         if (
