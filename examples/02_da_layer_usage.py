@@ -157,9 +157,7 @@ async def demonstrate_round_details(
 
         print(f"  Voting Round: {round_data.voting_round}")
         print(f"  Merkle Root: {round_data.merkle_root}")
-        print(
-            f"  Timestamp: {datetime.fromtimestamp(round_data.timestamp, tz=UTC)}"
-        )
+        print(f"  Timestamp: {datetime.fromtimestamp(round_data.timestamp, tz=UTC)}")
         print(f"  Total Attestations: {round_data.total_attestations}")
         print(f"  Finalized: {'Yes' if round_data.finalized else 'No'}")
 

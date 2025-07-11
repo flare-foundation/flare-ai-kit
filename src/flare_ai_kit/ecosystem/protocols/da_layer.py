@@ -314,7 +314,7 @@ class DataAvailabilityLayer(Flare):
 
         """
         endpoint = "attestations/search"
-        params = {"attestationType": attestation_type, "limit": limit}
+        params: dict[str, Any] = {"attestationType": attestation_type, "limit": limit}
 
         if source_id:
             params["sourceId"] = source_id
@@ -325,7 +325,7 @@ class DataAvailabilityLayer(Flare):
 
         try:
             data = await self._make_request("GET", endpoint, params=params)
-            attestations = []
+            attestations: list[AttestationData] = []
 
             for item in data["attestations"]:
                 response = AttestationResponse(
@@ -351,12 +351,11 @@ class DataAvailabilityLayer(Flare):
                 source_id=source_id,
                 count=len(attestations),
             )
-
-            return attestations
-
         except Exception as e:
             msg = f"Failed to retrieve attestations by type {attestation_type}: {e}"
             raise DALayerError(msg) from e
+        else:
+            return attestations
 
     async def verify_merkle_proof(
         self, attestation_data: AttestationData, expected_merkle_root: str | None = None
@@ -412,13 +411,12 @@ class DataAvailabilityLayer(Flare):
                 voting_round=attestation_data.response.voting_round,
                 valid=is_valid,
             )
-
-            return is_valid
-
         except Exception as e:
             msg = f"Failed to verify Merkle proof: {e}"
             logger.exception(msg)
             raise MerkleProofError(msg) from e
+        else:
+            return is_valid
 
     async def get_voting_round_data(self, voting_round: int) -> VotingRoundData:
         """
@@ -453,12 +451,11 @@ class DataAvailabilityLayer(Flare):
                 finalized=round_data.finalized,
                 total_attestations=round_data.total_attestations,
             )
-
-            return round_data
-
         except Exception as e:
             msg = f"Failed to retrieve voting round data for round {voting_round}: {e}"
             raise DALayerError(msg) from e
+        else:
+            return round_data
 
     async def get_historical_data(
         self,
@@ -486,7 +483,7 @@ class DataAvailabilityLayer(Flare):
 
         """
         endpoint = "attestations/historical"
-        params = {
+        params: dict[str, Any] = {
             "startTimestamp": start_timestamp,
             "endTimestamp": end_timestamp,
             "limit": limit,
@@ -499,7 +496,7 @@ class DataAvailabilityLayer(Flare):
 
         try:
             data = await self._make_request("GET", endpoint, params=params)
-            attestations = []
+            attestations: list[AttestationData] = []
 
             for item in data["attestations"]:
                 response = AttestationResponse(
@@ -525,12 +522,11 @@ class DataAvailabilityLayer(Flare):
                 end_time=datetime.fromtimestamp(end_timestamp, tz=UTC),
                 count=len(attestations),
             )
-
-            return attestations
-
         except Exception as e:
             msg = f"Failed to retrieve historical data: {e}"
             raise DALayerError(msg) from e
+        else:
+            return attestations
 
     async def get_supported_attestation_types(self) -> list[dict[str, Any]]:
         """
@@ -552,9 +548,8 @@ class DataAvailabilityLayer(Flare):
             logger.info(
                 "Retrieved supported attestation types", count=len(attestation_types)
             )
-
-            return attestation_types
-
         except Exception as e:
             msg = f"Failed to retrieve supported attestation types: {e}"
             raise DALayerError(msg) from e
+        else:
+            return attestation_types
