@@ -48,12 +48,13 @@ class DiscordConnector(SocialConnector):
 
     async def _start_if_needed(self) -> None:
         if not self.client.is_ready():
-            asyncio.create_task(self.client.start(self.token))
+            self._client_task = asyncio.create_task(self.client.start(self.token))
             await self._ready_event.wait()
 
     async def fetch_mentions(
         self, query: str = "", limit: int = 10
     ) -> list[dict[str, Any]]:
+        """Fetch messages that mention the query."""
         await self._start_if_needed()
         await asyncio.sleep(1)  # let messages collect
 

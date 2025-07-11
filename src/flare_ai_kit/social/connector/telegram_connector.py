@@ -24,7 +24,8 @@ class TelegramConnector(SocialConnector):
         self.chat_id = os.getenv("SOCIAL__TELEGRAM_CHAT_ID")
 
         if not self.token or not self.chat_id:
-            raise ValueError("Telegram token or chat ID not provided")
+            msg = "Telegram token or chat ID not provided"
+            raise ValueError(msg)
 
         self._messages: list[dict[str, Any]] = []
 
@@ -53,9 +54,7 @@ class TelegramConnector(SocialConnector):
         ]
         return filtered[-limit:]
 
-    async def _on_message(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def _on_message(self, update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle incoming messages."""
         message = update.message
         if (

@@ -20,7 +20,7 @@ class XConnector(SocialConnector):
 
     def __init__(self) -> None:
         self.bearer_token = os.getenv("SOCIAL__X_API_KEY", "")
-        self.client = AsyncClient(bearer_token=self.bearer_token)  # type: ignore
+        self.client = AsyncClient(bearer_token=self.bearer_token)  # type: ignore[reportGeneralTypeIssues]
 
         self.auth = OAuth1UserHandler(
             os.getenv("SOCIAL__X_API_KEY", ""),
@@ -28,7 +28,7 @@ class XConnector(SocialConnector):
             os.getenv("SOCIAL__X_ACCESS_TOKEN", ""),
             os.getenv("SOCIAL__X_ACCESS_TOKEN_SECRET", ""),
         )
-        self.sync_client = API(self.auth)  # type: ignore
+        self.sync_client = API(self.auth)  # type: ignore[reportGeneralTypeIssues]
 
     @property
     def platform(self) -> str:
@@ -38,7 +38,7 @@ class XConnector(SocialConnector):
     async def fetch_mentions(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
         """Fetch recent tweets matching the query."""
         try:
-            raw_response = await self.client.search_recent_tweets(  # type: ignore
+            raw_response = await self.client.search_recent_tweets(  # type: ignore[reportGeneralTypeIssues]
                 query=query,
                 max_results=limit,
                 tweet_fields=["created_at", "author_id"],

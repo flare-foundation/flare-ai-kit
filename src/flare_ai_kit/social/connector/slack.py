@@ -23,6 +23,7 @@ class SlackConnector(SocialConnector):
 
     @property
     def platform(self) -> str:
+        """Return the platform name."""
         return "slack"
 
     async def fetch_mentions(
@@ -51,6 +52,6 @@ class SlackConnector(SocialConnector):
             ]
 
             return results[-limit:]
-        except SlackApiError as e:
-            logger.exception("Slack connector error: %s", e)
+        except SlackApiError:
+            logger.exception("Slack connector error: %s")
             return []

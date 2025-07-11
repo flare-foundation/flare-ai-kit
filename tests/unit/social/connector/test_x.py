@@ -48,7 +48,3 @@ def test_post_tweet_success():
     assert result["tweet_id"] == "123"
     assert result["content"] == "Test tweet"
     assert result["created_at"] == "2024-01-01T00:00:00"
-
-
-def test_reply_to_tweet_success():
-    connector = XConnector()

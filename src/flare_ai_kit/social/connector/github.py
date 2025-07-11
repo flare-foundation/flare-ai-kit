@@ -1,4 +1,4 @@
-# src/flare_ai_kit/social/connector/github.py
+"""GitHub Connector for Flare AI Kit."""
 
 import os
 from typing import Any
