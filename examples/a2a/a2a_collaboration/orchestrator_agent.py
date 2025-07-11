@@ -1,7 +1,7 @@
-import os
 import asyncio
-from typing import List, Optional
+import os
 from uuid import uuid4
+
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from pydantic_ai import Agent, RunContext
@@ -10,9 +10,9 @@ from pydantic_ai.providers.google_gla import GoogleGLAProvider
 
 from flare_ai_kit.a2a import A2AClient
 from flare_ai_kit.a2a.schemas import (
-    SendMessageRequest,
-    MessageSendParams,
     Message,
+    MessageSendParams,
+    SendMessageRequest,
     TextPart,
 )
 
@@ -20,10 +20,13 @@ load_dotenv()
 
 
 class OrchestratorDeps(BaseModel):
+    """Dependencies required by the Orchestrator agent."""
+
     client: A2AClient
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = {
+        "arbitrary_types_allowed": True,
+    }
 
 
 model = GeminiModel(
@@ -36,26 +39,35 @@ orchestrator_agent = Agent(
     deps_type=OrchestratorDeps,
     system_prompt=(
         "You are an orchestration agent. "
-        "Your job is to break down user queries into smaller subtasks and assign each to the most suitable skill. "
-        "You can run these tasks either in parallel (if independent) or sequentially (if later tasks need earlier results). "
-        "Use route_workflow for flexible sequencing of tasks and route_tasks if all tasks are independent. "
+        "Your job is to break down user queries into smaller subtasks "
+        "and assign each to the most suitable skill. "
+        "You can run these tasks either in parallel (if independent) "
+        "or sequentially (if later tasks need earlier results). "
+        "Use route_workflow for flexible sequencing of tasks "
+        "and route_tasks if all tasks are independent. "
         "Use list_skills if you need to see the available skills first."
     ),
 )
 
+
 class SubTask(BaseModel):
+    """Input schema for orchestrator sub task."""
+
     query: str
     skill_name: str
 
+
 class WorkflowSubTask(BaseModel):
+    """Input schema for orchestrator workflow."""
+
     query: str
     skill_name: str
-    use_previous_result: Optional[bool] = False
+    use_previous_result: bool | None = False
 
 
 @orchestrator_agent.tool
 async def list_skills(ctx: RunContext[OrchestratorDeps]) -> str:
-    """Returns a list of available skills and their descriptions"""
+    """Returns a list of available skills and their descriptions."""
     return "\n".join(
         f"{skill.name}: {skill.description}"
         for skill in ctx.deps.client.available_skills
@@ -63,10 +75,16 @@ async def list_skills(ctx: RunContext[OrchestratorDeps]) -> str:
 
 
 @orchestrator_agent.tool
-async def route_tasks(ctx: RunContext[OrchestratorDeps], subtasks: List[SubTask]) -> str:
-    """Routes independent subtasks to the appropriate agents and returns their combined responses."""
+async def route_tasks(
+    ctx: RunContext[OrchestratorDeps], subtasks: list[SubTask]
+) -> str:
+    """
+    Routes independent subtasks to the appropriate agents.
+
+    Return their combined responses.
+    """
     client = ctx.deps.client
-    results: List[str] = []
+    results: list[str] = []
 
     for subtask in subtasks:
         agent_urls = client.skill_to_agents.get(subtask.skill_name)
@@ -86,7 +104,8 @@ async def route_tasks(ctx: RunContext[OrchestratorDeps], subtasks: List[SubTask]
         )
 
         try:
-            response = await client.send_message(agent_url, message)
+            response = await client.send_message(agent_url, message, timeout=30.0)
+            print(response)
             if isinstance(response.result, Message):
                 text = "".join(
                     part.text
@@ -98,20 +117,25 @@ async def route_tasks(ctx: RunContext[OrchestratorDeps], subtasks: List[SubTask]
                 results.append(f"[No result from agent at {agent_url}]")
 
         except Exception as e:
-            results.append(f"[Error from agent at {agent_url}]: {str(e)}")
+            results.append(f"[Error from agent at {agent_url}]: {e!s}")
 
     return (
         "\n---\n".join(results) if results else "No results received from any agents."
     )
 
+
 @orchestrator_agent.tool
 async def route_workflow(
-    ctx: RunContext[OrchestratorDeps], subtasks: List[WorkflowSubTask]
+    ctx: RunContext[OrchestratorDeps], subtasks: list[WorkflowSubTask]
 ) -> str:
-    """Executes a workflow of subtasks, optionally passing previous results to the next subtask."""
+    """
+    Executes a workflow of subtasks.
+
+    Optionally passing previous results to the next subtask.
+    """
     client = ctx.deps.client
     previous_result = ""
-    results: List[str] = []
+    results: list[str] = []
 
     for subtask in subtasks:
         input_query = subtask.query
@@ -147,14 +171,15 @@ async def route_workflow(
                 results.append(f"[No result from agent at {agent_url}]")
 
         except Exception as e:
-            results.append(f"[Error from agent at {agent_url}]: {str(e)}")
+            results.append(f"[Error from agent at {agent_url}]: {e!s}")
 
     return "\n---\n".join(results) if results else "No results received in workflow."
 
 
 if __name__ == "__main__":
 
-    async def main():
+    async def main() -> None:
+        """Async entrypoint for orchestrator agent."""
         client = A2AClient(db_path="orchestrator-agent-client.db")
 
         await client.discover(
@@ -169,6 +194,7 @@ if __name__ == "__main__":
             "Get me the current BTC price, and then use that to analyze BTC trends.",
             deps=deps,
         )
+
         print(result.output)
 
     asyncio.run(main())

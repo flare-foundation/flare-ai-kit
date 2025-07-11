@@ -1,18 +1,30 @@
+"""
+TaskManager module.
+
+contains the TaskManager class with methods for handling\
+CRUD operations on tasks.
+"""
+
 import sqlite3
 import uuid
-from flare_ai_kit.a2a.schemas import Task, TaskStatus, TaskState
-from typing import Dict, Optional, Set
+from typing import ClassVar
+
+from flare_ai_kit.a2a.schemas import Task, TaskState, TaskStatus
+
 
 class TaskManager:
-    def __init__(self, db_path: str = "tasks.db"):
+    """class responsible for task CRUD operations (SQLite supported)."""
+
+    def __init__(self, db_path: str = "tasks.db") -> None:
+        """Init method for the task manager."""
         self.db_path = db_path
         self.connection = sqlite3.connect(db_path)
         self.cursor = self.connection.cursor()
         self._create_task_table()
-        self.tasks: Dict[str, Task] = {}
-        self.cancelled_tasks: Set[str] = set()
+        self.tasks: dict[str, Task] = {}
+        self.cancelled_tasks: set[str] = set()
 
-    def _create_task_table(self):
+    def _create_task_table(self) -> None:
         """Create the tasks table if it doesn't exist."""
         query = """
         CREATE TABLE IF NOT EXISTS tasks (
@@ -40,13 +52,15 @@ class TaskManager:
     def update_task(self, remote_task_id: str, status: str) -> None:
         """Update the task status and result."""
         query = """
-        UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE remote_task_id = ?;
+        UPDATE tasks
+        SET status = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE remote_task_id = ?;
         """
         self.cursor.execute(query, (status, remote_task_id))
         self.connection.commit()
 
     def upsert_task(self, remote_task_id: str, status: str) -> None:
-        """Insert a new task or update existing task's status and updated_at timestamp."""
+        """Insert a new task or update existing task's status."""
         query = """
         INSERT INTO tasks (remote_task_id, status, updated_at)
         VALUES (?, ?, CURRENT_TIMESTAMP)
@@ -67,7 +81,7 @@ class TaskManager:
         self.add_task(task_id, TaskState.submitted)
         return task
 
-    def get_task(self, task_id: str) -> Optional[Task]:
+    def get_task(self, task_id: str) -> Task | None:
         """Retrieve task by ID."""
         task = self.tasks.get(task_id)
         if task is None:
@@ -80,19 +94,19 @@ class TaskManager:
                 self.tasks[task_id] = task
         return task
 
-    def update_task_status(self, task_id: str, status: TaskStatus):
+    def update_task_status(self, task_id: str, status: TaskStatus) -> None:
         """Update task status in both memory and database."""
         if task_id in self.tasks:
             self.tasks[task_id].status = status
             self.update_task(task_id, status.state)
 
-    terminal_task_state = [
-            TaskState.canceled,
-            TaskState.completed,
-            TaskState.failed,
-            TaskState.rejected,
-            TaskState.unknown,
-        ]
+    terminal_task_state: ClassVar[list[TaskState]] = [
+        TaskState.canceled,
+        TaskState.completed,
+        TaskState.failed,
+        TaskState.rejected,
+        TaskState.unknown,
+    ]
 
     def cancel_task(self, task_id: str) -> bool:
         """Cancel a task and update status in both memory and database."""

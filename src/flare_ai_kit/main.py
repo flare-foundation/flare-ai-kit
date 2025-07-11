@@ -1,11 +1,12 @@
 """Entry point for Flare AI Kit SDK."""
 
+from .a2a import A2AClient
 from .config import AppSettings, settings
 from .ecosystem import BlockExplorer, Flare, FtsoV2
 from .ingestion import GithubIngestor
 from .rag.vector import VectorRAGPipeline, create_vector_rag_pipeline
 from .social import TelegramClient, XClient
-from .a2a import A2AClient
+
 
 class FlareAIKit:
     """The main entry point for the Flare AI Kit SDK."""
@@ -33,7 +34,7 @@ class FlareAIKit:
         self._telegram = None
         self._github_ingestor = None
         self._x_client = None
-        self._a2a = None
+        self._a2a_client = None
 
     # Ecosystem Interaction Methods
     @property
@@ -90,8 +91,8 @@ class FlareAIKit:
             self._github_ingestor = GithubIngestor(self.settings.ingestion)
         return self._github_ingestor
 
-    def a2a_client(self, sqlite_db_path: str):
-        """"Access the A2A client and provide and optional db path for task management"""
-        if self._a2a is None:
-            self._a2a = A2AClient(sqlite_db_path)
-        return self._a2a
+    def a2a_client(self, sqlite_db_path: str) -> A2AClient:
+        """Access the A2A client with optional db path."""
+        if self._a2a_client is None:
+            self._a2a_client = A2AClient(sqlite_db_path)
+        return self._a2a_client

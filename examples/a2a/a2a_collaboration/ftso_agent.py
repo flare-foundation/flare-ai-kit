@@ -1,38 +1,39 @@
-import os
 import locale
+import os
 from uuid import uuid4
+
+from dotenv import load_dotenv
+from pydantic import BaseModel
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.providers.google_gla import GoogleGLAProvider
-from typing import Optional, List
-from pydantic import BaseModel
+
 from flare_ai_kit import FlareAIKit
 from flare_ai_kit.a2a import A2AServer
-from flare_ai_kit.a2a.task_management import TaskManager
 from flare_ai_kit.a2a.schemas import (
-    AgentCard,
     AgentCapabilities,
+    AgentCard,
     AgentProvider,
     AgentSkill,
+    Message,
     SendMessageRequest,
     SendMessageResponse,
-    Message,
     TextPart,
 )
-from dotenv import load_dotenv
+from flare_ai_kit.a2a.task_management import TaskManager
 
 load_dotenv()
 
 
 class PriceRequest(BaseModel):
-    """Model for price requests"""
+    """Model for price requests."""
 
     symbol: str
-    base_currency: Optional[str] = "USD"
+    base_currency: str | None = "USD"
 
 
 class PriceResponse(BaseModel):
-    """Model for price responses"""
+    """Model for price responses."""
 
     symbol: str
     price: float
@@ -42,12 +43,13 @@ class PriceResponse(BaseModel):
 
 
 class AgentDependencies(BaseModel):
-    """Dependencies for the agent"""
+    """Dependencies for the agent."""
 
     flare_kit: FlareAIKit
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = {
+        "arbitrary_types_allowed": True,
+    }
 
 
 model = GeminiModel(
@@ -60,17 +62,26 @@ price_agent = Agent(
     deps_type=AgentDependencies,
     retries=2,
     system_prompt=(
-        "You are a crypto price assistant. You help users get current prices for cryptocurrency pairs. "
-        "When users ask for prices, identify the cryptocurrency symbols they want and call the appropriate tools. "
-        "Common symbols include FLR, BTC, ETH, ADA, etc. Default to USD pairs unless specified otherwise. "
-        "Do also display the formated price in parenthesis for easier readability. "
-        "An example: The current price of BTC is 111070.88 USD ($111,070.88). "
-        "Ensure you add the forward slash for the pair between the symbols."
+        "You are a crypto price assistant. "
+        "You help users get current prices for cryptocurrency pairs. "
+        "When users ask for prices, "
+        "identify the cryptocurrency symbols they want "
+        "and call the appropriate tools. "
+        "Common symbols include FLR, BTC, ETH, ADA, etc. "
+        "Default to USD pairs unless specified otherwise. "
+        "Do also display the formated price in "
+        "parenthesis for easier readability. "
+        "An example: The current price of BTC "
+        "is 111070.88 USD ($111,070.88). "
+        "Ensure you add the forward slash "
+        "for the pair between the symbols."
     ),
 )
 
 
-def format_price(price: float):
+def format_price(price: float, target_locale: str = "en_US.UTF-8") -> str:
+    """Returns price formated in currency: defaults to USD."""
+    locale.setlocale(locale.LC_ALL, target_locale)
     return locale.currency(price, grouping=True)
 
 
@@ -78,7 +89,7 @@ def format_price(price: float):
 async def get_crypto_price(
     ctx: RunContext[AgentDependencies], symbol: str
 ) -> PriceResponse:
-    """Get the latest price for a cryptocurrency pair"""
+    """Get the latest price for a cryptocurrency pair."""
     try:
         ftso = await ctx.deps.flare_kit.ftso
 
@@ -92,20 +103,21 @@ async def get_crypto_price(
             timestamp="now",
         )
     except Exception as e:
-        raise ValueError(f"Could not get price for {symbol}: {str(e)}")
+        msg = f"Could not get price for {symbol}: {e!s}"
+        raise ValueError(msg) from e
 
 
 @price_agent.tool
 async def get_multiple_prices(
-    ctx: RunContext[AgentDependencies], symbols: List[str]
-) -> List[PriceResponse]:
-    """Get prices for multiple cryptocurrency pairs"""
+    ctx: RunContext[AgentDependencies], symbols: list[str]
+) -> list[PriceResponse]:
+    """Get prices for multiple cryptocurrency pairs."""
     try:
         # Use FlareAIKit to get the FTSO client
         ftso = await ctx.deps.flare_kit.ftso
         prices_data = await ftso.get_latest_prices(symbols)
 
-        results: List[PriceResponse] = []
+        results: list[PriceResponse] = []
         for i, symbol in enumerate(symbols):
             price = prices_data[i]
             results.append(
@@ -117,17 +129,19 @@ async def get_multiple_prices(
                     timestamp="now",
                 )
             )
-
-        return results
     except Exception as e:
-        raise ValueError(f"Could not get prices for {symbols}: {str(e)}")
+        msg = f"Could not get prices for {symbols}: {e!s}"
+        raise ValueError(msg) from e
+    else:
+        return results
+
 
 
 task_manager = TaskManager()
 
 
-async def handle_send_message(request_body: SendMessageRequest):
-    """Message send handler"""
+async def handle_send_message(request_body: SendMessageRequest) -> SendMessageResponse:
+    """Message send handler."""
     try:
         user_message = ""
         for part in request_body.params.message.parts:
@@ -149,7 +163,7 @@ async def handle_send_message(request_body: SendMessageRequest):
             )
         )
     except Exception as e:
-        error_message = f"I apologize, but I encountered an error: {str(e)}"
+        error_message = f"I apologize, but I encountered an error: {e!s}"
         return SendMessageResponse(
             result=Message(
                 messageId=uuid4().hex,
