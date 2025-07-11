@@ -1,0 +1,49 @@
+Metadata-Version: 2.1
+Name: langchain-qdrant
+Version: 0.2.0
+Summary: An integration package connecting Qdrant and LangChain
+Home-page: https://github.com/langchain-ai/langchain
+License: MIT
+Requires-Python: >=3.9,<4
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Provides-Extra: fastembed
+Requires-Dist: fastembed (>=0.3.3,<0.4.0) ; (python_version >= "3.9" and python_version < "3.13") and (extra == "fastembed")
+Requires-Dist: langchain-core (>=0.2.43,<0.4.0,!=0.3.0,!=0.3.1,!=0.3.2,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14)
+Requires-Dist: pydantic (>=2.7.4,<3.0.0)
+Requires-Dist: qdrant-client (>=1.10.1,<2.0.0)
+Project-URL: Repository, https://github.com/langchain-ai/langchain
+Project-URL: Release Notes, https://github.com/langchain-ai/langchain/releases?q=tag%3A%22langchain-qdrant%3D%3D0%22&expanded=true
+Project-URL: Source Code, https://github.com/langchain-ai/langchain/tree/master/libs/partners/qdrant
+Description-Content-Type: text/markdown
+
+# langchain-qdrant
+
+This package contains the LangChain integration with [Qdrant](https://qdrant.tech/).
+
+## Installation
+
+```bash
+pip install -U langchain-qdrant
+```
+
+## Usage
+
+The `Qdrant` class exposes the connection to the Qdrant vector store.
+
+```python
+from langchain_qdrant import Qdrant
+
+embeddings = ... # use a LangChain Embeddings class
+
+vectorstore = Qdrant.from_existing_collection(
+    embeddings=embeddings,
+    collection_name="<COLLECTION_NAME>",
+    url="http://localhost:6333",
+)
+```
+
