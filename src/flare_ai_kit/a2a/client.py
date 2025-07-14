@@ -57,7 +57,7 @@ class A2AClient:
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
             response = await client.post(agent_base_url, json=message.model_dump())
 
-            if response.status_code == httpx.codes.OK:
+            if response.status_code == httpx.codes.OK.value:
                 send_msg_response = SendMessageResponse.model_validate_json(
                     response.text
                 )
@@ -105,7 +105,7 @@ class A2AClient:
                 full_url = normalized_urls[index]
                 response = responses[index]
 
-                if response.status_code != httpx.codes.OK:
+                if response.status_code != httpx.codes.OK.value:
                     error_msg = f"""
                     Failed to fetch agent card from {full_url}:
                     HTTP {response.status_code}
