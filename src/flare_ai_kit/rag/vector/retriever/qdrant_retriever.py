@@ -103,14 +103,14 @@ class QdrantRetriever(BaseRetriever):
             vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
         )
 
-    def retrieve(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+    def retrieve(self, query: str, top_k: int = 5) -> list[SemanticSearchResult]:
         """
-        Embed the query, search Qdrant for top-k similar vectors, and return documents with content and metadata.
+        Embed the query, search Qdrant for top-k similar vectors, and return SemanticSearchResult objects.
         Args:
             query (str): The search query string.
             top_k (int): Number of top results to return.
         Returns:
-            List[Dict[str, Any]]: List of documents with content and metadata.
+            list[SemanticSearchResult]: List of documents with content and metadata.
         """
         query_vec = self.embedding_client.embed_content(query)[0]
         search_result = self.client.search(
@@ -119,17 +119,7 @@ class QdrantRetriever(BaseRetriever):
             limit=top_k,
             with_payload=True,
         )
-        results = []
-        for hit in search_result:
-            payload = hit.payload or {}
-            results.append(
-                {
-                    "text": payload.get("text", ""),
-                    "metadata": {k: v for k, v in payload.items() if k != "text"},
-                    "score": hit.score,
-                }
-            )
-        return results
+        return convert_points_to_results(search_result)
 
     def semantic_search(
         self,
@@ -137,7 +127,7 @@ class QdrantRetriever(BaseRetriever):
         collection_name: str,
         top_k: int = 5,
         score_threshold: float | None = None,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[SemanticSearchResult]:
         """
         Perform semantic search using vector embeddings.
         Args:
@@ -146,7 +136,7 @@ class QdrantRetriever(BaseRetriever):
             top_k (int): Number of top results to return.
             score_threshold (float | None): Optional minimum score threshold for results.
         Returns:
-            List[Dict[str, Any]]: List of documents with content and metadata.
+            list[SemanticSearchResult]: List of documents with content and metadata.
         """
         if not query or not query.strip():
             return []
@@ -160,17 +150,7 @@ class QdrantRetriever(BaseRetriever):
             score_threshold=score_threshold,
             with_payload=True,
         )
-        results = []
-        for hit in search_result:
-            payload = hit.payload or {}
-            results.append(
-                {
-                    "text": payload.get("text", ""),
-                    "metadata": {k: v for k, v in payload.items() if k != "text"},
-                    "score": hit.score,
-                }
-            )
-        return results
+        return convert_points_to_results(search_result)
 
     def keyword_search(
         self, keywords: List[str], collection_name: str, top_k: int = 5
