@@ -5,17 +5,25 @@ from flare_ai_kit.rag.vector.indexer.local_file_indexer import LocalFileIndexer
 from flare_ai_kit.rag.vector.indexer.ingest_and_embed import ingest_and_embed
 from flare_ai_kit.rag.vector.indexer.qdrant_upserter import upsert_to_qdrant
 from flare_ai_kit.rag.vector.retriever.qdrant_retriever import QdrantRetriever
-from flare_ai_kit.rag.vector.embedding.gemini_embedding import GeminiEmbedding
 from qdrant_client import QdrantClient
-from pydantic import BaseModel, Field, PositiveInt
+from pydantic import BaseModel, Field, HttpUrl, PositiveInt
 
+# using a mocke model for example purposes
+def simple_hash_embedding(text: str, dim: int = 8) -> List[float]:
+    # Simple deterministic hash-based embedding for demo
+    return [float((sum(ord(c) for c in text) + i) % 100) / 100 for i in range(dim)]
+
+class DummyEmbedding:
+    def embed_content(self, contents, title=None, task_type=None):
+        if isinstance(contents, str):
+            contents = [contents]
+        return [simple_hash_embedding(text) for text in contents]
 
 # VectorDbSettingsModel for retriever
 class VectorDbSettingsModel(BaseModel):
-    qdrant_vector_size: PositiveInt = Field(768)  # Gemini embedding default size
+    qdrant_vector_size: PositiveInt = Field(8)
     qdrant_batch_size: PositiveInt = Field(100)
     embeddings_model: str = Field("demo-collection")
-
 
 if __name__ == "__main__":
     # 1. Prepare a sample text file
@@ -30,17 +38,10 @@ if __name__ == "__main__":
 
     # 2. Set up chunker and indexer
     chunker = FixedSizeChunker(chunk_size=15)
-    indexer = LocalFileIndexer(
-        root_dir=".", chunker=chunker, allowed_extensions={".txt"}
-    )
+    indexer = LocalFileIndexer(root_dir=".", chunker=chunker, allowed_extensions={".txt"})
 
-    # 3. Use the Gemini embedding model
-    api_key = os.environ.get("GEMINI_API_KEY")
-    model = "gemini-embedding-001"
-    output_dimensionality = 768
-    embedding_model = GeminiEmbedding(
-        api_key=api_key, model=model, output_dimensionality=output_dimensionality
-    )
+    # 3. Use dummy embedding model
+    embedding_model = DummyEmbedding()
 
     # 4. Ingest and embed
     data = ingest_and_embed(indexer, embedding_model, batch_size=8)
@@ -49,7 +50,7 @@ if __name__ == "__main__":
     # 5. Upsert to Qdrant
     qdrant_url = "http://localhost:6333"
     collection_name = "demo-collection"
-    vector_size = 768  # Gemini embedding output size
+    vector_size = 8
     upsert_to_qdrant(data, qdrant_url, collection_name, vector_size, batch_size=8)
     print(f"Upserted {len(data)} vectors to Qdrant collection '{collection_name}'.")
 
@@ -64,4 +65,4 @@ if __name__ == "__main__":
         print(f"Result {i} (score={res['score']:.3f}):\n{res['text']}\n---")
 
     # Cleanup demo file
-    os.remove(tmp_file)
+    os.remove(tmp_file) 

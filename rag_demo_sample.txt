@@ -1,5 +1,0 @@
-
-    Retrieval-Augmented Generation (RAG) is a technique that combines information retrieval with generative models. 
-    It allows large language models to access external knowledge bases for more accurate and up-to-date answers.
-    This demo shows how to chunk, embed, store, and search text using Qdrant.
-    

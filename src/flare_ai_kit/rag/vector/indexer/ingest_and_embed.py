@@ -25,12 +25,12 @@ def ingest_and_embed(
     batch_metadata = []
 
     for item in indexer.ingest():
-        batch_texts.append(item["text"])
-        batch_metadata.append(item["metadata"])
+        batch_texts.append(item['text'])
+        batch_metadata.append(item['metadata'])
         if len(batch_texts) == batch_size:
             embeddings = embedding_model.embed_content(batch_texts)
             for emb, text, meta in zip(embeddings, batch_texts, batch_metadata):
-                results.append({"embedding": emb, "text": text, "metadata": meta})
+                results.append({'embedding': emb, 'text': text, 'metadata': meta})
             batch_texts = []
             batch_metadata = []
 
@@ -38,6 +38,6 @@ def ingest_and_embed(
     if batch_texts:
         embeddings = embedding_model.embed_content(batch_texts)
         for emb, text, meta in zip(embeddings, batch_texts, batch_metadata):
-            results.append({"embedding": emb, "text": text, "metadata": meta})
+            results.append({'embedding': emb, 'text': text, 'metadata': meta})
 
-    return results
+    return results 

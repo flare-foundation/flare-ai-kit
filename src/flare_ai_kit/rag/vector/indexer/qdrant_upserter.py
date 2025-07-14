@@ -9,7 +9,7 @@ def make_id(metadata: Dict[str, Any]) -> str:
     """
     Generate a deterministic UUID for a chunk using its metadata.
     """
-    key = f"{metadata.get('file_path', '')}:{metadata.get('chunk_index', '')}"
+    key = f"{metadata.get('file_path','')}:{metadata.get('chunk_index','')}"
     # Use UUID5 to deterministically generate a UUID from the key
     return str(uuid.uuid5(uuid.NAMESPACE_DNS, key))
 
@@ -42,16 +42,16 @@ def upsert_to_qdrant(
 
     # Upsert in batches
     for i in range(0, len(data), batch_size):
-        batch = data[i : i + batch_size]
+        batch = data[i:i+batch_size]
         points = [
             PointStruct(
-                id=make_id(item["metadata"]),
-                vector=item["embedding"],
+                id=make_id(item['metadata']),
+                vector=item['embedding'],
                 payload={
-                    **item["metadata"],
-                    "text": item["text"],
+                    **item['metadata'],
+                    'text': item['text'],
                 },
             )
             for item in batch
         ]
-        client.upsert(collection_name=collection_name, points=points)
+        client.upsert(collection_name=collection_name, points=points) 

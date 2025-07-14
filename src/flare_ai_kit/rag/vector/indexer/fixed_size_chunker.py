@@ -1,12 +1,10 @@
 from .base import BaseChunker
 from typing import List
 
-
 class FixedSizeChunker(BaseChunker):
     """
     Splits text into chunks of a fixed number of words.
     """
-
     def __init__(self, chunk_size: int = 200, overlap: int = 0):
         """
         Args:
@@ -21,10 +19,10 @@ class FixedSizeChunker(BaseChunker):
         chunks = []
         i = 0
         while i < len(words):
-            chunk = words[i : i + self.chunk_size]
-            chunks.append(" ".join(chunk))
+            chunk = words[i:i + self.chunk_size]
+            chunks.append(' '.join(chunk))
             if self.overlap > 0:
                 i += self.chunk_size - self.overlap
             else:
                 i += self.chunk_size
-        return chunks
+        return chunks 

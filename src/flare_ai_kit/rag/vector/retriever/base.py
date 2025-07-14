@@ -11,7 +11,6 @@ class BaseRetriever(ABC):
     Abstract base class for retrieval modules.
     Handles querying the vector database and returning relevant documents.
     """
-
     @abstractmethod
     def retrieve(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
         """

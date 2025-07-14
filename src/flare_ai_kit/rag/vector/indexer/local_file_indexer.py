@@ -2,12 +2,10 @@ import os
 from typing import Any, Iterator, Set
 from .base import BaseIndexer, BaseChunker
 
-
 class LocalFileIndexer(BaseIndexer):
     """
     Indexes local files from a directory, chunks their content, and yields chunked data with metadata.
     """
-
     def __init__(
         self,
         root_dir: str,
@@ -16,7 +14,7 @@ class LocalFileIndexer(BaseIndexer):
     ):
         self.root_dir = root_dir
         self.chunker = chunker
-        self.allowed_extensions = allowed_extensions or {".md", ".txt", ".py"}
+        self.allowed_extensions = allowed_extensions or {'.md', '.txt', '.py'}
 
     def ingest(self) -> Iterator[dict[str, Any]]:
         """
@@ -30,7 +28,7 @@ class LocalFileIndexer(BaseIndexer):
                     continue
                 file_path = os.path.join(dirpath, filename)
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, 'r', encoding='utf-8') as f:
                         text = f.read()
                 except Exception as e:
                     # Optionally log or skip unreadable files
@@ -38,11 +36,11 @@ class LocalFileIndexer(BaseIndexer):
                 chunks = self.chunker.chunk(text)
                 for idx, chunk in enumerate(chunks):
                     yield {
-                        "text": chunk,
-                        "metadata": {
-                            "file_path": file_path,
-                            "chunk_index": idx,
-                            "total_chunks": len(chunks),
-                            "file_name": filename,
-                        },
-                    }
+                        'text': chunk,
+                        'metadata': {
+                            'file_path': file_path,
+                            'chunk_index': idx,
+                            'total_chunks': len(chunks),
+                            'file_name': filename,
+                        }
+                    } 
