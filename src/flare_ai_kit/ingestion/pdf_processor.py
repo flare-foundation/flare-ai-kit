@@ -1,17 +1,34 @@
 """Processes PDF files to extract data and post it to a smart contract."""
 
 import fitz  # type: ignore # PyMuPDF
-import pytesseract # type: ignore
+import pytesseract  # type: ignore
 from PIL import Image
-from typing import Dict, Any
+from typing import Dict, Any, Type
 import structlog
-from pydantic import ValidationError
+from pydantic import BaseModel, create_model, ValidationError
 
-from flare_ai_kit.ingestion.settings_models import PDFTemplateSettings, PDFIngestionSettings
+from flare_ai_kit.ingestion.settings_models import (
+    PDFTemplateSettings,
+    PDFIngestionSettings,
+)
 from flare_ai_kit.onchain.contract_poster import ContractPoster
-from flare_ai_kit.common.schemas import PDFData
 
 logger = structlog.get_logger(__name__)
+
+
+# A mapping from data_type strings in the settings to actual Python types
+TYPE_MAP: dict[str, type] = {"string": str, "integer": int, "float": float}
+
+
+def _create_dynamic_model(template: PDFTemplateSettings) -> Type[BaseModel]:
+    """Dynamically creates a Pydantic model from a PDF template."""
+    # Create a dictionary of field definitions for Pydantic
+    fields = {
+        field.field_name: (TYPE_MAP.get(field.data_type, str), ...)
+        for field in template.fields
+    }
+    # Use Pydantic's create_model function to build the class
+    return create_model(f"{template.template_name}Model", **fields)  # type: ignore
 
 
 class PDFProcessor:
@@ -30,9 +47,13 @@ class PDFProcessor:
         """
         self.settings = settings
         self.contract_poster = contract_poster
-        self.templates = {template.template_name: template for template in settings.templates}
+        self.templates = {
+            template.template_name: template for template in settings.templates
+        }
 
-    def _extract_text_from_area(self, page: fitz.Page, rect: fitz.Rect, use_ocr: bool) -> str:
+    def _extract_text_from_area(
+        self, page: fitz.Page, rect: fitz.Rect, use_ocr: bool
+    ) -> str:
         """
         Extracts text from a specified area of a page.
 
@@ -45,13 +66,11 @@ class PDFProcessor:
             The extracted text.
         """
         if use_ocr:
-            pix = page.get_pixmap(clip=rect) # type: ignore
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples) # type: ignore
-            # Explicitly cast the result to str to satisfy type checkers
-            return str(pytesseract.image_to_string(img).strip()) # type: ignore
+            pix = page.get_pixmap(clip=rect)  # type: ignore
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # type: ignore
+            return str(pytesseract.image_to_string(img).strip())  # type: ignore
         else:
-            # Explicitly cast the result to str to satisfy type checkers
-            return str(page.get_text("text", clip=rect).strip()) # type: ignore
+            return str(page.get_text("text", clip=rect).strip())  # type: ignore
 
     def process_pdf(self, file_path: str, template_name: str) -> Dict[str, Any]:
         """
@@ -78,21 +97,33 @@ class PDFProcessor:
             page = doc[0]  # Assuming single-page documents for now
 
             for field_settings in template.fields:
-                rect = fitz.Rect(field_settings.x0, field_settings.y0, field_settings.x1, field_settings.y1)
+                rect = fitz.Rect(
+                    field_settings.x0,
+                    field_settings.y0,
+                    field_settings.x1,
+                    field_settings.y1,
+                )
                 text = self._extract_text_from_area(page, rect, self.settings.use_ocr)
                 extracted_data[field_settings.field_name] = text
 
             doc.close()
 
             # Validate and normalize data
-            pdf_data = PDFData(**extracted_data) # type: ignore
+            DynamicPDFModel = _create_dynamic_model(template)
+            pdf_data = DynamicPDFModel(**extracted_data)  # type: ignore
             return pdf_data.model_dump()
 
         except (IOError, fitz.FileDataError) as e:
-            logger.error("Failed to open or process PDF", file_path=file_path, error=str(e))
+            logger.error(
+                "Failed to open or process PDF", file_path=file_path, error=str(e)
+            )
             raise ValueError(f"Could not process PDF file: {file_path}") from e
         except ValidationError as e:
-            logger.error("Extracted data failed validation", extracted_data=extracted_data, error=str(e))
+            logger.error(
+                "Extracted data failed validation",
+                extracted_data=extracted_data,
+                error=str(e),
+            )
             raise ValueError("Extracted data is invalid") from e
 
     async def ingest_and_post(self, file_path: str, template_name: str) -> str:
@@ -106,7 +137,11 @@ class PDFProcessor:
         Returns:
             The transaction hash of the on-chain transaction.
         """
-        logger.info("Starting PDF ingestion and posting", file_path=file_path, template=template_name)
+        logger.info(
+            "Starting PDF ingestion and posting",
+            file_path=file_path,
+            template=template_name,
+        )
         try:
             extracted_data = self.process_pdf(file_path, template_name)
             tx_hash = await self.contract_poster.post_data(extracted_data)

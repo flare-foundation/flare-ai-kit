@@ -36,7 +36,9 @@ class ContractPoster(Flare):
         with open(self.contract_settings.abi_path) as f:
             abi = json.load(f)
         self.contract = self.w3.eth.contract(
-            address=self.w3.to_checksum_address(self.contract_settings.contract_address),
+            address=self.w3.to_checksum_address(
+                self.contract_settings.contract_address
+            ),
             abi=abi,
         )
 
@@ -66,7 +68,8 @@ class ContractPoster(Flare):
             )
 
             tx_params: TxParams = await self.build_transaction(
-                function_call, self.w3.to_checksum_address(self.address) # type: ignore
+                function_call,
+                self.w3.to_checksum_address(self.address),  # type: ignore
             )
             tx_hash = await self.sign_and_send_transaction(tx_params)
 

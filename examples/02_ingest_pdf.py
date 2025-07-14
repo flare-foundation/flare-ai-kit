@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, mock_open, patch
 
 from flare_ai_kit import FlareAIKit
 from flare_ai_kit.config import AppSettings
-from create_sample_invoice import create_invoice_and_get_coords # type: ignore
+from data.create_sample_invoice import create_invoice_and_get_coords # type: ignore
 
 MOCK_TX_HASH = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
 
@@ -24,7 +24,7 @@ async def main():
     coords = create_invoice_and_get_coords() # type: ignore
     print("-" * 30)
 
-    print("🚀 Starting PDF ingestion example with a real PDF...")
+    print("🚀 Starting PDF ingestion example...")
 
     # --- Configuration with programmatically found and CASTED coordinates ---
     settings = AppSettings(  # type: ignore
@@ -78,7 +78,7 @@ async def main():
         kit = FlareAIKit(config=settings)
 
         tx_hash = await kit.pdf_processor.ingest_and_post(
-            file_path="examples/sample_invoice.pdf",
+            file_path="examples/data/sample_invoice.pdf",
             template_name="generated_invoice",
         )
 
