@@ -76,7 +76,6 @@ class A2ARequestHandler:
             return result
 
 
-
 def create_app(service: A2AService, agent_card: AgentCard | None = None) -> FastAPI:
     """Factory function to create the FastAPI app with routes."""
     app = FastAPI()

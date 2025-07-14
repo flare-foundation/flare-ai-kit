@@ -136,7 +136,6 @@ async def get_multiple_prices(
         return results
 
 
-
 task_manager = TaskManager()
 
 

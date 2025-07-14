@@ -32,6 +32,7 @@ class AgentDependencies(BaseModel):
         "arbitrary_types_allowed": True,
     }
 
+
 # Historical price data
 historical_prices = {
     "BTC": {

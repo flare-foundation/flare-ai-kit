@@ -40,9 +40,9 @@ class A2AClient:
         self.task_manager = TaskManager(db_path)
         self.agent_cards: dict[str, AgentCard] = {}
         self.available_skills: list[AgentSkill] = []
-        self.skill_to_agents: dict[str, list[str]] = (
-            {}
-        )  # skill name -> list of agent URLs
+        self.skill_to_agents: dict[
+            str, list[str]
+        ] = {}  # skill name -> list of agent URLs
 
     async def send_message(
         self,
