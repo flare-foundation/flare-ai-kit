@@ -8,10 +8,12 @@ from flare_ai_kit.rag.vector.retriever.qdrant_retriever import QdrantRetriever
 from qdrant_client import QdrantClient
 from pydantic import BaseModel, Field, HttpUrl, PositiveInt
 
+
 # using a mocke model for example purposes
 def simple_hash_embedding(text: str, dim: int = 8) -> List[float]:
     # Simple deterministic hash-based embedding for demo
     return [float((sum(ord(c) for c in text) + i) % 100) / 100 for i in range(dim)]
+
 
 class DummyEmbedding:
     def embed_content(self, contents, title=None, task_type=None):
@@ -19,11 +21,13 @@ class DummyEmbedding:
             contents = [contents]
         return [simple_hash_embedding(text) for text in contents]
 
+
 # VectorDbSettingsModel for retriever
 class VectorDbSettingsModel(BaseModel):
     qdrant_vector_size: PositiveInt = Field(8)
     qdrant_batch_size: PositiveInt = Field(100)
     embeddings_model: str = Field("demo-collection")
+
 
 if __name__ == "__main__":
     # 1. Prepare a sample text file
@@ -38,7 +42,9 @@ if __name__ == "__main__":
 
     # 2. Set up chunker and indexer
     chunker = FixedSizeChunker(chunk_size=15)
-    indexer = LocalFileIndexer(root_dir=".", chunker=chunker, allowed_extensions={".txt"})
+    indexer = LocalFileIndexer(
+        root_dir=".", chunker=chunker, allowed_extensions={".txt"}
+    )
 
     # 3. Use dummy embedding model
     embedding_model = DummyEmbedding()
@@ -65,4 +71,4 @@ if __name__ == "__main__":
         print(f"Result {i} (score={res['score']:.3f}):\n{res['text']}\n---")
 
     # Cleanup demo file
-    os.remove(tmp_file) 
+    os.remove(tmp_file)
