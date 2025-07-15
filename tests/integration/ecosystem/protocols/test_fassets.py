@@ -16,6 +16,8 @@ from flare_ai_kit.ecosystem.protocols.fassets import FAssets
 if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
 
+    from flare_ai_kit.common.schemas import AgentInfo
+
 
 @pytest_asyncio.fixture(scope="function")
 async def fassets_instance(monkeypatch: "MonkeyPatch") -> FAssets:  # type: ignore[reportInvalidTypeForm]
@@ -128,7 +130,7 @@ async def test_fxrp_operations(fassets_instance: FAssets) -> None:
 
     # Test getting all agents - skip if method doesn't exist
     if hasattr(fassets_instance, "get_all_agents"):
-        agents = await fassets_instance.get_all_agents(FAssetType.FXRP)
+        agents: list[AgentInfo] = await fassets_instance.get_all_agents(FAssetType.FXRP)
         print(f"FXRP agents: {agents}")
     else:
         print("get_all_agents method not implemented")
@@ -514,7 +516,9 @@ async def test_full_workflow_with_supported_fasset(fassets_instance: FAssets) ->
 
     # Test agent operations - skip if method doesn't exist
     if hasattr(fassets_instance, "get_all_agents"):
-        agents = await fassets_instance.get_all_agents(active_fasset_type)
+        agents: list[AgentInfo] = await fassets_instance.get_all_agents(
+            active_fasset_type
+        )
         assert isinstance(agents, list)
     else:
         print("get_all_agents method not implemented")

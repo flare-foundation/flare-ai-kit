@@ -7,7 +7,7 @@ from web3.contract import Contract
 from web3.exceptions import Web3Exception
 
 from flare_ai_kit.common.exceptions import FAssetsContractError, FAssetsError
-from flare_ai_kit.common.schemas import FAssetInfo, FAssetType
+from flare_ai_kit.common.schemas import AgentInfo, FAssetInfo, FAssetType
 from flare_ai_kit.ecosystem.flare import Flare
 from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
 
@@ -178,7 +178,7 @@ class FAssets(Flare):
             "liquidation_threshold": 120,  # 120% liquidation threshold
         }
 
-    async def get_all_agents(self, fasset_type: FAssetType) -> list[dict[str, Any]]:
+    async def get_all_agents(self, fasset_type: FAssetType) -> list[AgentInfo]:
         """Get all agents for a specific FAsset."""
         if fasset_type.value not in self.asset_managers:
             msg = "Asset manager not found"
@@ -186,30 +186,39 @@ class FAssets(Flare):
 
         # Placeholder implementation - would call contract methods
         return [
-            {
-                "agent_address": "0x1234567890abcdef1234567890abcdef12345678",
-                "name": "Agent 1",
-                "available_lots": 100,
-                "collateral_ratio": 200,
-            }
+            AgentInfo(
+                agent_address="0x1234567890abcdef1234567890abcdef12345678",
+                name="Mock Agent 1",
+                description="Mock agent 1 for testing",
+                icon_url="https://example.com/icon1.png",
+                info_url="https://example.com/info1",
+                vault_collateral_token=(
+                    "0x" + "1234567890abcdef1234567890abcdef12345678"
+                ),
+                fee_share=100,
+                mint_count=100,
+            )
         ]
 
     async def get_agent_info(
         self, fasset_type: FAssetType, agent_address: str
-    ) -> dict[str, Any]:
+    ) -> AgentInfo:
         """Get information about a specific agent."""
         if fasset_type.value not in self.asset_managers:
             msg = "Asset manager not found"
             raise FAssetsError(msg)
 
         # Placeholder implementation - would call contract methods
-        return {
-            "agent_address": agent_address,
-            "name": "Agent",
-            "available_lots": 50,
-            "collateral_ratio": 180,
-            "vault_collateral": 1000000,
-        }
+        return AgentInfo(
+            agent_address=agent_address,
+            name="Mock Agent",
+            description="Mock agent for testing",
+            icon_url="https://example.com/icon.png",
+            info_url="https://example.com/info",
+            vault_collateral_token=("0x" + "1234567890abcdef1234567890abcdef12345678"),
+            fee_share=100,
+            mint_count=50,
+        )
 
     async def get_available_lots(
         self, fasset_type: FAssetType, _agent_address: str
