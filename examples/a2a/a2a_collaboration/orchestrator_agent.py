@@ -2,6 +2,7 @@ import asyncio
 import os
 from uuid import uuid4
 
+import structlog
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from pydantic_ai import Agent, RunContext
@@ -17,6 +18,8 @@ from flare_ai_kit.a2a.schemas import (
 )
 
 load_dotenv()
+
+logger = structlog.get_logger(__name__)
 
 
 class OrchestratorDeps(BaseModel):
@@ -104,8 +107,9 @@ async def route_tasks(
         )
 
         try:
-            response = await client.send_message(agent_url, message, timeout=30.0)
-            print(response)
+            response = await client.send_message(
+                agent_url, message, timeout_seconds=30.0
+            )
             if isinstance(response.result, Message):
                 text = "".join(
                     part.text
@@ -195,6 +199,6 @@ if __name__ == "__main__":
             deps=deps,
         )
 
-        print(result.output)
+        logger.info(result.output)
 
     asyncio.run(main())

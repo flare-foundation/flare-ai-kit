@@ -34,7 +34,7 @@ class A2AClientError(Exception):
 class A2AClient:
     """A2AClient responsible for interfacing with A2A servers."""
 
-    def __init__(self, db_path: str = ".") -> None:
+    def __init__(self, db_path: str = ".", http_client_timeout: float = 30.0) -> None:
         """Initialize the A2A client with SQLite database for task tracking."""
         self.db_path = db_path
         self.task_manager = TaskManager(db_path)
@@ -43,6 +43,7 @@ class A2AClient:
         self.skill_to_agents: dict[
             str, list[str]
         ] = {}  # skill name -> list of agent URLs
+        self.http_client = httpx.AsyncClient(timeout=http_client_timeout)
 
     async def send_message(
         self,
@@ -54,21 +55,20 @@ class A2AClient:
         """Send a message to the agent and manage task tracking."""
         message.params.message.message_id = self._generate_message_id()
 
-        async with httpx.AsyncClient(timeout=timeout_seconds) as client:
-            response = await client.post(agent_base_url, json=message.model_dump())
+        response = await self.http_client.post(
+            agent_base_url, json=message.model_dump(), timeout=timeout_seconds
+        )
 
-            if response.status_code == httpx.codes.OK.value:
-                send_msg_response = SendMessageResponse.model_validate_json(
-                    response.text
-                )
+        if response.status_code == httpx.codes.OK.value:
+            send_msg_response = SendMessageResponse.model_validate_json(response.text)
 
-                if isinstance(send_msg_response.result, Task):
-                    task = send_msg_response.result
-                    self.task_manager.upsert_task(task.id, task.status.state)
+            if isinstance(send_msg_response.result, Task):
+                task = send_msg_response.result
+                self.task_manager.upsert_task(task.id, task.status.state)
 
-                return send_msg_response
-            error_message = f"Error: {response.status_code}"
-            raise A2AClientError(error_message)
+            return send_msg_response
+        error_message = f"Error: {response.status_code}"
+        raise A2AClientError(error_message)
 
     def update_skill_knowledgebase(self) -> None:
         """Update the available skills and skill_to_agent index."""
@@ -90,34 +90,33 @@ class A2AClient:
         For example: '<base_url>/.well-known/agent.json'.
         It automatically handles missing or extra slashes.
         """
-        async with httpx.AsyncClient() as client:
-            tasks: list[Coroutine[Any, Any, httpx.Response]] = []
+        tasks: list[Coroutine[Any, Any, httpx.Response]] = []
 
-            normalized_urls: list[str] = []
-            for base_url in agent_base_urls:
-                normalized = base_url.rstrip("/") + "/.well-known/agent.json"
-                normalized_urls.append(normalized)
-                tasks.append(client.get(normalized))
+        normalized_urls: list[str] = []
+        for base_url in agent_base_urls:
+            normalized = base_url.rstrip("/") + "/.well-known/agent.json"
+            normalized_urls.append(normalized)
+            tasks.append(self.http_client.get(normalized))
 
-            responses = await asyncio.gather(*tasks)
+        responses = await asyncio.gather(*tasks)
 
-            for index, base_url in enumerate(agent_base_urls):
-                full_url = normalized_urls[index]
-                response = responses[index]
+        for index, base_url in enumerate(agent_base_urls):
+            full_url = normalized_urls[index]
+            response = responses[index]
 
-                if response.status_code != httpx.codes.OK.value:
-                    error_msg = f"""
-                    Failed to fetch agent card from {full_url}:
-                    HTTP {response.status_code}
-                    """
-                    raise RuntimeError(error_msg)
+            if response.status_code != httpx.codes.OK.value:
+                error_msg = f"""
+                Failed to fetch agent card from {full_url}:\
+                HTTP {response.status_code}
+                """
+                raise RuntimeError(error_msg)
 
-                try:
-                    agent_card = AgentCard.model_validate_json(response.text)
-                    self.agent_cards[base_url.rstrip("/")] = agent_card
-                except (ValidationError, ValueError) as e:
-                    error_msg = f"Failed to parse agent card from {full_url}: {e}"
-                    raise ValueError(error_msg) from e
+            try:
+                agent_card = AgentCard.model_validate_json(response.text)
+                self.agent_cards[base_url.rstrip("/")] = agent_card
+            except (ValidationError, ValueError) as e:
+                error_msg = f"Failed to parse agent card from {full_url}: {e}"
+                raise ValueError(error_msg) from e
 
         self.update_skill_knowledgebase()
 
