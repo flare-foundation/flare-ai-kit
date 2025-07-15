@@ -87,11 +87,11 @@ class FAssets(Flare):
         # For now, we'll use a simplified approach for testing
         # In production, this would query actual contract addresses
         test_fassets = {
-            FAssetType.FXRP: True,   # Available in test
+            FAssetType.FXRP: True,  # Available in test
             FAssetType.FBTC: False,  # Not available in test
-            FAssetType.FDOGE: False, # Not available in test
+            FAssetType.FDOGE: False,  # Not available in test
         }
-        
+
         for fasset_type, is_available in test_fassets.items():
             try:
                 if is_available:
@@ -99,30 +99,41 @@ class FAssets(Flare):
                     fasset_info = FAssetInfo(
                         symbol=fasset_type.value,
                         name=f"Flare {fasset_type.value}",
-                        asset_manager_address="0x1234567890abcdef1234567890abcdef12345678",  # Mock address
-                        f_asset_address="0xabcdef1234567890abcdef1234567890abcdef12",     # Mock address
+                        # Mock addresses
+                        asset_manager_address="0x1234567890abcdef1234567890abcdef12345678",
+                        f_asset_address="0xabcdef1234567890abcdef1234567890abcdef12",
                         underlying_symbol=fasset_type.value[1:],  # Remove 'F' prefix
                         decimals=18,
                         is_active=True,
                     )
                     self.supported_fassets[fasset_type.value] = fasset_info
-                    
+
                     # For testing, we'll create mock contracts with empty ABIs
                     # In production, these would be real contract instances
                     try:
-                        self.asset_managers[fasset_type.value] = await self.get_contract(
+                        self.asset_managers[
+                            fasset_type.value
+                        ] = await self.get_contract(
                             f"{fasset_type.value}AssetManager",
                             fasset_info.asset_manager_address,
                         )
-                        self.fasset_contracts[fasset_type.value] = await self.get_contract(
+                        self.fasset_contracts[
+                            fasset_type.value
+                        ] = await self.get_contract(
                             fasset_type.value,
                             fasset_info.f_asset_address,
                         )
                     except Exception:  # noqa: BLE001
                         # Contract creation failed, but FAsset info is still available
-                        logger.warning(f"Failed to create contracts for {fasset_type.value}", exc_info=True)
+                        logger.warning(
+                            "Failed to create contracts for %s",
+                            fasset_type.value,
+                            exc_info=True,
+                        )
             except Exception:  # noqa: BLE001
-                logger.warning(f"Failed to initialize {fasset_type.value}", exc_info=True)
+                logger.warning(
+                    "Failed to initialize %s", fasset_type.value, exc_info=True
+                )
 
     async def get_supported_fassets(self) -> dict[str, FAssetInfo]:
         """Get information about all supported FAssets."""
@@ -247,9 +258,7 @@ class FAssets(Flare):
 
     # === FASSET TOKEN OPERATIONS ===
 
-    async def get_fasset_balance(
-        self, fasset_type: FAssetType, _address: str
-    ) -> int:
+    async def get_fasset_balance(self, fasset_type: FAssetType, _address: str) -> int:
         """Get FAsset balance for an address."""
         if fasset_type.value not in self.fasset_contracts:
             msg = "FAsset contract not found"
@@ -432,4 +441,3 @@ class FAssets(Flare):
             "Transaction logic not implemented for test environment"
         )
         raise FAssetsContractError(msg)
-

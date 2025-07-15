@@ -1,247 +1,262 @@
-#!/usr/bin/env python3
 """
 Verification script for FAssets implementation.
 
-This script tests that all required functionality is properly implemented,
-including the newly added swap operations.
+This script tests the FAssets adapter to ensure it can:
+1. Connect to the test network
+2. Get supported FAssets
+3. Handle unsupported assets properly
+4. Validate error handling
 """
 
 import asyncio
-import inspect
-import os
-
-# Direct imports to avoid loading main settings
+import logging
 import sys
-from typing import Any
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, TypeVar
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
 
-from flare_ai_kit.common.schemas import FAssetType
+from eth_account import Account
+from pydantic import HttpUrl
+from web3 import Web3
+
+from flare_ai_kit.common.exceptions import FAssetsError
+from flare_ai_kit.common.schemas import (
+    AgentInfo,
+    FAssetType,
+)
 from flare_ai_kit.ecosystem.protocols.fassets import FAssets
 from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
 
+# Add the src directory to the path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-def check_method_signature(
-    cls: Any, method_name: str, expected_params: list[str]
-) -> bool:
-    """Check if a method has the expected parameters."""
-    if not hasattr(cls, method_name):
-        print(f"❌ Missing method: {method_name}")
+logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
+
+
+def create_test_settings() -> EcosystemSettingsModel:
+    """Create test settings for Coston2 network."""
+    # Use a test account with no real value
+    Account.enable_unaudited_hdwallet_features()
+    account = Account.from_mnemonic(
+        "test test test test test test test test test test test junk"
+    )
+    return EcosystemSettingsModel(
+        is_testnet=True,
+        web3_provider_url=HttpUrl("https://coston-api.flare.network/ext/bc/C/rpc"),
+        web3_provider_timeout=5,
+        block_explorer_url=HttpUrl("https://coston-explorer.flare.network/api"),
+        block_explorer_timeout=10,
+        max_retries=3,
+        retry_delay=5,
+        account_private_key=account.key.hex(),
+        account_address=account.address,
+    )
+
+
+async def test_connectivity(fassets: FAssets) -> bool:
+    """Test basic connectivity to the network."""
+    try:
+        # Test connection by getting block number
+        block_number = await fassets.w3.eth.block_number
+        logger.info("Connected to network. Current block: %d", block_number)
+
+        # Check account
+        account = Account.from_key(fassets.private_key)
+        balance_wei = await fassets.w3.eth.get_balance(account.address)
+        balance_eth = Web3.from_wei(balance_wei, "ether")
+        logger.info("Account address: %s", account.address)
+        logger.info("Account balance: %f C2FLR", balance_eth)
+    except (FAssetsError, Exception):
+        logger.exception("Connectivity test failed")
         return False
-
-    method = getattr(cls, method_name)
-    sig = inspect.signature(method)
-    actual_params = list(sig.parameters.keys())
-
-    # Remove 'self' parameter for comparison
-    if actual_params and actual_params[0] == "self":
-        actual_params = actual_params[1:]
-
-    missing_params = set(expected_params) - set(actual_params)
-    if missing_params:
-        print(f"❌ Method {method_name} missing parameters: {missing_params}")
-        return False
-
-    print(f"✅ Method {method_name} has correct signature")
     return True
 
 
-async def test_initialization():
-    """Test that FAssets can be initialized properly."""
-    print("\n=== Testing Initialization ===")
+async def test_supported_fassets(fassets: FAssets) -> bool:
+    """Test getting supported FAssets."""
+    try:
+        supported = await fassets.get_supported_fassets()
+        logger.info("Found %d supported FAsset(s):", len(supported))
+
+        for asset_type, info in supported.items():
+            logger.info("  - %s: %s (%s)", asset_type, info.name, info.symbol)
+
+        _ = await fassets.get_supported_fassets()
+    except FAssetsError:
+        logger.exception("Failed to get supported FAssets")
+        return False
+    return True
+
+
+async def test_asset_info(fassets: FAssets) -> bool:
+    """Test getting asset information."""
+    try:
+        # Test supported asset
+        supported = await fassets.get_supported_fassets()
+
+        for asset_type in supported:
+            try:
+                fasset_type = FAssetType(asset_type)
+                info = await fassets.get_fasset_info(fasset_type)
+                logger.info("\n%s Asset Info:", fasset_type.value)
+                logger.info("  - Name: %s", info.name)
+                logger.info("  - Symbol: %s", info.symbol)
+                logger.info("  - Decimals: %d", info.decimals)
+                logger.info("  - Asset Manager: %s", info.asset_manager_address)
+                logger.info("  - FAsset Token: %s", info.f_asset_address)
+                logger.info("  - Active: %s", info.is_active)
+            except FAssetsError:
+                logger.exception("Failed to get info for %s", asset_type)
+
+    except FAssetsError:
+        logger.exception("Asset info test failed")
+        return False
+    return True
+
+
+async def test_agent_operations(fassets: FAssets) -> bool:
+    """Test agent-related operations."""
+    try:
+        supported = await fassets.get_supported_fassets()
+
+        for asset_type in supported:
+            try:
+                fasset_type = FAssetType(asset_type)
+
+                # Get all agents
+                agents = await fassets.get_all_agents(fasset_type)
+                logger.info(
+                    "\nFound %d agent(s) for %s", len(agents), fasset_type.value
+                )
+
+                # Get info for first agent if available
+                if agents:
+                    agent_info: AgentInfo = await fassets.get_agent_info(
+                        fasset_type, agents[0]
+                    )
+                    logger.info("  - Agent: %s...", agents[0][:10])
+                    logger.info("  - Name: %s", agent_info.name)
+                    logger.info("  - Description: %s", agent_info.description)
+                    logger.info("  - Fee Share: %d", agent_info.fee_share)
+                    logger.info("  - Mint Count: %d", agent_info.mint_count)
+                    logger.info("  - Available Lots: %d", agent_info.available_lots)
+
+                    # Get available lots
+                    lots = await fassets.get_available_lots(fasset_type, agents[0])
+                    if isinstance(lots, dict):
+                        logger.info(
+                            "  - Total available lots: %d", lots.get("total_lots", 0)
+                        )
+                    else:
+                        logger.info("  - Total available lots: %d", lots.total_lots)
+            except FAssetsError:
+                logger.exception("Agent operations failed for %s", asset_type)
+
+    except FAssetsError:
+        logger.exception("Agent operations test failed")
+        return False
+    return True
+
+
+async def test_error_handling(fassets: FAssets) -> bool:
+    """Test error handling for edge cases."""
+    logger.info("\nTesting error handling...")
 
     try:
-        settings = EcosystemSettingsModel()
-        fassets = await FAssets.create(settings)
+        # Test unsupported asset (FBTC is marked as inactive)
+        try:
+            _ = await fassets.get_fasset_info(FAssetType.FBTC)
+        except FAssetsError as e:
+            if "not supported" not in str(e):
+                logger.exception("Unexpected error for unsupported asset")
+                return False
+            logger.info("  - Correctly handles unsupported asset")
+        else:
+            logger.error("Expected error for unsupported asset not raised")
+            return False
 
-        # Check that all required attributes are present
-        required_attrs = [
-            "asset_managers",
-            "supported_fassets",
-            "fasset_contracts",
-            "sparkdex_router",
-            "contracts",
-            "is_testnet",
+        # Test swap without router initialization
+        try:
+            _ = await fassets.swap_fasset_for_native(FAssetType.FXRP, 1000, 500, 123456)
+        except FAssetsError as e:
+            if "router not initialized" not in str(e):
+                logger.exception("Unexpected error for uninitialized router")
+                return False
+            logger.info("  - Correctly handles uninitialized router")
+        else:
+            logger.error("Expected error for uninitialized router not raised")
+            return False
+
+    except Exception:
+        logger.exception("Unexpected error in error handling test")
+        return False
+    return True
+
+
+async def main() -> None:
+    """Run all verification tests."""
+    logger.info("=" * 60)
+    logger.info("FAssets Implementation Verification")
+    logger.info("=" * 60)
+    logger.info("Start time: %s", datetime.now(UTC).isoformat())
+
+    try:
+        # Create test settings and FAssets instance
+        settings = create_test_settings()
+        fassets = await FAssets.create(settings)
+        logger.info("\nFAssets instance created successfully")
+
+        # Run tests
+        tests: Sequence[tuple[str, Callable[[FAssets], Any]]] = [
+            ("Connectivity", test_connectivity),
+            ("Supported FAssets", test_supported_fassets),
+            ("Asset Info", test_asset_info),
+            ("Agent Operations", test_agent_operations),
+            ("Error Handling", test_error_handling),
         ]
 
-        for attr in required_attrs:
-            if hasattr(fassets, attr):
-                print(f"✅ Has attribute: {attr}")
-            else:
-                print(f"❌ Missing attribute: {attr}")
-                return False
+        results: list[tuple[str, bool]] = []
+        for test_name, test_func in tests:
+            logger.info("\n%s", "=" * 40)
+            logger.info("Running test: %s", test_name)
+            try:
+                result = await test_func(fassets)
+                results.append((test_name, result))
+                logger.info("%s: %s", test_name, "PASS" if result else "FAIL")
+            except Exception:
+                logger.exception("Unexpected error in test %s", test_name)
+                results.append((test_name, False))
 
-        # Check supported FAssets
-        supported = await fassets.get_supported_fassets()
-        print(f"✅ Supported FAssets: {list(supported.keys())}")
+        # Print summary
+        logger.info("\n%s", "=" * 40)
+        logger.info("Test Summary:")
+        passed = sum(1 for _, result in results if result)
+        logger.info(
+            "Passed: %d/%d tests (%d%%)",
+            passed,
+            len(results),
+            int(passed * 100 / len(results)),
+        )
 
-        return True
+        for test_name, result in results:
+            logger.info("  - %s: %s", test_name, "PASS" if result else "FAIL")
 
-    except Exception as e:
-        print(f"❌ Initialization failed: {e}")
-        return False
+    except Exception:
+        logger.exception("Test execution failed")
+        sys.exit(1)
 
-
-def test_method_signatures():
-    """Test that all required methods exist with correct signatures."""
-    print("\n=== Testing Method Signatures ===")
-
-    required_methods = {
-        # Core query methods
-        "get_supported_fassets": [],
-        "get_fasset_info": ["fasset_type"],
-        "get_all_agents": ["fasset_type"],
-        "get_agent_info": ["fasset_type", "agent_vault"],
-        "get_available_lots": ["fasset_type", "agent_vault"],
-        "get_asset_manager_settings": ["fasset_type"],
-        # NEW: Balance and allowance methods
-        "get_fasset_balance": ["fasset_type", "account"],
-        "get_fasset_allowance": ["fasset_type", "owner", "spender"],
-        "approve_fasset": ["fasset_type", "spender", "amount"],
-        # NEW: Swap methods (KEY REQUIREMENT!)
-        "swap_fasset_for_native": [
-            "fasset_type",
-            "amount_in",
-            "amount_out_min",
-            "deadline",
-        ],
-        "swap_native_for_fasset": [
-            "fasset_type",
-            "amount_out_min",
-            "deadline",
-            "amount_in",
-        ],
-        "swap_fasset_for_fasset": [
-            "fasset_from",
-            "fasset_to",
-            "amount_in",
-            "amount_out_min",
-            "deadline",
-        ],
-        # Minting workflow
-        "reserve_collateral": [
-            "fasset_type",
-            "agent_vault",
-            "lots",
-            "max_minting_fee_bips",
-            "executor",
-        ],
-        "execute_minting": [
-            "fasset_type",
-            "collateral_reservation_id",
-            "payment_reference",
-            "recipient",
-        ],
-        # Redemption workflow
-        "redeem_from_agent": [
-            "fasset_type",
-            "lots",
-            "max_redemption_fee_bips",
-            "underlying_address",
-            "executor",
-        ],
-        "get_redemption_request": ["fasset_type", "request_id"],
-        "get_collateral_reservation_data": ["fasset_type", "reservation_id"],
-    }
-
-    all_passed = True
-    for method_name, expected_params in required_methods.items():
-        if not check_method_signature(FAssets, method_name, expected_params):
-            all_passed = False
-
-    return all_passed
-
-
-async def test_error_handling():
-    """Test that proper errors are raised for invalid inputs."""
-    print("\n=== Testing Error Handling ===")
-
-    try:
-        settings = EcosystemSettingsModel()
-        fassets = await FAssets.create(settings)
-
-        # Test unsupported FAsset error
-        try:
-            await fassets.get_fasset_info(FAssetType.FBTC)  # May not be supported
-            print("⚠️  Expected error for unsupported FAsset, but none was raised")
-        except Exception as e:
-            if "not supported" in str(e):
-                print("✅ Proper error for unsupported FAsset")
-            else:
-                print(f"❌ Unexpected error type: {e}")
-
-        # Test swap without router
-        fassets.sparkdex_router = None
-        try:
-            await fassets.swap_fasset_for_native(FAssetType.FXRP, 1000, 500, 123456)
-            print("❌ Expected error for missing router, but none was raised")
-        except Exception as e:
-            if "router not initialized" in str(e):
-                print("✅ Proper error for missing SparkDEX router")
-            else:
-                print(f"❌ Unexpected error type: {e}")
-
-        return True
-
-    except Exception as e:
-        print(f"❌ Error handling test failed: {e}")
-        return False
-
-
-async def main():
-    """Run all verification tests."""
-    print("🔍 Verifying FAssets Implementation")
-    print("=" * 50)
-
-    # Test method signatures
-    signatures_ok = test_method_signatures()
-
-    # Test initialization
-    init_ok = await test_initialization()
-
-    # Test error handling
-    error_handling_ok = await test_error_handling()
-
-    print("\n" + "=" * 50)
-    print("VERIFICATION SUMMARY")
-    print("=" * 50)
-
-    if signatures_ok:
-        print("✅ All required methods present with correct signatures")
-    else:
-        print("❌ Some methods missing or have incorrect signatures")
-
-    if init_ok:
-        print("✅ Initialization works correctly")
-    else:
-        print("❌ Initialization issues detected")
-
-    if error_handling_ok:
-        print("✅ Error handling works correctly")
-    else:
-        print("❌ Error handling issues detected")
-
-    # Overall status
-    print("\n🎯 KEY REQUIREMENTS CHECK:")
-    print("✅ Query current states and collateralization ratios")
-    print("✅ Perform SWAP functions using FAssets protocol")  # NEW!
-    print("✅ Perform REDEEM functions using FAssets protocol")
-    print("✅ SparkDEX integration for swap operations")  # NEW!
-    print("✅ Complete minting workflow with executeMinting")  # NEW!
-    print("✅ Balance and allowance management")  # NEW!
-
-    if signatures_ok and init_ok and error_handling_ok:
-        print("\n🎉 VERIFICATION PASSED - FAssets implementation is COMPLETE!")
-        print("\n📝 Next Steps:")
-        print("   1. Add real contract addresses for Songbird FXRP")
-        print("   2. Add SparkDEX router ABI for actual swap transactions")
-        print("   3. Implement event log parsing for real return values")
-        print("   4. Add ERC20 ABI for FAsset token interactions")
-        return True
-    print("\n❌ VERIFICATION FAILED - Issues need to be addressed")
-    return False
+    if not all(result for _, result in results):
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    success = asyncio.run(main())
-    exit(0 if success else 1)
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
+    asyncio.run(main())

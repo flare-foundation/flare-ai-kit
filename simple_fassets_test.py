@@ -1,221 +1,306 @@
-#!/usr/bin/env python3
-"""
-Simple FAssets Test - Demonstrates working components without full environment setup
-"""
+#!/usr/bin/env python
+"""Simple test script to verify FAssets implementation is valid Python."""
 
+import ast
+import importlib
 import json
+import logging
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, TypeVar
 
-# Add src to path
-sys.path.insert(0, "src")
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+from flare_ai_kit.ecosystem.protocols.fassets import FAssets
+
+logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
-def test_abi_structure():
-    """Test that the AssetManager ABI is properly structured."""
-    print("🔧 Testing AssetManager ABI")
+def test_syntax() -> bool:
+    """Test if fassets.py has valid Python syntax."""
+    file_path = (
+        Path(__file__).parent
+        / "src"
+        / "flare_ai_kit"
+        / "ecosystem"
+        / "protocols"
+        / "fassets.py"
+    )
 
-    abi_path = Path("src/flare_ai_kit/abis/AssetManager.json")
-    if not abi_path.exists():
-        print("❌ AssetManager.json not found")
+    if not file_path.exists():
         return False
 
     try:
-        with open(abi_path) as f:
-            abi = json.load(f)
+        content = file_path.read_text(encoding="utf-8")
+        ast.parse(content)
+    except SyntaxError:
+        logger.exception("Syntax error in fassets.py")
+        return False
+    return True
 
-        print(f"   ✅ ABI loaded successfully ({len(abi)} functions)")
 
-        # Check for required functions
-        function_names = [
-            func.get("name") for func in abi if func.get("type") == "function"
+def test_imports() -> bool:
+    """Test if required imports work correctly."""
+    try:
+        # Add the src directory to the path
+        sys.path.insert(0, str(Path(__file__).parent / "src"))
+
+        # Try to import the main classes
+        importlib.import_module("flare_ai_kit.common.schemas")
+        importlib.import_module("flare_ai_kit.ecosystem.protocols.fassets")
+    except ImportError:
+        logger.exception("Import error")
+        return False
+    return True
+
+
+def test_structure() -> bool:
+    """Test if FAssets class has required structure."""
+    try:
+        sys.path.insert(0, str(Path(__file__).parent / "src"))
+
+        # Check required methods
+        required_methods = [
+            "create",
+            "get_supported_fassets",
+            "get_fasset_info",
+            "get_all_agents",
+            "get_agent_info",
+            "reserve_collateral",
+            "execute_minting",
+            "redeem_from_agent",
+            "get_fasset_balance",
+            "swap_fasset_for_native",
+            "swap_native_for_fasset",
+            "swap_fasset_for_fasset",
         ]
-        required_functions = [
+
+        return all(hasattr(FAssets, method) for method in required_methods)
+    except (ImportError, AttributeError):
+        logger.exception("Structure test failed")
+        return False
+
+
+def test_abi_files() -> bool:
+    """Test if all required ABI files exist and have correct structure."""
+    base_path = Path(__file__).parent / "src" / "flare_ai_kit" / "abis"
+
+    required_abis = {
+        "FlareContractRegistry.json": ["getContractAddressByName"],
+        "AssetManager.json": [
             "getSettings",
+            "getAgents",
             "getAgentInfo",
-            "getAllAgents",
             "reserveCollateral",
             "executeMinting",
-            "redeemFromAgent",
+            "redeem",
+        ],
+        "ERC20.json": ["balanceOf", "approve", "allowance"],
+        "SparkDEXRouter.json": ["swapExactTokensForETH"],
+    }
+
+    for abi_file, required_functions in required_abis.items():
+        try:
+            file_path = base_path / abi_file
+            if not file_path.exists():
+                logger.error("ABI file not found: %s", abi_file)
+                return False
+
+            content = file_path.read_text(encoding="utf-8")
+            abi_data: list[dict[str, Any]] = json.loads(content)
+
+            # Check each required function exists in the ABI
+            for func_name in required_functions:
+                found = False
+                for entry in abi_data:
+                    entry_type = entry.get("type", "")
+                    entry_name = entry.get("name", "")
+                    if entry_type == "function" and entry_name == func_name:
+                        found = True
+                        break
+                if not found:
+                    logger.error(
+                        "Missing required function in %s: %s", abi_file, func_name
+                    )
+                    return False
+        except (json.JSONDecodeError, FileNotFoundError):
+            logger.exception("Error processing %s", abi_file)
+            return False
+    return True
+
+
+def test_file_syntax() -> bool:
+    """Test individual file imports to verify syntax."""
+    test_files = {
+        "fassets": "src/flare_ai_kit/ecosystem/protocols/fassets.py",
+        "schemas": "src/flare_ai_kit/common/schemas.py",
+        "main": "src/flare_ai_kit/main.py",
+    }
+
+    for name, file_path in test_files.items():
+        try:
+            with Path(file_path).open(encoding="utf-8") as f:
+                content = f.read()
+            compile(content, file_path, "exec")
+        except (FileNotFoundError, SyntaxError):
+            logger.exception("Error in %s", name)
+            return False
+    return True
+
+
+def test_file_imports() -> bool:
+    """Test if files can be imported without errors."""
+    try:
+        # Reset path
+        sys.path.insert(0, str(Path(__file__).parent / "src"))
+
+        # Test direct imports
+        importlib.import_module("flare_ai_kit.common.schemas")
+        importlib.import_module("flare_ai_kit.ecosystem.protocols.fassets")
+    except ImportError:
+        logger.exception("Import test failed")
+        return False
+    return True
+
+
+def test_data_models() -> bool:
+    """Test if data models are properly defined."""
+    try:
+        file_path = (
+            Path(__file__).parent / "src" / "flare_ai_kit" / "common" / "schemas.py"
+        )
+        content = file_path.read_text(encoding="utf-8")
+
+        # Check for required models
+        models_to_check = [
+            ("FAssetType", "class FAssetType"),
+            ("FAssetInfo", "class FAssetInfo"),
+            ("AgentInfo", "class AgentInfo"),
+            ("CollateralReservationData", "class CollateralReservationData"),
+            ("RedemptionRequestData", "class RedemptionRequestData"),
         ]
 
-        for func in required_functions:
-            if func in function_names:
-                print(f"   ✅ {func} function present")
-            else:
-                print(f"   ❌ {func} function missing")
-
-        return True
-
-    except json.JSONDecodeError as e:
-        print(f"   ❌ Invalid JSON: {e}")
+        return all(pattern in content for _, pattern in models_to_check)
+    except FileNotFoundError:
+        logger.exception("Data models test failed")
         return False
 
 
-def test_file_syntax():
-    """Test file syntax by compilation."""
-    print("\n🐍 Testing File Syntax")
-
-    test_files = [
-        "src/flare_ai_kit/common/schemas.py",
-        "src/flare_ai_kit/common/exceptions.py",
-        "src/flare_ai_kit/ecosystem/protocols/fassets.py",
-    ]
-
-    for file_path in test_files:
-        try:
-            with open(file_path) as f:
-                code = f.read()
-
-            # Check for syntax errors
-            compile(code, file_path, "exec")
-            print(f"   ✅ {Path(file_path).name} - Syntax OK")
-
-        except SyntaxError as e:
-            print(f"   ❌ {Path(file_path).name} - Syntax Error: {e}")
-        except FileNotFoundError:
-            print(f"   ⚠️  {Path(file_path).name} - File not found")
-        except Exception as e:
-            print(f"   ⚠️  {Path(file_path).name} - Other error: {e}")
-
-
-def test_file_imports():
-    """Test individual file imports to verify syntax."""
-    print("\n🐍 Testing File Imports (Syntax Validation)")
-
-    test_files = {
-        "FAssets Schemas": "flare_ai_kit.common.schemas",
-        "FAssets Exceptions": "flare_ai_kit.common.exceptions",
-        "FAssets Utils": "flare_ai_kit.common.utils",
-    }
-
-    for name, module_path in test_files.items():
-        try:
-            # Try to compile the file first
-            file_path = module_path.replace(".", "/") + ".py"
-            with open(f"src/{file_path}") as f:
-                code = f.read()
-
-            # Check for syntax errors
-            compile(code, file_path, "exec")
-            print(f"   ✅ {name} - Syntax OK")
-
-        except SyntaxError as e:
-            print(f"   ❌ {name} - Syntax Error: {e}")
-        except FileNotFoundError:
-            print(f"   ⚠️  {name} - File not found")
-        except Exception as e:
-            print(f"   ⚠️  {name} - Other error: {e}")
-
-
-def test_data_models():
-    """Test data model definitions without importing (Python 3.9 compatible)."""
-    print("\n📋 Testing Data Model Definitions")
-
-    schemas_file = "src/flare_ai_kit/common/schemas.py"
+def test_fassets_structure() -> bool:
+    """Test FAssets class internal structure."""
     try:
-        with open(schemas_file) as f:
-            content = f.read()
+        file_path = (
+            Path(__file__).parent
+            / "src"
+            / "flare_ai_kit"
+            / "ecosystem"
+            / "protocols"
+            / "fassets.py"
+        )
+        content = file_path.read_text(encoding="utf-8")
 
-        # Check for key data models
-        models_to_check = [
-            ("FAssetType enum", "class FAssetType"),
-            ("FAssetInfo dataclass", "@dataclass(frozen=True)\nclass FAssetInfo"),
-            ("AgentInfo dataclass", "@dataclass(frozen=True)\nclass AgentInfo"),
-            ("FXRP support", 'FXRP = "FXRP"'),
-            ("FBTC support", 'FBTC = "FBTC"'),
-            ("FDOGE support", 'FDOGE = "FDOGE"'),
-        ]
-
-        for name, pattern in models_to_check:
-            if pattern in content:
-                print(f"   ✅ {name}")
-            else:
-                print(f"   ❌ {name}")
-
-    except Exception as e:
-        print(f"   ❌ Error reading schemas: {e}")
-
-
-def test_fassets_class_structure():
-    """Test FAssets class structure without importing."""
-    print("\n🏗️  Testing FAssets Class Structure")
-
-    fassets_file = "src/flare_ai_kit/ecosystem/protocols/fassets.py"
-    try:
-        with open(fassets_file) as f:
-            content = f.read()
-
-        # Check class structure
+        # Check for required structure
         structure_checks = [
-            ("Class inheritance", "class FAssets(Flare):"),
-            ("Factory method", "@classmethod\n    async def create"),
-            ("Async initialization", "async def _initialize_supported_fassets"),
-            ("Network detection", "chain_id = await self.w3.eth.chain_id"),
-            ("Songbird support", "chain_id == 19"),
-            ("Flare Mainnet support", "chain_id == 14"),
-            ("Testnet support", "chain_id in [114, 16]"),
-            ("Agent queries", "async def get_all_agents"),
-            ("Collateral reservation", "async def reserve_collateral"),
-            ("Redemption", "async def redeem_from_agent"),
-            ("Error handling", "raise FAssetsContractError"),
+            ("FAssets class definition", "class FAssets(Flare):"),
+            ("create classmethod", "async def create(cls,"),
+            (
+                "_initialize_sparkdex_router method",
+                "async def _initialize_sparkdex_router(self):",
+            ),
+            (
+                "_initialize_supported_fassets method",
+                "async def _initialize_supported_fassets(self):",
+            ),
+            (
+                "get_supported_fassets method",
+                "async def get_supported_fassets(self) -> dict[str, FAssetInfo]:",
+            ),
+            (
+                "get_fasset_info method",
+                "async def get_fasset_info(self, fasset_type: FAssetType) "
+                "-> FAssetInfo:",
+            ),
+            (
+                "get_all_agents method",
+                "async def get_all_agents(self, fasset_type: FAssetType) -> list:",
+            ),
+            ("get_agent_info method", "async def get_agent_info("),
+            ("get_available_lots method", "async def get_available_lots("),
+            ("reserve_collateral method", "async def reserve_collateral("),
+            (
+                "get_asset_manager_settings method",
+                "async def get_asset_manager_settings(",
+            ),
+            ("redeem_from_agent method", "async def redeem_from_agent("),
+            ("get_redemption_request method", "async def get_redemption_request("),
+            (
+                "get_collateral_reservation_data method",
+                "async def get_collateral_reservation_data(",
+            ),
+            ("get_fasset_balance method", "async def get_fasset_balance("),
+            ("get_fasset_allowance method", "async def get_fasset_allowance("),
+            ("approve_fasset method", "async def approve_fasset("),
+            ("swap_fasset_for_native method", "async def swap_fasset_for_native("),
+            ("swap_native_for_fasset method", "async def swap_native_for_fasset("),
+            ("swap_fasset_for_fasset method", "async def swap_fasset_for_fasset("),
+            ("execute_minting method", "async def execute_minting("),
         ]
 
-        for name, pattern in structure_checks:
-            if pattern in content:
-                print(f"   ✅ {name}")
-            else:
-                print(f"   ⚠️  {name}")
-
-        # Count lines to show implementation size
-        lines = len(content.split("\n"))
-        print(f"   📊 Implementation size: {lines} lines")
-
-    except Exception as e:
-        print(f"   ❌ Error reading FAssets class: {e}")
+        return all(pattern in content for _, pattern in structure_checks)
+    except FileNotFoundError:
+        logger.exception("FAssets structure test failed")
+        return False
 
 
-def test_integration_setup():
-    """Test integration with main FlareAIKit class."""
-    print("\n🔗 Testing Integration Setup")
-
-    main_file = "src/flare_ai_kit/main.py"
+def test_integration_setup() -> bool:
+    """Test if FAssets is properly integrated into FlareAIKit."""
     try:
-        with open(main_file) as f:
-            content = f.read()
+        file_path = Path(__file__).parent / "src" / "flare_ai_kit" / "main.py"
+        content = file_path.read_text(encoding="utf-8")
 
         integration_checks = [
+            ("FlareAIKit class import", "from flare_ai_kit.main import FlareAIKit"),
             (
-                "FAssets import",
-                "from .ecosystem import BlockExplorer, FAssets, Flare, FtsoV2",
+                "FAssets property in FlareAIKit",
+                "self.fassets = FAssets(self.settings.ecosystem)",
             ),
-            ("Instance variable", "_fassets = None"),
-            ("Async property", "@property\n    async def fassets"),
-            ("Factory call", "await FAssets.create(self.settings.ecosystem)"),
         ]
 
-        for name, pattern in integration_checks:
-            if pattern in content:
-                print(f"   ✅ {name}")
-            else:
-                print(f"   ❌ {name}")
-
-    except Exception as e:
-        print(f"   ❌ Error reading main.py: {e}")
+        return all(pattern in content for _, pattern in integration_checks)
+    except FileNotFoundError:
+        logger.exception("Integration test failed")
+        return False
 
 
-def main():
-    """Run all tests."""
-    print("🧪 Simple FAssets Implementation Test")
-    print("=" * 50)
+def main() -> int:
+    """Run all tests and report results."""
+    logging.basicConfig(level=logging.INFO)
+    logger.info("Testing FAssets Implementation...")
 
-    # Run tests
-    test_abi_structure()
-    test_file_syntax()
+    tests: list[tuple[str, Callable[[], bool]]] = [
+        ("Syntax", test_syntax),
+        ("Imports", test_imports),
+        ("Structure", test_structure),
+        ("ABI Files", test_abi_files),
+        ("File Syntax", test_file_syntax),
+        ("File Imports", test_file_imports),
+        ("Data Models", test_data_models),
+        ("FAssets Structure", test_fassets_structure),
+        ("Integration", test_integration_setup),
+    ]
 
-    print("\n✅ IMPLEMENTATION VERIFIED!")
-    print("The FAssets connector is structurally complete and ready for use.")
+    failed = False
+    for name, test_func in tests:
+        result = test_func()
+        logger.info("%s Test: %s", name, "PASS" if result else "FAIL")
+        if not result:
+            failed = True
+
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

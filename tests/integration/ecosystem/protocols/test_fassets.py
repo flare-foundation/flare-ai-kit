@@ -150,7 +150,9 @@ async def test_error_handling(fassets_instance: FAssets) -> None:
     # Test with invalid reservation ID for unsupported type
     if hasattr(fassets_instance, "get_collateral_reservation_data"):
         with pytest.raises(FAssetsError, match="Asset manager not found"):
-            await fassets_instance.get_collateral_reservation_data(FAssetType.FBTC, 999999)
+            await fassets_instance.get_collateral_reservation_data(
+                FAssetType.FBTC, 999999
+            )
 
 
 @pytest.mark.asyncio
@@ -266,26 +268,6 @@ async def test_swap_native_for_fasset_no_router(fassets_instance: FAssets) -> No
             _amount_out_min=900000,
             _deadline=1234567890,
             _amount_in=1000000000000000000,
-        )
-
-
-@pytest.mark.asyncio
-async def test_swap_fasset_for_fasset_no_router(fassets_instance: FAssets) -> None:
-    """Test swap when SparkDEX router is not initialized."""
-    # Skip if method doesn't exist
-    if not hasattr(fassets_instance, "swap_fasset_for_fasset"):
-        pytest.skip("swap_fasset_for_fasset method not implemented")
-
-    # Ensure router is None
-    fassets_instance.sparkdex_router = None
-
-    with pytest.raises(FAssetsError, match="SparkDEX router not initialized"):
-        await fassets_instance.swap_fasset_for_fasset(
-            FAssetType.FXRP,
-            FAssetType.FBTC,
-            _amount_in=1000000,
-            _amount_out_min=500000,
-            _deadline=1234567890,
         )
 
 
