@@ -9,7 +9,11 @@ from urllib.parse import urljoin
 import aiohttp
 import structlog
 
-from flare_ai_kit.common import FlareAIKitError
+from flare_ai_kit.common import (
+    AttestationNotFoundError,
+    DALayerError,
+    MerkleProofError,
+)
 from flare_ai_kit.ecosystem.flare import Flare
 from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
 
@@ -20,18 +24,6 @@ logger = structlog.get_logger(__name__)
 
 # Type variable for the factory method pattern
 T = TypeVar("T", bound="DataAvailabilityLayer")
-
-
-class DALayerError(FlareAIKitError):
-    """Raised for errors specific to Data Availability Layer interactions."""
-
-
-class AttestationNotFoundError(DALayerError):
-    """Raised when requested attestation data is not found."""
-
-
-class MerkleProofError(DALayerError):
-    """Raised for errors related to Merkle proof verification."""
 
 
 @dataclass(frozen=True)
@@ -84,6 +76,37 @@ class VotingRoundData:
     finalized: bool
 
 
+@dataclass(frozen=True)
+class FTSOAnchorFeed:
+    """FTSO anchor feed data structure."""
+
+    id: str
+    name: str
+    decimals: int
+    category: str
+    description: str
+
+
+@dataclass(frozen=True)
+class FTSOAnchorFeedValue:
+    """FTSO anchor feed value with proof."""
+
+    id: str
+    value: int
+    timestamp: int
+    decimals: int
+    proof: MerkleProof
+
+
+@dataclass(frozen=True)
+class FTSOAnchorFeedsWithProof:
+    """FTSO anchor feeds with proof for a specific voting round."""
+
+    voting_round: int
+    merkle_root: str
+    feeds: list[FTSOAnchorFeedValue]
+
+
 class DataAvailabilityLayer(Flare):
     """
     Connector for interacting with the Flare Data Availability (DA) Layer.
@@ -97,7 +120,8 @@ class DataAvailabilityLayer(Flare):
 
     def __init__(self, settings: EcosystemSettingsModel) -> None:
         super().__init__(settings)
-        self.da_layer_base_url = "https://flr-data-availability.flare.network/api/v1/"
+        self.da_layer_base_url = str(settings.da_layer_base_url)
+        self.da_layer_api_key = settings.da_layer_api_key
         self.session: aiohttp.ClientSession | None = None
         self.timeout = aiohttp.ClientTimeout(total=30.0)
 
@@ -117,12 +141,20 @@ class DataAvailabilityLayer(Flare):
         logger.debug("Initializing DataAvailabilityLayer...")
 
         # Initialize HTTP session
+        headers = {
+            "Content-Type": "application/json",
+            "User-Agent": "flare-ai-kit/1.0.0",
+        }
+
+        # Add API key to headers if available
+        if instance.da_layer_api_key:
+            headers["Authorization"] = (
+                f"Bearer {instance.da_layer_api_key.get_secret_value()}"
+            )
+
         instance.session = aiohttp.ClientSession(
             timeout=instance.timeout,
-            headers={
-                "Content-Type": "application/json",
-                "User-Agent": "flare-ai-kit/1.0.0",
-            },
+            headers=headers,
         )
 
         # Verify connection to DA Layer
@@ -136,12 +168,20 @@ class DataAvailabilityLayer(Flare):
     async def __aenter__(self) -> Self:
         """Async context manager entry."""
         if not self.session:
+            headers = {
+                "Content-Type": "application/json",
+                "User-Agent": "flare-ai-kit/1.0.0",
+            }
+
+            # Add API key to headers if available
+            if self.da_layer_api_key:
+                headers["Authorization"] = (
+                    f"Bearer {self.da_layer_api_key.get_secret_value()}"
+                )
+
             self.session = aiohttp.ClientSession(
                 timeout=self.timeout,
-                headers={
-                    "Content-Type": "application/json",
-                    "User-Agent": "flare-ai-kit/1.0.0",
-                },
+                headers=headers,
             )
         return self
 
@@ -553,3 +593,102 @@ class DataAvailabilityLayer(Flare):
             raise DALayerError(msg) from e
         else:
             return attestation_types
+
+    async def get_ftso_anchor_feed_names(self) -> list[FTSOAnchorFeed]:
+        """
+        Retrieve list of available FTSO anchor feed names and metadata.
+
+        Returns:
+            List of FTSO anchor feed configurations
+
+        Raises:
+            DALayerError: If request fails
+
+        """
+        endpoint = "ftso/anchor-feed-names"
+
+        try:
+            data = await self._make_request("GET", endpoint)
+            feeds: list[FTSOAnchorFeed] = []
+
+            for feed_data in data.get("feeds", []):
+                feed = FTSOAnchorFeed(
+                    id=feed_data["id"],
+                    name=feed_data["name"],
+                    decimals=feed_data["decimals"],
+                    category=feed_data["category"],
+                    description=feed_data["description"],
+                )
+                feeds.append(feed)
+
+            logger.info("Retrieved FTSO anchor feed names", count=len(feeds))
+        except Exception as e:
+            msg = f"Failed to retrieve FTSO anchor feed names: {e}"
+            raise DALayerError(msg) from e
+        else:
+            return feeds
+
+    async def get_ftso_anchor_feeds_with_proof(
+        self,
+        voting_round: int,
+        feed_ids: list[str] | None = None,
+    ) -> FTSOAnchorFeedsWithProof:
+        """
+        Retrieve FTSO anchor feeds with Merkle proofs for a specific voting round.
+
+        Args:
+            voting_round: The voting round ID
+            feed_ids: Optional list of specific feed IDs to retrieve
+
+        Returns:
+            FTSO anchor feeds with proofs for the voting round
+
+        Raises:
+            DALayerError: If request fails
+
+        """
+        endpoint = "ftso/anchor-feeds-with-proof"
+        data_payload: dict[str, Any] = {"votingRound": voting_round}
+
+        if feed_ids:
+            data_payload["feedIds"] = feed_ids
+
+        try:
+            data = await self._make_request("POST", endpoint, data=data_payload)
+            feeds: list[FTSOAnchorFeedValue] = []
+
+            for feed_data in data.get("feeds", []):
+                proof = MerkleProof(
+                    merkle_proof=feed_data["proof"]["merkleProof"],
+                    leaf_index=feed_data["proof"]["leafIndex"],
+                    total_leaves=feed_data["proof"]["totalLeaves"],
+                )
+
+                feed_value = FTSOAnchorFeedValue(
+                    id=feed_data["id"],
+                    value=feed_data["value"],
+                    timestamp=feed_data["timestamp"],
+                    decimals=feed_data["decimals"],
+                    proof=proof,
+                )
+                feeds.append(feed_value)
+
+            result = FTSOAnchorFeedsWithProof(
+                voting_round=data["votingRound"],
+                merkle_root=data["merkleRoot"],
+                feeds=feeds,
+            )
+
+            logger.info(
+                "Retrieved FTSO anchor feeds with proof",
+                voting_round=voting_round,
+                feed_count=len(feeds),
+            )
+        except Exception as e:
+            msg = (
+                f"Failed to retrieve FTSO anchor feeds with proof for round "
+                f"{voting_round}: {e}"
+            )
+            raise DALayerError(msg) from e
+        else:
+            return result
