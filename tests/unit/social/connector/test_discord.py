@@ -77,3 +77,17 @@ async def test_start_if_needed_triggers_client(monkeypatch):
 
     await connector._start_if_needed()
     connector.client.start.assert_called_once_with(connector.token)
+
+
+@pytest.mark.asyncio
+async def test_post_message_wrong_channel_id(monkeypatch):
+    connector = DiscordConnector()
+    connector._messages = []
+    monkeypatch.setattr(connector.client, "is_ready", lambda: True)
+
+    results = await connector.post_message(content="hello flare")
+    assert results == {
+        "platform": "discord",
+        "message_id": None,
+        "error": "Channel not found or not a text channel.",
+    }

@@ -1,12 +1,12 @@
 """Slack Connector for Flare AI Kit."""
 
 import logging
-import os
 from typing import Any
 
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
+from flare_ai_kit.config import settings
 from flare_ai_kit.social.connector import SocialConnector
 
 logger = logging.getLogger(__name__)
@@ -16,10 +16,20 @@ logger.setLevel(logging.INFO)
 class SlackConnector(SocialConnector):
     """Slack Connector for Flare AI Kit."""
 
-    def __init__(self, client: WebClient | None = None) -> None:
-        self.token = os.getenv("SLACK_BOT_TOKEN")
-        self.channel_id = os.getenv("SLACK_CHANNEL_ID")
-        self.client = client or WebClient(token=self.token)
+    def __init__(self, client: WebClient | None) -> None:
+        """Initialize the SlackConnector with API token and channel ID."""
+        social_settings = settings.social
+        self.token = (
+            social_settings.slack_bot_token.get_secret_value()
+            if social_settings.slack_bot_token
+            else ""
+        )
+        self.channel_id = (
+            social_settings.slack_channel_id.get_secret_value()
+            if social_settings.slack_channel_id
+            else ""
+        )
+        self.client: WebClient = client or WebClient(token=self.token)
 
     @property
     def platform(self) -> str:
@@ -55,3 +65,17 @@ class SlackConnector(SocialConnector):
         except SlackApiError:
             logger.exception("Slack connector error: %s")
             return []
+
+    def post_message(self, content: str) -> dict[str, Any]:
+        """Post a message to the Slack channel."""
+        try:
+            result = self.client.chat_postMessage(  # type: ignore[reportUnknownMemberType]
+                channel=self.channel_id, text=content
+            )
+            return {
+                "platform": "slack",
+                "message_ts": result["ts"],
+                "content": content,
+            }
+        except SlackApiError as e:
+            return {"error": str(e)}

@@ -1,22 +1,29 @@
 """GitHub Connector for Flare AI Kit."""
 
-import os
 from typing import Any
 
 import httpx
-from dotenv import load_dotenv
 
+from flare_ai_kit.config import settings
 from flare_ai_kit.social.connector import SocialConnector
-
-load_dotenv()
 
 
 class GitHubConnector(SocialConnector):
     """GitHub Connector for Flare AI Kit."""
 
     def __init__(self) -> None:
-        self.token = os.getenv("SOCIAL__GITHUB_TOKEN", "")
-        self.repo = os.getenv("SOCIAL__GITHUB_REPO", "")
+        """Initialize the GitHubConnector with API token and repository."""
+        social_settings = settings.social
+        self.token = (
+            social_settings.github_token.get_secret_value()
+            if social_settings.github_token
+            else ""
+        )
+        self.repo = (
+            social_settings.github_repo.get_secret_value()
+            if social_settings.github_repo
+            else ""
+        )
         self.client = httpx.AsyncClient()
         self.endpoint = f"https://api.github.com/repos/{self.repo}/issues/comments"
 

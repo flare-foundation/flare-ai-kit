@@ -1,11 +1,11 @@
 """Discord Connector for Flare AI Kit."""
 
 import asyncio
-import os
 from typing import Any
 
-from discord import Client, Intents, Message
+from discord import Client, Intents, Message, TextChannel
 
+from flare_ai_kit.config import settings
 from flare_ai_kit.social.connector import SocialConnector
 
 
@@ -13,8 +13,18 @@ class DiscordConnector(SocialConnector):
     """Discord connector implementation."""
 
     def __init__(self) -> None:
-        self.token: str = os.getenv("SOCIAL__DISCORD_BOT_TOKEN") or ""
-        self.channel_id: int = int(os.getenv("SOCIAL__DISCORD_CHANNEL_ID") or 0)
+        """Initialize the DiscordConnector with API token and channel ID."""
+        social_settings = settings.social
+        self.token: str = (
+            social_settings.discord_bot_token.get_secret_value()
+            if social_settings.discord_bot_token
+            else ""
+        )
+        self.channel_id: int = int(
+            social_settings.discord_channel_id.get_secret_value()
+            if social_settings.discord_channel_id
+            else ""
+        )
         self.client: Client = Client(intents=Intents.default())
         self._ready_event: asyncio.Event = asyncio.Event()
         self._messages: list[dict[str, Any]] = []
@@ -65,3 +75,20 @@ class DiscordConnector(SocialConnector):
                 if len(results) >= limit:
                     break
         return results
+
+    async def post_message(self, content: str) -> dict[str, Any]:
+        """Post a message to the Discord channel."""
+        await self._start_if_needed()
+        channel = self.client.get_channel(self.channel_id)
+        if isinstance(channel, TextChannel):
+            message = await channel.send(content)
+            return {
+                "platform": "discord",
+                "message_id": message.id,
+                "content": message.content,
+            }
+        return {
+            "platform": "discord",
+            "message_id": None,
+            "error": "Channel not found or not a text channel.",
+        }

@@ -2,16 +2,13 @@
 
 import asyncio
 import logging
-import os
 from typing import Any
 
-from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, ContextTypes, MessageHandler, filters
 
+from flare_ai_kit.config import settings
 from flare_ai_kit.social.connector import SocialConnector
-
-load_dotenv()
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
@@ -20,12 +17,18 @@ class TelegramConnector(SocialConnector):
     """Telegram Connector for Flare AI Kit."""
 
     def __init__(self) -> None:
-        self.token = os.getenv("SOCIAL__TELEGRAM_BOT_TOKEN")
-        self.chat_id = os.getenv("SOCIAL__TELEGRAM_CHAT_ID")
-
-        if not self.token or not self.chat_id:
-            msg = "Telegram token or chat ID not provided"
-            raise ValueError(msg)
+        """Initialize the TelegramConnector with API token and chat ID."""
+        social_settings = settings.social
+        self.token = (
+            social_settings.telegram_bot_token.get_secret_value()
+            if social_settings.telegram_bot_token
+            else ""
+        )
+        self.chat_id = (
+            social_settings.telegram_channel_id.get_secret_value()
+            if social_settings.telegram_channel_id
+            else ""
+        )
 
         self._messages: list[dict[str, Any]] = []
 
@@ -45,7 +48,7 @@ class TelegramConnector(SocialConnector):
         """Starts polling and filters collected messages by query."""
         await self.app.initialize()
         await self.app.start()
-        await asyncio.sleep(1)  # brief period to collect messages
+        await asyncio.sleep(1)
         await self.app.stop()
         await self.app.shutdown()
 

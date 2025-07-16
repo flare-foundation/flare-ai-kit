@@ -2,32 +2,46 @@
 
 # pyright: reportMissingTypeStubs=false
 
-import os
 from typing import Any, cast
 
-from dotenv import load_dotenv
 from tweepy import API, OAuth1UserHandler
 from tweepy.asynchronous import AsyncClient
 from tweepy.errors import TweepyException
 
+from flare_ai_kit.config import settings
 from flare_ai_kit.social.connector import SocialConnector
-
-load_dotenv()
 
 
 class XConnector(SocialConnector):
     """X (formerly Twitter) Connector for Flare AI Kit."""
 
     def __init__(self) -> None:
-        self.bearer_token = os.getenv("SOCIAL__X_API_KEY", "")
+        """Initialize the XConnector with API keys and tokens."""
+        social_settings = settings.social
+
+        self.bearer_token = (
+            social_settings.x_api_key.get_secret_value()
+            if social_settings.x_api_key
+            else ""
+        )
+
         self.client = AsyncClient(bearer_token=self.bearer_token)  # type: ignore[reportGeneralTypeIssues]
 
         self.auth = OAuth1UserHandler(
-            os.getenv("SOCIAL__X_API_KEY", ""),
-            os.getenv("SOCIAL__X_API_KEY_SECRET", ""),
-            os.getenv("SOCIAL__X_ACCESS_TOKEN", ""),
-            os.getenv("SOCIAL__X_ACCESS_TOKEN_SECRET", ""),
+            social_settings.x_api_key.get_secret_value()
+            if social_settings.x_api_key
+            else "",
+            social_settings.x_api_key_secret.get_secret_value()
+            if social_settings.x_api_key_secret
+            else "",
+            social_settings.x_access_token.get_secret_value()
+            if social_settings.x_access_token
+            else "",
+            social_settings.x_access_token_secret.get_secret_value()
+            if social_settings.x_access_token_secret
+            else "",
         )
+
         self.sync_client = API(self.auth)  # type: ignore[reportGeneralTypeIssues]
 
     @property

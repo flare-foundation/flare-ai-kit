@@ -70,3 +70,14 @@ async def test_fetch_mentions_no_api_key(monkeypatch):
     results = await connector.fetch_mentions("flare")
 
     assert results == []
+
+
+@pytest.mark.asyncio
+async def test_post_message_success(monkeypatch):
+    monkeypatch.setenv("SOCIAL__FARCASTER_API_KEY", "fake-key")
+    monkeypatch.setenv("SOCIAL__FARCASTER_SIGNER_UUID", "erty57687898765-key")
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    connector = FarcasterConnector(client=mock_client)
+    results = await connector.post_message("Hello Farcaster")
+    assert results["platform"] == "farcaster"
+    assert results["content"] == "Hello Farcaster"
