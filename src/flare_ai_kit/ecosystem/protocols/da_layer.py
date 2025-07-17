@@ -9,7 +9,7 @@ from urllib.parse import urljoin
 import aiohttp
 import structlog
 
-from flare_ai_kit.common import (
+from flare_ai_kit.common.exceptions import (
     AttestationNotFoundError,
     DALayerError,
     MerkleProofError,
