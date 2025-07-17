@@ -3,6 +3,7 @@ import asyncio
 
 from flare_ai_kit.consensus.coordinator.simple import SimpleCoordinator
 
+
 # Dummy Agent to simulate behavior
 class DummyAgent:
     def __init__(self, name: str, status: str = "idle"):

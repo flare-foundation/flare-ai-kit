@@ -16,7 +16,7 @@ class BaseCoordinator(ABC):
     @abstractmethod
     def remove_agent(self, agent_id: str) -> None:
         """Remove an agent from the pool."""
-    
+
     @abstractmethod
     async def start_agents(self) -> None:
         """Start all agents in the pool."""

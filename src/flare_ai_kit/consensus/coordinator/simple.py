@@ -39,10 +39,7 @@ class SimpleCoordinator(BaseCoordinator):
         """
         agent_id = f"{type(agent).__name__}_{len(self.agents)}"
         self.agents[agent_id] = CoordinatorAgent(
-            agent_id=agent_id,
-            agent=agent,
-            role=role,
-            config=config or {}
+            agent_id=agent_id, agent=agent, role=role, config=config or {}
         )
 
     def remove_agent(self, agent_id: str) -> None:
@@ -64,15 +61,13 @@ class SimpleCoordinator(BaseCoordinator):
     def monitor_agents(self) -> list[dict[str, Union[str, Any]]]:
         """Returns basic agent info for monitoring."""
         return [
-            {
-                "agent_id": a.agent_id,
-                "role": a.role,
-                "status": a.status
-            }
+            {"agent_id": a.agent_id, "role": a.role, "status": a.status}
             for a in self.agents.values()
         ]
 
-    async def distribute_task(self, task: str, role: Optional[str] = None) -> list[tuple[str, Any]]:
+    async def distribute_task(
+        self, task: str, role: Optional[str] = None
+    ) -> list[tuple[str, Any]]:
         """
         Distributes a task to all or role-matching agents.
 
@@ -98,15 +93,19 @@ class SimpleCoordinator(BaseCoordinator):
         predictions: list[Prediction] = []
 
         for agent_id, result in results:
-            prediction_value = float(result) if isinstance(result, (int, float)) else str(result)
+            prediction_value = (
+                float(result) if isinstance(result, (int, float)) else str(result)
+            )
 
             # Optional: make confidence dynamic from config
             confidence = self.agents[agent_id].config.get("confidence", 1.0)
 
-            predictions.append(Prediction(
-                agent_id=agent_id,
-                prediction=prediction_value,
-                confidence=confidence
-            ))
+            predictions.append(
+                Prediction(
+                    agent_id=agent_id,
+                    prediction=prediction_value,
+                    confidence=confidence,
+                )
+            )
 
         return predictions
