@@ -5,7 +5,7 @@ import pytest
 import pytest_asyncio
 from pydantic import SecretStr
 
-from flare_ai_kit.agent.settings_models import AgentSettingsModel
+from flare_ai_kit.agent.settings import AgentSettings
 from flare_ai_kit.common import (
     FAssetsError,
     FAssetType,
@@ -25,8 +25,8 @@ async def fassets_instance(monkeypatch: "MonkeyPatch") -> FAssets:  # type: igno
     # Set a placeholder API key using monkeypatch
     monkeypatch.setenv("GEMINI_API_KEY", "test_api_key")
 
-    # Create a mock AgentSettingsModel with required parameters
-    mock_agent_settings = AgentSettingsModel(
+    # Create a mock AgentSettings with required parameters
+    mock_agent_settings = AgentSettings(
         gemini_api_key=SecretStr("test_api_key"),
         gemini_model="gemini-2.5-flash",
         openrouter_api_key=None,

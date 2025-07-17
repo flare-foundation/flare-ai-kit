@@ -197,6 +197,10 @@ class FAssets(Flare):
                 ),
                 fee_share=100,
                 mint_count=100,
+                remaining_wnat=5000,
+                free_underlying_balance_usd=1000,
+                all_lots=20,
+                available_lots=15,
             )
         ]
 
@@ -218,6 +222,10 @@ class FAssets(Flare):
             vault_collateral_token=("0x" + "1234567890abcdef1234567890abcdef12345678"),
             fee_share=100,
             mint_count=50,
+            remaining_wnat=3000,
+            free_underlying_balance_usd=750,
+            all_lots=10,
+            available_lots=8,
         )
 
     async def get_available_lots(
