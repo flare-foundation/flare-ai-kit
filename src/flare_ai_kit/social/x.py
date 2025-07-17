@@ -4,7 +4,7 @@ import structlog
 import tweepy.asynchronous as tweepy  # type: ignore[reportMissingTypeStubs]
 from tweepy.errors import TweepyException  # type: ignore[reportMissingTypeStubs]
 
-from flare_ai_kit.social.settings_models import SocialSettings
+from flare_ai_kit.social.settings import SocialSettings
 
 logger = structlog.get_logger(__name__)
 
