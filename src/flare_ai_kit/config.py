@@ -1,6 +1,5 @@
 """Settings for Flare AI Kit."""
 
-
 from typing import Literal
 
 from pydantic import Field
@@ -30,11 +29,10 @@ class AppSettings(BaseSettings):
         default="DEBUG", description="Logging level"
     )
 
-    agent: AgentSettingsModel = Field(default_factory=AgentSettingsModel)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
-    ecosystem: EcosystemSettingsModel = Field(default_factory=EcosystemSettingsModel)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
-    vector_db: VectorDbSettingsModel = Field(default_factory=VectorDbSettingsModel)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
-    graph_db: GraphDbSettingsModel = Field(default_factory=GraphDbSettingsModel)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
-    social: SocialSettingsModel = Field(default_factory=SocialSettingsModel)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
-    tee: TeeSettingsModel = Field(default_factory=TeeSettingsModel)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
-    ingestion: IngestionSettingsModel = Field(default_factory=IngestionSettingsModel)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
-
+    agent: AgentSettings = Field(default_factory=AgentSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
+    ecosystem: EcosystemSettings = Field(default_factory=EcosystemSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
+    vector_db: VectorDbSettings = Field(default_factory=VectorDbSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
+    graph_db: GraphDbSettings = Field(default_factory=GraphDbSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
+    social: SocialSettings = Field(default_factory=SocialSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
+    tee: TeeSettings = Field(default_factory=TeeSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
+    ingestion: IngestionSettings = Field(default_factory=IngestionSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]

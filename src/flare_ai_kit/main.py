@@ -1,9 +1,7 @@
 """Entry point for Flare AI Kit SDK."""
 
-
 from .config import AppSettings
 from .ecosystem import BlockExplorer, FAssets, Flare, FtsoV2
-
 from .ingestion import GithubIngestor
 from .rag.vector import VectorRAGPipeline, create_vector_rag_pipeline
 from .social import TelegramClient, XClient
@@ -25,9 +23,7 @@ class FlareAIKit:
         ```
 
         """
-
         self.settings = config or AppSettings()
-
 
         # Lazy-loaded properties
         self._flare = None

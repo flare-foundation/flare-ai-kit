@@ -9,7 +9,7 @@ from web3.exceptions import Web3Exception
 from flare_ai_kit.common.exceptions import FAssetsContractError, FAssetsError
 from flare_ai_kit.common.schemas import AgentInfo, FAssetInfo, FAssetType
 from flare_ai_kit.ecosystem.flare import Flare
-from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
+from flare_ai_kit.ecosystem.settings import EcosystemSettings
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class FAssets(Flare):
     """FAssets protocol connector for interacting with FAssets on Flare."""
 
-    def __init__(self, settings: EcosystemSettingsModel) -> None:
+    def __init__(self, settings: EcosystemSettings) -> None:
         """Initialize FAssets connector."""
         super().__init__(settings)
         self.supported_fassets: dict[str, FAssetInfo] = {}
@@ -26,7 +26,7 @@ class FAssets(Flare):
         self.sparkdex_router: Contract | None = None
 
     @classmethod
-    async def create(cls, settings: EcosystemSettingsModel) -> "FAssets":
+    async def create(cls, settings: EcosystemSettings) -> "FAssets":
         """Create a new FAssets instance."""
         instance = cls(settings)
         await instance._initialize_sparkdex_router()

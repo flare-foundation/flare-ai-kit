@@ -31,7 +31,7 @@ class FtsoV2(Flare):
         Asynchronously creates and initializes an FtsoV2 instance.
 
         Args:
-            settings: Instance of EcosystemSettingsModel.
+            settings: Instance of EcosystemSettings.
 
         Returns:
             A fully initialized AsyncFtsoV2 instance.
