@@ -1,3 +1,5 @@
+"""Qdrant upserter for vector storage."""
+
 import uuid
 from typing import Any
 
@@ -6,7 +8,9 @@ from qdrant_client.http.models import Distance, PointStruct, VectorParams
 
 
 def make_id(metadata: dict[str, Any]) -> str:
-    """Generate a deterministic UUID for a chunk using its metadata."""
+    """
+    Generate a deterministic UUID for a chunk using its metadata.
+    """
     key = f"{metadata.get('file_path', '')}:{metadata.get('chunk_index', '')}"
     # Use UUID5 to deterministically generate a UUID from the key
     return str(uuid.uuid5(uuid.NAMESPACE_DNS, key))

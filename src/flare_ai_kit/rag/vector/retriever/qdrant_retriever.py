@@ -67,16 +67,15 @@ class QdrantRetriever(BaseRetriever):
         Args:
             qdrant_client (QdrantClient): An initialized QdrantClient instance.
             embedding_client (BaseEmbedding): An embedding client (e.g., GeminiEmbedding).
-            settings (VectorDbSettings): Configuration object containing settings like collection_name, vector_size, embedding models.
+            settings (VectorDbSettings): Configuration object containing settings like collection_name,
+                vector_size, embedding models.
 
         """
         self.client = qdrant_client
         self.embedding_client = embedding_client
         self.vector_size = settings.qdrant_vector_size
         self.batch_size = settings.qdrant_batch_size
-        self.collection_name = (
-            settings.embeddings_model
-        )  # You may want to use a dedicated collection name field
+        self.collection_name = settings.embeddings_model  # You may want to use a dedicated collection name field
 
     def _create_collection(self, collection_name: str, vector_size: int) -> None:
         """

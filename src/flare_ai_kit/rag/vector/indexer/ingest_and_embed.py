@@ -1,7 +1,9 @@
+"""Ingest and embed pipeline for vector RAG."""
+
 from typing import Any
 
-from ..embedding.base import BaseEmbedding
-from .base import BaseIndexer
+from flare_ai_kit.rag.vector.embedding.base import BaseEmbedding
+from flare_ai_kit.rag.vector.indexer.base import BaseIndexer
 
 
 def ingest_and_embed(

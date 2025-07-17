@@ -1,40 +1,50 @@
 import os
+from pathlib import Path
 
-from flare_ai_kit.rag.vector.indexer.fixed_size_chunker import FixedSizeChunker
-from flare_ai_kit.rag.vector.indexer.local_file_indexer import LocalFileIndexer
-from flare_ai_kit.rag.vector.indexer.ingest_and_embed import ingest_and_embed
-from flare_ai_kit.rag.vector.indexer.qdrant_upserter import upsert_to_qdrant
-from flare_ai_kit.rag.vector.retriever.qdrant_retriever import QdrantRetriever
-from flare_ai_kit.rag.vector.embedding.gemini_embedding import GeminiEmbedding
-from flare_ai_kit.rag.vector.settings import VectorDbSettings
 from qdrant_client import QdrantClient
 
+from flare_ai_kit.rag.vector.embedding.gemini_embedding import GeminiEmbedding
+from flare_ai_kit.rag.vector.indexer.fixed_size_chunker import FixedSizeChunker
+from flare_ai_kit.rag.vector.indexer.ingest_and_embed import ingest_and_embed
+from flare_ai_kit.rag.vector.indexer.local_file_indexer import LocalFileIndexer
+from flare_ai_kit.rag.vector.indexer.qdrant_upserter import upsert_to_qdrant
+from flare_ai_kit.rag.vector.retriever.qdrant_retriever import QdrantRetriever
+from flare_ai_kit.rag.vector.settings import VectorDbSettings
 
 if __name__ == "__main__":
     # 1. Prepare a sample text file in a dedicated directory
-    os.makedirs("demo_data", exist_ok=True)
-    sample_text = """
-    Retrieval-Augmented Generation (RAG) is a technique that combines information retrieval with generative models.
-    It allows large language models to access external knowledge bases for more accurate and up-to-date answers.
-    This demo shows how to chunk, embed, store, and search text using Qdrant.
-    """
-    tmp_file = "demo_data/rag_demo_sample.txt"
-    with open(tmp_file, "w", encoding="utf-8") as f:
+    demo_dir = Path("demo_data")
+    demo_dir.mkdir(parents=True, exist_ok=True)
+    sample_text = (
+        "Retrieval-Augmented Generation (RAG) is a technique that combines "
+        "information retrieval with generative models.\n"
+        "It allows large language models to access external knowledge bases "
+        "for more accurate and up-to-date answers.\n"
+        "This demo shows how to chunk, embed, store, and search text using Qdrant."
+    )
+    tmp_file = demo_dir / "rag_demo_sample.txt"
+    with tmp_file.open("w", encoding="utf-8") as f:
         f.write(sample_text)
 
     # 2. Set up chunker and indexer to only index the demo_data directory
     chunker = FixedSizeChunker(chunk_size=15)
     indexer = LocalFileIndexer(
-        root_dir="demo_data", chunker=chunker, allowed_extensions={".txt"}
+        root_dir=str(demo_dir), chunker=chunker, allowed_extensions={".txt"}
     )
 
-    # 3. Use the Gemini embedding model
-    api_key = os.environ.get("GEMINI_API_KEY")
-    model = "gemini-embedding-001"
+    # 3. Use the Gemini embedding model or MockEmbedding for testing
     output_dimensionality = 768
-    embedding_model = GeminiEmbedding(
-        api_key=api_key, model=model, output_dimensionality=output_dimensionality
-    )
+    USE_MOCK_EMBEDDING = os.environ.get("USE_MOCK_EMBEDDING", "0") == "1"
+    if USE_MOCK_EMBEDDING:
+        from flare_ai_kit.rag.vector.embedding.mock_embedding import MockEmbedding
+        embedding_model = MockEmbedding(output_dimensionality=output_dimensionality)
+        print("[INFO] Using MockEmbedding for testing.")
+    else:
+        api_key = os.environ.get("GEMINI_API_KEY")
+        model = "gemini-embedding-001"
+        embedding_model = GeminiEmbedding(
+            api_key=api_key, model=model, output_dimensionality=output_dimensionality
+        )
 
     # 4. Ingest and embed
     data = ingest_and_embed(indexer, embedding_model, batch_size=8)
@@ -58,5 +68,5 @@ if __name__ == "__main__":
         print(f"Result {i} (score={res.score:.3f}):\n{res.text}\n---")
 
     # Cleanup demo file and directory
-    os.remove(tmp_file)
-    os.rmdir("demo_data")
+    tmp_file.unlink()
+    demo_dir.rmdir()

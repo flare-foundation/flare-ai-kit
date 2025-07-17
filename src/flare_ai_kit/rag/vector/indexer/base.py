@@ -1,3 +1,5 @@
+"""Base classes for vector indexers and chunkers."""
+
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from typing import Any
@@ -6,6 +8,7 @@ from typing import Any
 class BaseIndexer(ABC):
     """
     Abstract base class for data ingestion modules.
+
     Responsible for processing raw data from a source and yielding cleaned, chunked text with metadata.
     """
 
@@ -14,7 +17,7 @@ class BaseIndexer(ABC):
         """
         Process the data source and yield dictionaries containing:
             - 'text': The chunked text content
-            - 'metadata': Associated metadata (e.g., source, title, url).
+            - 'metadata': Associated metadata (e.g., source, title, url)
 
         Yields:
             dict[str, Any]: A dictionary with 'text' and 'metadata' keys.
@@ -25,6 +28,7 @@ class BaseIndexer(ABC):
 class BaseChunker(ABC):
     """
     Abstract base class for text chunking strategies.
+
     Splits raw text into smaller, meaningful chunks for embedding.
     """
 

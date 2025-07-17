@@ -1,10 +1,15 @@
+"""Fixed-size chunker implementation for text splitting."""
+
+
 from .base import BaseChunker
 
 
 class FixedSizeChunker(BaseChunker):
-    """Splits text into chunks of a fixed number of words."""
+    """
+    Splits text into chunks of a fixed number of words.
+    """
 
-    def __init__(self, chunk_size: int = 200, overlap: int = 0) -> None:
+    def __init__(self, chunk_size: int = 200, overlap: int = 0):
         """
         Args:
             chunk_size (int): Number of words per chunk.
@@ -15,6 +20,16 @@ class FixedSizeChunker(BaseChunker):
         self.overlap = overlap
 
     def chunk(self, text: str) -> list[str]:
+        """
+        Split input text into a list of fixed-size word chunks.
+
+        Args:
+            text (str): The raw text to split.
+
+        Returns:
+            List[str]: List of text chunks.
+
+        """
         words = text.split()
         chunks = []
         i = 0
