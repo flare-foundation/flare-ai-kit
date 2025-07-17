@@ -21,18 +21,17 @@ def ingest_and_embed(
         batch_size (int): Number of chunks to embed per batch.
 
     Returns:
-        List[Dict[str, Any]]: Each dict contains 'embedding', 'text', and 'metadata'.
-
+        list[dict[str, Any]]: Each dict contains 'embedding', 'text', and 'metadata'.
     """
-    results = []
-    batch_texts = []
-    batch_metadata = []
+    results: list[dict[str, Any]] = []
+    batch_texts: list[str] = []
+    batch_metadata: list[Any] = []
 
     for item in indexer.ingest():
         batch_texts.append(item["text"])
         batch_metadata.append(item["metadata"])
         if len(batch_texts) == batch_size:
-            embeddings = embedding_model.embed_content(batch_texts)
+            embeddings: list[Any] = embedding_model.embed_content(batch_texts)
             for emb, text, meta in zip(
                 embeddings, batch_texts, batch_metadata, strict=False
             ):
@@ -42,7 +41,7 @@ def ingest_and_embed(
 
     # Process any remaining items
     if batch_texts:
-        embeddings = embedding_model.embed_content(batch_texts)
+        embeddings: list[Any] = embedding_model.embed_content(batch_texts)
         for emb, text, meta in zip(
             embeddings, batch_texts, batch_metadata, strict=False
         ):

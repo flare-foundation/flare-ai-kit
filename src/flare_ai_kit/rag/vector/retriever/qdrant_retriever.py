@@ -151,7 +151,7 @@ class QdrantRetriever(BaseRetriever):
 
     def keyword_search(
         self, keywords: list[str], collection_name: str, top_k: int = 5
-    ) -> list[dict[str, Any]]:
+    ) -> list[SemanticSearchResult]:
         """
         Perform keyword search using Qdrant's scroll API.
 
@@ -161,29 +161,52 @@ class QdrantRetriever(BaseRetriever):
             top_k (int): Maximum number of results to return.
 
         Returns:
-            List[Dict[str, Any]]: List of documents with content and metadata.
+            list[SemanticSearchResult]: List of documents with content and metadata.
 
         """
         if not keywords:
             return []
-        keyword_conditions = [
+
+        # Build filter conditions using MatchText for each keyword.
+        keyword_conditions: list[FieldCondition] = [
             FieldCondition(key="text", match=MatchText(text=keyword))
             for keyword in keywords
         ]
-        scroll_filter = Filter(should=keyword_conditions)
-        points, _ = self.client.scroll(
-            collection_name=collection_name,
-            scroll_filter=scroll_filter,
-            limit=top_k,
-        )
-        results = []
+
+        # Build a filter using a "should" clause (OR logic).
+        scroll_filter = Filter(should=keyword_conditions)  # pyright: ignore[reportArgumentType]
+
+        try:
+            # Use client.scroll to retrieve matching points.
+            points, _ = self.client.scroll(
+                collection_name=collection_name,
+                scroll_filter=scroll_filter,
+                limit=top_k,
+            )
+        except Exception as e:
+            logger.exception(
+                "Error during keyword search.",
+                keywords=keywords,
+                collection_name=collection_name,
+                error=str(e),
+            )
+            return []
+
+        # Convert results to SemanticSearchResult
+        results: list[SemanticSearchResult] = []
         for hit in points:
             payload = hit.payload or {}
             results.append(
-                {
-                    "text": payload.get("text", ""),
-                    "metadata": {k: v for k, v in payload.items() if k != "text"},
-                    "score": 1.0,  # Keyword search doesn't provide a similarity score
-                }
+                SemanticSearchResult(
+                    text=payload.get("text", ""),
+                    metadata={k: v for k, v in payload.items() if k != "text"},
+                    score=1.0,  # Keyword search doesn't provide a similarity score
+                )
             )
+        logger.info(
+            "Keyword search performed successfully.",
+            keywords=keywords,
+            top_k=top_k,
+            results_found=len(results),
+        )
         return results

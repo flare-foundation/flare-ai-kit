@@ -1,6 +1,7 @@
 """Base class for VectorDB retriever."""
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 from flare_ai_kit.common import SemanticSearchResult
 
@@ -28,6 +29,7 @@ class BaseRetriever(ABC):
         Perform semantic search using vector embeddings.
         """
 
+    @abstractmethod
     def retrieve(self, query: str, top_k: int = 5) -> list[SemanticSearchResult]:
         """
         Retrieve the top-k most relevant documents for a given query.
@@ -38,5 +40,4 @@ class BaseRetriever(ABC):
 
         Returns:
             list[SemanticSearchResult]: List of documents with content and metadata.
-
         """
