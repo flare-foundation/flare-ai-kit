@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
 
 
 class BaseIndexer(ABC):
@@ -13,11 +14,12 @@ class BaseIndexer(ABC):
         """
         Process the data source and yield dictionaries containing:
             - 'text': The chunked text content
-            - 'metadata': Associated metadata (e.g., source, title, url)
+            - 'metadata': Associated metadata (e.g., source, title, url).
+
         Yields:
             dict[str, Any]: A dictionary with 'text' and 'metadata' keys.
+
         """
-        pass
 
 
 class BaseChunker(ABC):
@@ -30,9 +32,11 @@ class BaseChunker(ABC):
     def chunk(self, text: str) -> list[str]:
         """
         Split input text into a list of chunks.
+
         Args:
             text (str): The raw text to split.
+
         Returns:
             list[str]: List of text chunks.
+
         """
-        pass

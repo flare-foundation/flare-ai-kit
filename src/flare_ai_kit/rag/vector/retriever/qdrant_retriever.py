@@ -1,32 +1,21 @@
 """VectorDB retriever using Qdrant."""
 
-from typing import override, Any, List, Dict
+from typing import Any
 
 import structlog
 from qdrant_client import QdrantClient
-from qdrant_client.http.exceptions import UnexpectedResponse
 from qdrant_client.http.models import (
     Distance,
     FieldCondition,
     Filter,
     MatchText,
-    PointStruct,
     Record,
     ScoredPoint,
     VectorParams,
 )
-from tenacity import (
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
 
 from flare_ai_kit.common import (
-    Chunk,
-    EmbeddingsError,
     SemanticSearchResult,
-    VectorDbError,
 )
 from flare_ai_kit.rag.vector.embedding import BaseEmbedding
 from flare_ai_kit.rag.vector.settings import VectorDbSettings
@@ -64,9 +53,7 @@ def convert_points_to_results(
 
 
 class QdrantRetriever(BaseRetriever):
-    """
-    Interacting with Qdrant VectorDB, semantic search and indexing.
-    """
+    """Interacting with Qdrant VectorDB, semantic search and indexing."""
 
     def __init__(
         self,
@@ -80,7 +67,8 @@ class QdrantRetriever(BaseRetriever):
         Args:
             qdrant_client (QdrantClient): An initialized QdrantClient instance.
             embedding_client (BaseEmbedding): An embedding client (e.g., GeminiEmbedding).
-            settings (VectorDbSettingsModel): Configuration object containing settings like collection_name, vector_size, embedding models.
+            settings (VectorDbSettings): Configuration object containing settings like collection_name, vector_size, embedding models.
+
         """
         self.client = qdrant_client
         self.embedding_client = embedding_client
@@ -94,9 +82,11 @@ class QdrantRetriever(BaseRetriever):
         """
         Creates or recreates a Qdrant collection.
         Warning: This will delete the collection if it already exists.
+
         Args:
             collection_name (str): Name of the collection.
             vector_size (int): Dimension of the vectors.
+
         """
         self.client.recreate_collection(
             collection_name=collection_name,
@@ -106,11 +96,14 @@ class QdrantRetriever(BaseRetriever):
     def retrieve(self, query: str, top_k: int = 5) -> list[SemanticSearchResult]:
         """
         Embed the query, search Qdrant for top-k similar vectors, and return SemanticSearchResult objects.
+
         Args:
             query (str): The search query string.
             top_k (int): Number of top results to return.
+
         Returns:
             list[SemanticSearchResult]: List of documents with content and metadata.
+
         """
         query_vec = self.embedding_client.embed_content(query)[0]
         search_result = self.client.search(
@@ -130,13 +123,16 @@ class QdrantRetriever(BaseRetriever):
     ) -> list[SemanticSearchResult]:
         """
         Perform semantic search using vector embeddings.
+
         Args:
             query (str): The input query string.
             collection_name (str): The name of the Qdrant collection.
             top_k (int): Number of top results to return.
             score_threshold (float | None): Optional minimum score threshold for results.
+
         Returns:
             list[SemanticSearchResult]: List of documents with content and metadata.
+
         """
         if not query or not query.strip():
             return []
@@ -153,16 +149,19 @@ class QdrantRetriever(BaseRetriever):
         return convert_points_to_results(search_result)
 
     def keyword_search(
-        self, keywords: List[str], collection_name: str, top_k: int = 5
-    ) -> List[Dict[str, Any]]:
+        self, keywords: list[str], collection_name: str, top_k: int = 5
+    ) -> list[dict[str, Any]]:
         """
         Perform keyword search using Qdrant's scroll API.
+
         Args:
             keywords (List[str]): A list of keywords to match in the document payload.
             collection_name (str): The name of the Qdrant collection.
             top_k (int): Maximum number of results to return.
+
         Returns:
             List[Dict[str, Any]]: List of documents with content and metadata.
+
         """
         if not keywords:
             return []

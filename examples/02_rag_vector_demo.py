@@ -1,20 +1,13 @@
 import os
-from typing import List
+
 from flare_ai_kit.rag.vector.indexer.fixed_size_chunker import FixedSizeChunker
 from flare_ai_kit.rag.vector.indexer.local_file_indexer import LocalFileIndexer
 from flare_ai_kit.rag.vector.indexer.ingest_and_embed import ingest_and_embed
 from flare_ai_kit.rag.vector.indexer.qdrant_upserter import upsert_to_qdrant
 from flare_ai_kit.rag.vector.retriever.qdrant_retriever import QdrantRetriever
 from flare_ai_kit.rag.vector.embedding.gemini_embedding import GeminiEmbedding
+from flare_ai_kit.rag.vector.settings import VectorDbSettings
 from qdrant_client import QdrantClient
-from pydantic import BaseModel, Field, PositiveInt
-
-
-# VectorDbSettingsModel for retriever
-class VectorDbSettingsModel(BaseModel):
-    qdrant_vector_size: PositiveInt = Field(768)  # Gemini embedding default size
-    qdrant_batch_size: PositiveInt = Field(100)
-    embeddings_model: str = Field("demo-collection")
 
 
 if __name__ == "__main__":
@@ -56,7 +49,7 @@ if __name__ == "__main__":
 
     # 6. Retrieve using QdrantRetriever
     client = QdrantClient(qdrant_url)
-    settings = VectorDbSettingsModel()
+    settings = VectorDbSettings()
     retriever = QdrantRetriever(client, embedding_model, settings)
     query = "What is RAG?"
     results = retriever.semantic_search(query, collection_name, top_k=3)

@@ -1,13 +1,14 @@
-from typing import List, Dict, Any
-from .base import BaseIndexer
+from typing import Any
+
 from ..embedding.base import BaseEmbedding
+from .base import BaseIndexer
 
 
 def ingest_and_embed(
     indexer: BaseIndexer,
     embedding_model: BaseEmbedding,
     batch_size: int = 32,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Processes all chunks from the indexer, generates embeddings using the embedding model,
     and returns a list of dicts with embedding, text, and metadata.
@@ -19,6 +20,7 @@ def ingest_and_embed(
 
     Returns:
         List[Dict[str, Any]]: Each dict contains 'embedding', 'text', and 'metadata'.
+
     """
     results = []
     batch_texts = []
@@ -29,7 +31,9 @@ def ingest_and_embed(
         batch_metadata.append(item["metadata"])
         if len(batch_texts) == batch_size:
             embeddings = embedding_model.embed_content(batch_texts)
-            for emb, text, meta in zip(embeddings, batch_texts, batch_metadata):
+            for emb, text, meta in zip(
+                embeddings, batch_texts, batch_metadata, strict=False
+            ):
                 results.append({"embedding": emb, "text": text, "metadata": meta})
             batch_texts = []
             batch_metadata = []
@@ -37,7 +41,9 @@ def ingest_and_embed(
     # Process any remaining items
     if batch_texts:
         embeddings = embedding_model.embed_content(batch_texts)
-        for emb, text, meta in zip(embeddings, batch_texts, batch_metadata):
+        for emb, text, meta in zip(
+            embeddings, batch_texts, batch_metadata, strict=False
+        ):
             results.append({"embedding": emb, "text": text, "metadata": meta})
 
     return results

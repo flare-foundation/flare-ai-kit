@@ -1,21 +1,19 @@
-import hashlib
 import uuid
-from typing import List, Dict, Any
+from typing import Any
+
 from qdrant_client import QdrantClient
-from qdrant_client.http.models import PointStruct, VectorParams, Distance
+from qdrant_client.http.models import Distance, PointStruct, VectorParams
 
 
-def make_id(metadata: Dict[str, Any]) -> str:
-    """
-    Generate a deterministic UUID for a chunk using its metadata.
-    """
+def make_id(metadata: dict[str, Any]) -> str:
+    """Generate a deterministic UUID for a chunk using its metadata."""
     key = f"{metadata.get('file_path', '')}:{metadata.get('chunk_index', '')}"
     # Use UUID5 to deterministically generate a UUID from the key
     return str(uuid.uuid5(uuid.NAMESPACE_DNS, key))
 
 
 def upsert_to_qdrant(
-    data: List[Dict[str, Any]],
+    data: list[dict[str, Any]],
     qdrant_url: str,
     collection_name: str,
     vector_size: int,
@@ -30,6 +28,7 @@ def upsert_to_qdrant(
         collection_name (str): Name of the Qdrant collection.
         vector_size (int): Dimension of the embedding vectors.
         batch_size (int): Number of points to upsert per batch.
+
     """
     client = QdrantClient(qdrant_url)
 
