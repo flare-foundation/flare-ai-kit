@@ -29,7 +29,7 @@ class GithubIngestor:
         Initializes the GitHubIndexer.
 
         Args:
-            settings: A VectorDbSettingsModel instance containing configuration
+            settings: A VectorDbSettings instance containing configuration
                       for file filtering (allowed extensions, ignored paths) and
                       chunking parameters.
 
