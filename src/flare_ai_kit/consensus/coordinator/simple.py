@@ -1,7 +1,8 @@
 """An enhanced implementation of the Coordinator interface."""
 
 import asyncio
-from typing import Any, override, Optional
+from typing import Any, Optional, Literal, Union
+from dataclasses import dataclass, field
 
 from pydantic_ai import Agent
 
@@ -9,15 +10,24 @@ from flare_ai_kit.common import Prediction
 from flare_ai_kit.consensus.coordinator.base import BaseCoordinator
 
 
+@dataclass
+class CoordinatorAgent:
+    agent_id: str
+    agent: Agent
+    role: Literal["user", "system", "assistant", "summarizer", "critic"]
+    config: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def status(self) -> str:
+        return getattr(self.agent, "status", "unknown")
+
+
 class SimpleCoordinator(BaseCoordinator):
     """A coordinator that manages agent lifecycle, distribution, and roles."""
 
     def __init__(self) -> None:
-        """Initializes the SimpleCoordinator."""
-        self.agents: dict[str, dict[str, Any]] = {}
-         # Format: {agent_id: {"agent": Agent, "role": str, "config": dict}}
+        self.agents: dict[str, CoordinatorAgent] = {}
 
-    @override
     def add_agent(self, agent: Agent, role: str, config: Optional[dict] = None) -> None:
         """
         Adds an agent with a specific role and optional config.
@@ -28,83 +38,75 @@ class SimpleCoordinator(BaseCoordinator):
             config: Optional agent-specific configuration.
         """
         agent_id = f"{type(agent).__name__}_{len(self.agents)}"
-        self.agents[agent_id] = {
-            "agent" : agent,
-            "role": role,
-            "config": config or {}
-        }
+        self.agents[agent_id] = CoordinatorAgent(
+            agent_id=agent_id,
+            agent=agent,
+            role=role,
+            config=config or {}
+        )
 
     def remove_agent(self, agent_id: str) -> None:
         """Removes an agent by ID."""
-        if agent_id in self.agents:
-            del self.agents[agent_id]
-    
+        self.agents.pop(agent_id, None)
+
     async def start_agents(self) -> None:
-        """Opptionally starts all agents if they define a start() coroutine."""
-        for entry in self.agents.values():
-            agent = entry["agent"]
-            if hasattr(agent, "start") and asyncio.iscoroutinefunction(agent.start):
-                await agent.start()
+        """Optionally starts all agents if they define a start() coroutine."""
+        for a in self.agents.values():
+            if hasattr(a.agent, "start") and asyncio.iscoroutinefunction(a.agent.start):
+                await a.agent.start()
 
     async def stop_agents(self) -> None:
         """Optionally stops all agents if they define a stop() coroutine."""
-        for entry in self.agents.values():
-            agent = entry["agent"]
-            if hasattr(agent, "stop") and asyncio.iscoroutinefunction(agent.stop):
-                await agent.stop()
+        for a in self.agents.values():
+            if hasattr(a.agent, "stop") and asyncio.iscoroutinefunction(a.agent.stop):
+                await a.agent.stop()
 
-    def monitor_agents(self) -> list[dict[str, Any]]:
+    def monitor_agents(self) -> list[dict[str, Union[str, Any]]]:
         """Returns basic agent info for monitoring."""
         return [
             {
-                "agent_id": agent_id,
-                "role": meta["role"],
-                "status": getattr(meta["agent"], "status", "unknown")
+                "agent_id": a.agent_id,
+                "role": a.role,
+                "status": a.status
             }
-            for agent_id, meta in self.agents.items()
+            for a in self.agents.values()
         ]
 
-    @override
-    async def distribute_task(self, task: str, role: Optional[str] = None) -> list[Any]:
+    async def distribute_task(self, task: str, role: Optional[str] = None) -> list[tuple[str, Any]]:
         """
         Distributes a task to all or role-matching agents.
 
-        Args:
-            task: The task to distribute.
-            role: If specified, only agents with this role will receive the task.
-
         Returns:
-            A list of agent responses.
+            A list of tuples (agent_id, result)
         """
-        selected = [
-            meta["agent"]
-            for meta in self.agents.values()
-            if role is None or meta["role"] == role
+        selected_agents = [
+            (a.agent_id, a.agent)
+            for a in self.agents.values()
+            if role is None or a.role == role
         ]
 
-        tasks = [agent.run(task) for agent in selected]
-        return await asyncio.gather(*tasks)
+        results = await asyncio.gather(
+            *[agent.run(task) for _, agent in selected_agents]
+        )
 
-    @override
-    async def process_results(self, predictions: list[Any]) -> list[Prediction]:
+        return list(zip([agent_id for agent_id, _ in selected_agents], results))
+
+    async def process_results(self, results: list[tuple[str, Any]]) -> list[Prediction]:
         """
-        Processes raw outputs from agents.
-
-        Args:
-            predictions: Agent outputs.
-
-        Returns:
-            A list of Prediction objects.
+        Processes a list of (agent_id, result) into Prediction objects.
         """
-        processed: list[Prediction] = []
-        agent_ids = list(self.agents.keys())
-        for i, pred in enumerate(predictions):
-            agent_id = agent_ids[i]
-            processed.append(
-                Prediction(
-                    agent_id=agent_id,
-                    prediction=str(pred),
-                    confidence=1.0  # This can be made dynamic using config
-                )
-            )
-        return processed
+        predictions: list[Prediction] = []
+
+        for agent_id, result in results:
+            prediction_value = float(result) if isinstance(result, (int, float)) else str(result)
+
+            # Optional: make confidence dynamic from config
+            confidence = self.agents[agent_id].config.get("confidence", 1.0)
+
+            predictions.append(Prediction(
+                agent_id=agent_id,
+                prediction=prediction_value,
+                confidence=confidence
+            ))
+
+        return predictions
