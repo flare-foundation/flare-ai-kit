@@ -2,7 +2,7 @@
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import Any, Literal, Dict, Optional, cast
+from typing import Any, Literal, cast
 
 from pydantic_ai import Agent
 
@@ -19,7 +19,7 @@ class CoordinatorAgent:
     agent_id: str
     agent: Agent[Any, Any]
     role: AgentRole
-    config: Dict[str, Any] = field(default_factory=lambda: dict[str, Any]())
+    config: dict[str, Any] = field(default_factory=lambda: dict[str, Any]())
 
     @property
     def status(self) -> str:
@@ -37,7 +37,7 @@ class SimpleCoordinator(BaseCoordinator):
         self,
         agent: Agent[Any, Any],
         role: str,  # Changed to str to match base class
-        config: Optional[dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
     ) -> None:
         """
         Adds an agent with a specific role and optional config.
@@ -46,16 +46,18 @@ class SimpleCoordinator(BaseCoordinator):
             agent: The AI agent instance.
             role: Role of the agent (e.g., "summarizer").
             config: Optional agent-specific configuration.
+
         """
         # Validate the role matches our expected types
         if role not in {"user", "system", "assistant", "summarizer", "critic"}:
-            raise ValueError(f"Invalid role: {role}")
+            msg = f"Invalid role: {role}"
+            raise ValueError(msg)
 
         agent_id = f"{type(agent).__name__}_{len(self.agents)}"
         self.agents[agent_id] = CoordinatorAgent(
             agent_id=agent_id,
             agent=agent,
-            role=cast(AgentRole, role),  # Safe cast after validation
+            role=cast("AgentRole", role),  # Safe cast after validation
             config=config or {},
         )
 
@@ -85,13 +87,14 @@ class SimpleCoordinator(BaseCoordinator):
         ]
 
     async def distribute_task(
-        self, task: str, role: Optional[AgentRole] = None
+        self, task: str, role: AgentRole | None = None
     ) -> list[tuple[str, Any]]:
         """
         Distributes a task to all or role-matching agents.
 
         Returns:
             A list of tuples (agent_id, result).
+
         """
         selected = [
             (a.agent_id, a.agent)
@@ -111,6 +114,7 @@ class SimpleCoordinator(BaseCoordinator):
 
         Returns:
             A list of structured `Prediction` objects.
+
         """
         predictions_list: list[Prediction] = []
 
