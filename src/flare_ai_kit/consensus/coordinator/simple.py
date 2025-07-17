@@ -11,6 +11,7 @@ from flare_ai_kit.consensus.coordinator.base import BaseCoordinator
 
 AgentRole = Literal["user", "system", "assistant", "summarizer", "critic"]
 
+
 @dataclass
 class CoordinatorAgent:
     """Represents an agent managed by the coordinator."""
@@ -33,10 +34,10 @@ class SimpleCoordinator(BaseCoordinator):
         self.agents: dict[str, CoordinatorAgent] = {}
 
     def add_agent(
-        self, 
-        agent: Agent[Any, Any], 
+        self,
+        agent: Agent[Any, Any],
         role: str,  # Changed to str to match base class
-        config: Optional[dict[str, Any]] = None
+        config: Optional[dict[str, Any]] = None,
     ) -> None:
         """
         Adds an agent with a specific role and optional config.
@@ -49,13 +50,13 @@ class SimpleCoordinator(BaseCoordinator):
         # Validate the role matches our expected types
         if role not in {"user", "system", "assistant", "summarizer", "critic"}:
             raise ValueError(f"Invalid role: {role}")
-            
+
         agent_id = f"{type(agent).__name__}_{len(self.agents)}"
         self.agents[agent_id] = CoordinatorAgent(
-            agent_id=agent_id, 
-            agent=agent, 
+            agent_id=agent_id,
+            agent=agent,
             role=cast(AgentRole, role),  # Safe cast after validation
-            config=config or {}
+            config=config or {},
         )
 
     def remove_agent(self, agent_id: str) -> None:
@@ -84,9 +85,7 @@ class SimpleCoordinator(BaseCoordinator):
         ]
 
     async def distribute_task(
-        self, 
-        task: str, 
-        role: Optional[AgentRole] = None
+        self, task: str, role: Optional[AgentRole] = None
     ) -> list[tuple[str, Any]]:
         """
         Distributes a task to all or role-matching agents.
@@ -104,7 +103,9 @@ class SimpleCoordinator(BaseCoordinator):
 
         return list(zip((aid for aid, _ in selected), results, strict=False))
 
-    async def process_results(self, predictions: list[tuple[str, Any]]) -> list[Prediction]:
+    async def process_results(
+        self, predictions: list[tuple[str, Any]]
+    ) -> list[Prediction]:
         """
         Processes a list of (agent_id, result) into Prediction objects.
 
