@@ -4,7 +4,7 @@ import structlog
 import tweepy.asynchronous as tweepy  # type: ignore[reportMissingTypeStubs]
 from tweepy.errors import TweepyException  # type: ignore[reportMissingTypeStubs]
 
-from flare_ai_kit.social.settings_models import SocialSettingsModel
+from flare_ai_kit.social.settings_models import SocialSettings
 
 logger = structlog.get_logger(__name__)
 
@@ -12,7 +12,7 @@ logger = structlog.get_logger(__name__)
 class XClient:
     """A client to interact with the X API for posting tweets."""
 
-    def __init__(self, settings: SocialSettingsModel) -> None:
+    def __init__(self, settings: SocialSettings) -> None:
         """
         Initializes the XClient using credentials from the settings.
 
