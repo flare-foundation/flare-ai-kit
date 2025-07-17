@@ -8,8 +8,8 @@ from web3.types import TxParams
 
 from flare_ai_kit.common import FlareTxError
 from flare_ai_kit.ecosystem.flare import Flare
-from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
-from flare_ai_kit.ingestion.settings_models import OnchainContractSettings
+from flare_ai_kit.ecosystem.settings import EcosystemSettings
+from flare_ai_kit.ingestion.settings import OnchainContractSettings
 
 logger = structlog.get_logger(__name__)
 
@@ -20,7 +20,7 @@ class ContractPoster(Flare):
     def __init__(
         self,
         contract_settings: OnchainContractSettings,
-        ecosystem_settings: EcosystemSettingsModel,
+        ecosystem_settings: EcosystemSettings,
     ):
         """
         Initializes the ContractPoster.

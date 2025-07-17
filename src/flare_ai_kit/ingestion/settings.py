@@ -1,6 +1,7 @@
 """Settings for Vector RAG."""
 
-from pydantic import BaseModel, Field, PositiveInt, model_validator, FilePath
+from pydantic import Field, PositiveInt, model_validator, FilePath
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 
 DEFAULT_ALLOWED_EXTENSIONS = {
@@ -59,8 +60,7 @@ DEFAULT_IGNORED_FILES = {
     "uv.lock",
 }
 
-
-class PDFFieldExtractionSettings(BaseModel):
+class PDFFieldExtractionSettings(BaseSettings):
     """Specifies fields to extract from a PDF and their locations."""
 
     field_name: str = Field(description="The name of the field to extract.")
@@ -74,7 +74,7 @@ class PDFFieldExtractionSettings(BaseModel):
     )
 
 
-class PDFTemplateSettings(BaseModel):
+class PDFTemplateSettings(BaseSettings):
     """Defines a template for a specific type of PDF document."""
 
     template_name: str = Field(description="A unique name for this PDF template.")
@@ -83,7 +83,7 @@ class PDFTemplateSettings(BaseModel):
     )
 
 
-class OnchainContractSettings(BaseModel):
+class OnchainContractSettings(BaseSettings):
     """Settings for the smart contract to post data to."""
 
     contract_address: str = Field(
@@ -98,7 +98,7 @@ class OnchainContractSettings(BaseModel):
     )
 
 
-class PDFIngestionSettings(BaseModel):
+class PDFIngestionSettings(BaseSettings):
     """Settings for the PDF ingestion and on-chain posting service."""
 
     templates: List[PDFTemplateSettings] = Field(
@@ -110,9 +110,15 @@ class PDFIngestionSettings(BaseModel):
     use_ocr: bool = Field(False, description="Whether to use OCR for text extraction.")
 
 
-class IngestionSettingsModel(BaseModel):
+
+class IngestionSettings(BaseSettings):
     """Configuration for Vector Database connections used in RAG."""
 
+    model_config = SettingsConfigDict(
+        env_prefix="INGESTION__",
+        env_file=".env",
+        extra="ignore",
+    )
     chunk_size: PositiveInt = Field(
         5000,
         description="Target size for text chunks before embedding (in characters).",
@@ -135,10 +141,10 @@ class IngestionSettingsModel(BaseModel):
     )
     pdf_ingestion: PDFIngestionSettings | None = Field(
         None, description="Settings for PDF ingestion."
-    )
+)
 
     @model_validator(mode="after")
-    def check_chunk_overlap_less_than_size(self) -> "IngestionSettingsModel":
+    def check_chunk_overlap_less_than_size(self) -> "IngestionSettings":
         """Validate that chunk overlap does not exceed chunk size."""
         if (
             self.chunk_overlap >= self.chunk_size

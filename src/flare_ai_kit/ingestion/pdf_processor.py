@@ -7,7 +7,7 @@ from typing import Dict, Any, Type
 import structlog
 from pydantic import BaseModel, create_model, ValidationError
 
-from flare_ai_kit.ingestion.settings_models import (
+from flare_ai_kit.ingestion.settings import (
     PDFTemplateSettings,
     PDFIngestionSettings,
 )
