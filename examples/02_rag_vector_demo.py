@@ -37,6 +37,7 @@ if __name__ == "__main__":
     USE_MOCK_EMBEDDING = os.environ.get("USE_MOCK_EMBEDDING", "0") == "1"
     if USE_MOCK_EMBEDDING:
         from flare_ai_kit.rag.vector.embedding.mock_embedding import MockEmbedding
+
         embedding_model = MockEmbedding(output_dimensionality=output_dimensionality)
         print("[INFO] Using MockEmbedding for testing.")
     else:

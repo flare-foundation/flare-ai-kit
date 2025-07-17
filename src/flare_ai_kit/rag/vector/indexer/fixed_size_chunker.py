@@ -1,6 +1,5 @@
 """Fixed-size chunker implementation for text splitting."""
 
-
 from .base import BaseChunker
 
 
