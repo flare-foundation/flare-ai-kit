@@ -13,6 +13,7 @@ class FixedSizeChunker(BaseChunker):
         Args:
             chunk_size (int): Number of words per chunk.
             overlap (int): Number of words to overlap between chunks.
+
         """
         self.chunk_size = chunk_size
         self.overlap = overlap
@@ -26,6 +27,7 @@ class FixedSizeChunker(BaseChunker):
 
         Returns:
             list[str]: List of text chunks.
+
         """
         words: list[str] = text.split()
         chunks: list[str] = []

@@ -1,7 +1,6 @@
 """Base class for VectorDB retriever."""
 
 from abc import ABC, abstractmethod
-from typing import Any
 
 from flare_ai_kit.common import SemanticSearchResult
 
@@ -40,4 +39,5 @@ class BaseRetriever(ABC):
 
         Returns:
             list[SemanticSearchResult]: List of documents with content and metadata.
+
         """

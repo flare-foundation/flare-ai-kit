@@ -22,6 +22,7 @@ def ingest_and_embed(
 
     Returns:
         list[dict[str, Any]]: Each dict contains 'embedding', 'text', and 'metadata'.
+
     """
     results: list[dict[str, Any]] = []
     batch_texts: list[str] = []

@@ -1,6 +1,5 @@
 """VectorDB retriever using Qdrant."""
 
-from typing import Any
 
 import structlog
 from qdrant_client import QdrantClient
