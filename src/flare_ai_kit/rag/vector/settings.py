@@ -60,7 +60,7 @@ DEFAULT_IGNORED_FILES = {
 }
 
 
-class VectorDbSetting(BaseSettings):
+class VectorDbSettings(BaseSettings):
     """Configuration for Vector Database connections used in RAG."""
 
     model_config = SettingsConfigDict(
