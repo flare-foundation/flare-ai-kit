@@ -1,6 +1,7 @@
 """Settings for Vector RAG."""
 
-from pydantic import BaseModel, Field, HttpUrl, PositiveInt, PostgresDsn
+from pydantic import Field, HttpUrl, PositiveInt, PostgresDsn
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_ALLOWED_EXTENSIONS = {
     ".py",
@@ -59,22 +60,27 @@ DEFAULT_IGNORED_FILES = {
 }
 
 
-class VectorDbSettingsModel(BaseModel):
+class VectorDbSetting(BaseSettings):
     """Configuration for Vector Database connections used in RAG."""
 
+    model_config = SettingsConfigDict(
+        env_prefix="VECTORDB__",
+        env_file=".env",
+        extra="ignore",
+    )
     qdrant_url: HttpUrl | None = Field(
-        None,
+        default=None,
         description="Host and port for the Qdrant instance.",
         examples=["env var: VECTOR_DB__QDRANT_URL"],
     )
     qdrant_vector_size: PositiveInt = Field(
-        768, description="Dimension of vectors to use."
+        default=768, description="Dimension of vectors to use."
     )
     qdrant_batch_size: PositiveInt = Field(
-        100, description="Batch size for upserting points to Qdrant."
+        default=100, description="Batch size for upserting points to Qdrant."
     )
     embeddings_model: str = Field(
-        "gemini-embedding-exp-03-07",
+        default="gemini-embedding-exp-03-07",
         description="Embedding model name (e.g., 'gemini-embedding-exp-03-07').",
         examples=[
             "gemini-embedding-exp-03-07",
@@ -82,10 +88,10 @@ class VectorDbSettingsModel(BaseModel):
         ],
     )
     embeddings_output_dimensionality: PositiveInt | None = Field(
-        None,
+        default=None,
         description="Reduced dimension for the output embedding. Leave None for max.",
     )
 
     postgres_dsn: PostgresDsn | None = Field(
-        None, description="DSN for PostgreSQL connection string."
+        default=None, description="DSN for PostgreSQL connection string."
     )
