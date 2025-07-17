@@ -15,7 +15,7 @@ from flare_ai_kit.common.exceptions import (
     MerkleProofError,
 )
 from flare_ai_kit.ecosystem.flare import Flare
-from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
+from flare_ai_kit.ecosystem.settings import EcosystemSettings
 
 # HTTP Status Codes
 HTTP_NOT_FOUND = 404
@@ -118,7 +118,7 @@ class DataAvailabilityLayer(Flare):
     - Query voting round information
     """
 
-    def __init__(self, settings: EcosystemSettingsModel) -> None:
+    def __init__(self, settings: EcosystemSettings) -> None:
         super().__init__(settings)
         self.da_layer_base_url = str(settings.da_layer_base_url)
         self.da_layer_api_key = settings.da_layer_api_key
@@ -126,12 +126,12 @@ class DataAvailabilityLayer(Flare):
         self.timeout = aiohttp.ClientTimeout(total=30.0)
 
     @classmethod
-    async def create(cls, settings: EcosystemSettingsModel) -> Self:
+    async def create(cls, settings: EcosystemSettings) -> Self:
         """
         Asynchronously creates and initializes a DataAvailabilityLayer instance.
 
         Args:
-            settings: Instance of EcosystemSettingsModel.
+            settings: Instance of EcosystemSettings.
 
         Returns:
             A fully initialized DataAvailabilityLayer instance.
