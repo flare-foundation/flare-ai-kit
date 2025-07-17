@@ -1,6 +1,7 @@
 """Settings for Vector RAG."""
 
-from pydantic import BaseModel, Field, PositiveInt, model_validator
+from pydantic import Field, PositiveInt, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_ALLOWED_EXTENSIONS = {
     ".py",
@@ -59,9 +60,14 @@ DEFAULT_IGNORED_FILES = {
 }
 
 
-class IngestionSettingsModel(BaseModel):
+class IngestionSettings(BaseSettings):
     """Configuration for Vector Database connections used in RAG."""
 
+    model_config = SettingsConfigDict(
+        env_prefix="INGESTION__",
+        env_file=".env",
+        extra="ignore",
+    )
     chunk_size: PositiveInt = Field(
         5000,
         description="Target size for text chunks before embedding (in characters).",
@@ -84,7 +90,7 @@ class IngestionSettingsModel(BaseModel):
     )
 
     @model_validator(mode="after")
-    def check_chunk_overlap_less_than_size(self) -> "IngestionSettingsModel":
+    def check_chunk_overlap_less_than_size(self) -> "IngestionSettings":
         """Validate that chunk overlap does not exceed chunk size."""
         if (
             self.chunk_overlap >= self.chunk_size
