@@ -10,6 +10,7 @@ class SocialSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="SOCIAL__",
         env_file=".env",
+        case_sensitive=False,
         extra="ignore",
     )
     x_api_key: SecretStr | None = Field(
