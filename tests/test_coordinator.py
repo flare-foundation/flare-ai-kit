@@ -1,4 +1,3 @@
-
 import pytest
 
 from flare_ai_kit.consensus.coordinator.simple import SimpleCoordinator
