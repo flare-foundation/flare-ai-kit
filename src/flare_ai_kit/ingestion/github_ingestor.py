@@ -10,7 +10,7 @@ import structlog
 from git import GitCommandError, Repo
 
 from flare_ai_kit.common import Chunk, ChunkMetadata
-from flare_ai_kit.ingestion.settings_models import IngestionSettingsModel
+from flare_ai_kit.ingestion.settings import IngestionSettings
 
 logger = structlog.get_logger(__name__)
 
@@ -24,7 +24,7 @@ class GithubIngestor:
     each chunk for further processing.
     """
 
-    def __init__(self, settings: IngestionSettingsModel) -> None:
+    def __init__(self, settings: IngestionSettings) -> None:
         """
         Initializes the GitHubIndexer.
 

@@ -29,7 +29,7 @@ from flare_ai_kit.common import (
     VectorDbError,
 )
 from flare_ai_kit.rag.vector.embedding import BaseEmbedding
-from flare_ai_kit.rag.vector.settings_models import VectorDbSettingsModel
+from flare_ai_kit.rag.vector.settings import VectorDbSettings
 
 from .base import BaseRetriever
 
@@ -72,7 +72,7 @@ class QdrantRetriever(BaseRetriever):
         self,
         qdrant_client: QdrantClient,
         embedding_client: BaseEmbedding,
-        settings: VectorDbSettingsModel,
+        settings: VectorDbSettings,
     ) -> None:
         """
         Initialize the QdrantRetriever.
