@@ -1,7 +1,6 @@
 """Aggregation strategies for consensus predictions."""
 
 from collections import Counter
-
 from flare_ai_kit.common import Prediction
 
 
@@ -24,3 +23,4 @@ def weighted_average(predictions: list[Prediction]) -> float:
 
     weighted_sum = sum(float(p.prediction) * p.confidence for p in predictions)
     return weighted_sum / total_weight
+
