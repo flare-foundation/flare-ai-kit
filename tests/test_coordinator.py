@@ -1,12 +1,12 @@
+
 import pytest
-import asyncio
 
 from flare_ai_kit.consensus.coordinator.simple import SimpleCoordinator
 
 
 # Dummy Agent to simulate behavior
 class DummyAgent:
-    def __init__(self, name: str, status: str = "idle"):
+    def __init__(self, name: str, status: str = "idle") -> None:
         self.name = name
         self.status = status
         self.started = False
@@ -42,7 +42,7 @@ async def test_remove_agent():
     coordinator = SimpleCoordinator()
     agent = DummyAgent("agent2")
     coordinator.add_agent(agent, role="filter")
-    agent_id = list(coordinator.agents.keys())[0]
+    agent_id = next(iter(coordinator.agents.keys()))
 
     coordinator.remove_agent(agent_id)
     assert agent_id not in coordinator.agents
