@@ -60,6 +60,7 @@ DEFAULT_IGNORED_FILES = {
     "uv.lock",
 }
 
+
 class PDFFieldExtractionSettings(BaseSettings):
     """Specifies fields to extract from a PDF and their locations."""
 
@@ -110,7 +111,6 @@ class PDFIngestionSettings(BaseSettings):
     use_ocr: bool = Field(False, description="Whether to use OCR for text extraction.")
 
 
-
 class IngestionSettings(BaseSettings):
     """Configuration for Vector Database connections used in RAG."""
 
@@ -141,7 +141,7 @@ class IngestionSettings(BaseSettings):
     )
     pdf_ingestion: PDFIngestionSettings | None = Field(
         None, description="Settings for PDF ingestion."
-)
+    )
 
     @model_validator(mode="after")
     def check_chunk_overlap_less_than_size(self) -> "IngestionSettings":
