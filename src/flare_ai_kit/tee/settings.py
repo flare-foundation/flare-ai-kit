@@ -1,11 +1,17 @@
 """Settings for TEE."""
 
-from pydantic import BaseModel, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class TeeSettingsModel(BaseModel):
+class TeeSettings(BaseSettings):
     """Configuration specific to the Flare ecosystem interactions."""
 
+    model_config = SettingsConfigDict(
+        env_prefix="TEE__",
+        env_file=".env",
+        extra="ignore",
+    )
     simulate_attestation_token: bool = Field(
         True,  # noqa: FBT003
         description="Use a pregenerated attestation token for testing.",

@@ -5,9 +5,9 @@ from web3.exceptions import ContractLogicError
 
 from flare_ai_kit.common import FtsoFeedCategory, FtsoV2Error
 from flare_ai_kit.ecosystem.protocols.ftsov2 import FtsoV2
-from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
+from flare_ai_kit.ecosystem.settings import EcosystemSettings
 
-settings = EcosystemSettingsModel()  # type: ignore[reportCallIssue]
+settings = EcosystemSettings()  # type: ignore[reportCallIssue]
 
 
 # Use pytest_asyncio.fixture for async fixtures

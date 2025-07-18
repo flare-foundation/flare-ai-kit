@@ -11,11 +11,11 @@ SDK for building **verifiable AI Agents** on Flare using Confidential Space.
 
 ## ✨ Features
 
-- **Verifiable Execution:** Run agent logic in a hardware-isolated Trusted Execution Environment (Confidential Space TDX TEEs).
-- **Consensus Engine:** Framework for multi-agent collaboration based on the [Consensus Learning](https://arxiv.org/abs/2402.16157) whitepaper.
-- **Agent Framework:** Build type-safe agents (PydanticAI) that interact with 200+ LLMs (Gemini, GPT etc.).
-- **Flare Integration:** Connect to core protocols ([FTSO](https://dev.flare.network/ftso/overview), [FDC](https://dev.flare.network/fdc/overview), [FAssets](https://dev.flare.network/fassets/overview)) and dApps ([Sceptre](http://sceptre.fi), [SparkDEX](https://sparkdex.ai), [Kinetic](https://kinetic.market) etc.).
-- **Social Intelligence:** Connectors & analytics for X, Telegram, and Farcaster.
+- **Verifiable Execution**: Run logic in hardware‑isolated TEEs - [GCP Confidential Space TDX](https://cloud.google.com/confidential-computing/confidential-space/docs/confidential-space-overview).
+- **Consensus Engine**: Multi‑agent [Consensus Learning](https://arxiv.org/abs/2402.16157) via [Google Agent2Agent](https://github.com/a2aproject/A2A) protocol.
+- **Strictly‑Typed Agents**: Build with [PydanticAI](https://ai.pydantic.dev) to enforce structured outputs across 200+ LLMs.
+- **Flare Protocol Integration**: [FTSO](https://dev.flare.network/ftso/overview), [FDC](https://dev.flare.network/fdc/overview), [FAssets](https://dev.flare.network/fassets/overview), plus ecosystem dApps like [Sceptre](http://sceptre.fi) and [SparkDEX](https://sparkdex.ai).
+- **Social Intelligence**: Analytics and connectors for X, Telegram, Farcaster.
 
 ## 🏗️ Architecture
 

@@ -8,11 +8,11 @@ import pytest_asyncio
 from httpx import HTTPStatusError, RequestError, TimeoutException
 from pydantic import HttpUrl
 
-from flare_ai_kit.common import AbiError, ExplorerError
+from flare_ai_kit.common.exceptions import AbiError, ExplorerError
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
-from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
+from flare_ai_kit.ecosystem.settings import EcosystemSettings
 
-settings = EcosystemSettingsModel(
+settings = EcosystemSettings(
     is_testnet=True,
     web3_provider_url=HttpUrl("https://explorer.example.com/api"),
     web3_provider_timeout=10,
