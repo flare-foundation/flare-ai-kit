@@ -92,6 +92,7 @@ class VectorDbError(FlareAIKitError):
     """Raised for errors encountered when interacting with VectorDBs."""
 
 
+
 # --- FAssets Errors ---
 class FAssetsError(FlareAIKitError):
     """Base exception for errors related to FAssets protocol interactions."""
@@ -115,3 +116,4 @@ class FAssetsCollateralError(FAssetsError):
 
 class FAssetsAgentError(FAssetsError):
     """Raised for errors related to FAssets agent operations."""
+
