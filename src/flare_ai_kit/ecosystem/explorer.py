@@ -20,7 +20,7 @@ class BlockExplorer:
         Initializes the BlockExplorer.
 
         Args:
-            settings: Instance of EcosystemSettingsModel.
+            settings: Instance of EcosystemSettings.
 
         """
         self.url = str(settings.block_explorer_url)

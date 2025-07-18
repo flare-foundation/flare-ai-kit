@@ -92,14 +92,39 @@ class VectorDbError(FlareAIKitError):
     """Raised for errors encountered when interacting with VectorDBs."""
 
 
-# --- Data Availability Layer Errors ---
+# --- FAssets Errors ---
+class FAssetsError(FlareAIKitError):
+    """Base exception for errors related to FAssets protocol interactions."""
+
+
+class FAssetsContractError(FAssetsError):
+    """Raised for errors during FAssets contract interactions."""
+
+
+class FAssetsMintError(FAssetsError):
+    """Raised for errors during FAssets minting process."""
+
+
+class FAssetsRedeemError(FAssetsError):
+    """Raised for errors during FAssets redemption process."""
+
+
+class FAssetsCollateralError(FAssetsError):
+    """Raised for errors related to FAssets collateral management."""
+
+
+class FAssetsAgentError(FAssetsError):
+    """Raised for errors related to FAssets agent operations."""
+
+
+# --- DA Layer Errors ---
 class DALayerError(FlareAIKitError):
-    """Raised for errors specific to Data Availability Layer interactions."""
+    """Base exception for errors related to Data Availability Layer interactions."""
 
 
 class AttestationNotFoundError(DALayerError):
-    """Raised when requested attestation data is not found."""
+    """Raised when a requested attestation is not found."""
 
 
 class MerkleProofError(DALayerError):
-    """Raised for errors related to Merkle proof verification."""
+    """Raised for errors related to Merkle proof validation or processing."""

@@ -1,19 +1,4 @@
-from .da_layer import (
-    AttestationData,
-    AttestationRequest,
-    AttestationResponse,
-    DataAvailabilityLayer,
-    MerkleProof,
-    VotingRoundData,
-)
+from .fassets import FAssets
 from .ftsov2 import FtsoV2
 
-__all__ = [
-    "AttestationData",
-    "AttestationRequest",
-    "AttestationResponse",
-    "DataAvailabilityLayer",
-    "FtsoV2",
-    "MerkleProof",
-    "VotingRoundData",
-]
+__all__ = ["FAssets", "FtsoV2"]

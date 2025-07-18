@@ -1,9 +1,7 @@
 """Settings for Flare AI Kit."""
 
-from functools import lru_cache
 from typing import Literal
 
-import structlog
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -30,25 +28,11 @@ class AppSettings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
         default="DEBUG", description="Logging level"
     )
-    agent: AgentSettings
-    ecosystem: EcosystemSettings
-    vector_db: VectorDbSettings
-    graph_db: GraphDbSettings
-    social: SocialSettings
-    tee: TeeSettings
-    ingestion: IngestionSettings
 
-
-@lru_cache
-def get_settings() -> AppSettings:
-    """Singleton settings."""
-    settings = AppSettings()  # pyright: ignore[reportCallIssue]
-    structlog.configure(
-        wrapper_class=structlog.make_filtering_bound_logger(settings.log_level)
-    )
-    logger = structlog.getLogger(__name__)
-    logger.info(settings.model_dump_json(indent=2))
-    return settings
-
-
-get_settings()
+    agent: AgentSettings = Field(default_factory=AgentSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
+    ecosystem: EcosystemSettings = Field(default_factory=EcosystemSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
+    vector_db: VectorDbSettings = Field(default_factory=VectorDbSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
+    graph_db: GraphDbSettings = Field(default_factory=GraphDbSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
+    social: SocialSettings = Field(default_factory=SocialSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
+    tee: TeeSettings = Field(default_factory=TeeSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
+    ingestion: IngestionSettings = Field(default_factory=IngestionSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]

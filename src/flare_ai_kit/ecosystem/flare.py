@@ -84,7 +84,7 @@ class Flare:
         Initialize the Flare Provider and connect to the RPC endpoint.
 
         Args:
-            settings: Instance of EcosystemSettingsModel containing connection
+            settings: Instance of EcosystemSettings containing connection
                       and account details.
 
         Raises:
