@@ -8,7 +8,7 @@ import pytest_asyncio
 from httpx import HTTPStatusError, RequestError, TimeoutException
 from pydantic import HttpUrl
 
-from flare_ai_kit.common import AbiError, ExplorerError
+from flare_ai_kit.common.exceptions import AbiError, ExplorerError
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.settings import EcosystemSettings
 
