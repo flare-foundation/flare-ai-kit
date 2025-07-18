@@ -38,23 +38,23 @@ async def main():
                         "fields": [
                             {
                                 "field_name": "invoice_id",
-                                "x0": int(coords["invoice_id"].x0), # type: ignore
+                                "x0": int(coords["invoice_id"].x0),  # type: ignore
                                 "y0": int(coords["invoice_id"].y0),  # type: ignore
-                                "x1": int(coords["invoice_id"].x1), # type: ignore
+                                "x1": int(coords["invoice_id"].x1),  # type: ignore
                                 "y1": int(coords["invoice_id"].y1),  # type: ignore
                             },
                             {
                                 "field_name": "issue_date",
-                                "x0": int(coords["issue_date"].x0), # type: ignore
+                                "x0": int(coords["issue_date"].x0),  # type: ignore
                                 "y0": int(coords["issue_date"].y0),  # type: ignore
-                                "x1": int(coords["issue_date"].x1), # type: ignore
+                                "x1": int(coords["issue_date"].x1),  # type: ignore
                                 "y1": int(coords["issue_date"].y1),  # type: ignore
                             },
                             {
                                 "field_name": "amount_due",
-                                "x0": int(coords["amount_due"].x0), # type: ignore
+                                "x0": int(coords["amount_due"].x0),  # type: ignore
                                 "y0": int(coords["amount_due"].y0),  # type: ignore
-                                "x1": int(coords["amount_due"].x1), # type: ignore
+                                "x1": int(coords["amount_due"].x1),  # type: ignore
                                 "y1": int(coords["amount_due"].y1),  # type: ignore
                             },
                         ],
