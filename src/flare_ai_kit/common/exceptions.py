@@ -90,3 +90,16 @@ class EmbeddingsError(FlareAIKitError):
 # --- VectorDB Errors ---
 class VectorDbError(FlareAIKitError):
     """Raised for errors encountered when interacting with VectorDBs."""
+
+
+# --- Data Availability Layer Errors ---
+class DALayerError(FlareAIKitError):
+    """Raised for errors specific to Data Availability Layer interactions."""
+
+
+class AttestationNotFoundError(DALayerError):
+    """Raised when requested attestation data is not found."""
+
+
+class MerkleProofError(DALayerError):
+    """Raised for errors related to Merkle proof verification."""
