@@ -1,0 +1,61 @@
+[
+    {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "bytes32",
+                "name": "documentId",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "invoiceId",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "amountDue",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "issueDate",
+                "type": "string"
+            }
+        ],
+        "name": "DocumentRegistered",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_invoiceId",
+                "type": "string"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_amountDue",
+                "type": "uint256"
+            },
+            {
+                "internalType": "string",
+                "name": "_issueDate",
+                "type": "string"
+            }
+        ],
+        "name": "registerDocument",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+]
