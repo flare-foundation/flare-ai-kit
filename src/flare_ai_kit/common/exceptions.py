@@ -115,3 +115,16 @@ class FAssetsCollateralError(FAssetsError):
 
 class FAssetsAgentError(FAssetsError):
     """Raised for errors related to FAssets agent operations."""
+
+
+# --- DA Layer Errors ---
+class DALayerError(FlareAIKitError):
+    """Base exception for errors related to Data Availability Layer interactions."""
+
+
+class AttestationNotFoundError(DALayerError):
+    """Raised when a requested attestation is not found."""
+
+
+class MerkleProofError(DALayerError):
+    """Raised for errors related to Merkle proof validation or processing."""
