@@ -9,9 +9,10 @@ import asyncio
 from pathlib import Path
 from unittest.mock import AsyncMock, mock_open, patch
 
+from data.create_sample_invoice import create_invoice_and_get_coords  # type: ignore
+
 from flare_ai_kit import FlareAIKit
 from flare_ai_kit.config import AppSettings
-from data.create_sample_invoice import create_invoice_and_get_coords  # type: ignore
 
 MOCK_TX_HASH = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
 

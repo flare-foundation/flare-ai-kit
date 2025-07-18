@@ -1,7 +1,7 @@
 """Handles posting data to a smart contract on the Flare blockchain."""
 
 import json
-from typing import Any, Dict
+from typing import Any
 
 import structlog
 from web3.types import TxParams
@@ -28,6 +28,7 @@ class ContractPoster(Flare):
         Args:
             contract_settings: The on-chain contract settings.
             ecosystem_settings: The ecosystem settings for the parent Flare class.
+
         """
         # Initialize the parent Flare class with the ecosystem settings
         super().__init__(ecosystem_settings)
@@ -42,7 +43,7 @@ class ContractPoster(Flare):
             abi=abi,
         )
 
-    async def post_data(self, data: Dict[str, Any]) -> str | None:
+    async def post_data(self, data: dict[str, Any]) -> str | None:
         """
         Posts data to the smart contract.
 
@@ -54,6 +55,7 @@ class ContractPoster(Flare):
 
         Raises:
             FlareTxError: If the transaction fails.
+
         """
         try:
             function_name = self.contract_settings.function_name

@@ -1,8 +1,8 @@
 """Settings for Vector RAG."""
 
-from pydantic import Field, PositiveInt, model_validator, FilePath
+
+from pydantic import Field, FilePath, PositiveInt, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import List
 
 DEFAULT_ALLOWED_EXTENSIONS = {
     ".py",
@@ -79,7 +79,7 @@ class PDFTemplateSettings(BaseSettings):
     """Defines a template for a specific type of PDF document."""
 
     template_name: str = Field(description="A unique name for this PDF template.")
-    fields: List[PDFFieldExtractionSettings] = Field(
+    fields: list[PDFFieldExtractionSettings] = Field(
         description="A list of fields to extract from this template."
     )
 
@@ -102,7 +102,7 @@ class OnchainContractSettings(BaseSettings):
 class PDFIngestionSettings(BaseSettings):
     """Settings for the PDF ingestion and on-chain posting service."""
 
-    templates: List[PDFTemplateSettings] = Field(
+    templates: list[PDFTemplateSettings] = Field(
         description="A list of PDF templates to use for extraction."
     )
     contract_settings: OnchainContractSettings = Field(

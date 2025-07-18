@@ -5,8 +5,8 @@ finds the exact coordinates of the data for reliable testing.
 
 import fitz  # type: ignore
 from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
+from reportlab.pdfgen import canvas
 
 FILE_PATH = "examples/data/sample_invoice.pdf"
 INVOICE_ID = "FAI-2025-001"

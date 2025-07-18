@@ -1,15 +1,16 @@
 """Processes PDF files to extract data and post it to a smart contract."""
 
+from typing import Any
+
 import fitz  # type: ignore # PyMuPDF
 import pytesseract  # type: ignore
-from PIL import Image
-from typing import Dict, Any, Type
 import structlog
-from pydantic import BaseModel, create_model, ValidationError
+from PIL import Image
+from pydantic import BaseModel, ValidationError, create_model
 
 from flare_ai_kit.ingestion.settings import (
-    PDFTemplateSettings,
     PDFIngestionSettings,
+    PDFTemplateSettings,
 )
 from flare_ai_kit.onchain.contract_poster import ContractPoster
 
@@ -20,7 +21,7 @@ logger = structlog.get_logger(__name__)
 TYPE_MAP: dict[str, type] = {"string": str, "integer": int, "float": float}
 
 
-def _create_dynamic_model(template: PDFTemplateSettings) -> Type[BaseModel]:
+def _create_dynamic_model(template: PDFTemplateSettings) -> type[BaseModel]:
     """Dynamically creates a Pydantic model from a PDF template."""
     # Create a dictionary of field definitions for Pydantic
     fields = {
@@ -44,6 +45,7 @@ class PDFProcessor:
         Args:
             settings: The settings for PDF ingestion.
             contract_poster: An instance of the ContractPoster to handle on-chain transactions.
+
         """
         self.settings = settings
         self.contract_poster = contract_poster
@@ -64,15 +66,15 @@ class PDFProcessor:
 
         Returns:
             The extracted text.
+
         """
         if use_ocr:
             pix = page.get_pixmap(clip=rect)  # type: ignore
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # type: ignore
             return str(pytesseract.image_to_string(img).strip())  # type: ignore
-        else:
-            return str(page.get_text("text", clip=rect).strip())  # type: ignore
+        return str(page.get_text("text", clip=rect).strip())  # type: ignore
 
-    def process_pdf(self, file_path: str, template_name: str) -> Dict[str, Any]:
+    def process_pdf(self, file_path: str, template_name: str) -> dict[str, Any]:
         """
         Processes a PDF file using a specified template.
 
@@ -85,6 +87,7 @@ class PDFProcessor:
 
         Raises:
             ValueError: If the template is not found or the PDF cannot be processed.
+
         """
         if template_name not in self.templates:
             raise ValueError(f"Template '{template_name}' not found.")
@@ -113,7 +116,7 @@ class PDFProcessor:
             pdf_data = DynamicPDFModel(**extracted_data)  # type: ignore
             return pdf_data.model_dump()
 
-        except (IOError, fitz.FileDataError) as e:
+        except (OSError, fitz.FileDataError) as e:
             logger.error(
                 "Failed to open or process PDF", file_path=file_path, error=str(e)
             )
@@ -136,6 +139,7 @@ class PDFProcessor:
 
         Returns:
             The transaction hash of the on-chain transaction.
+
         """
         logger.info(
             "Starting PDF ingestion and posting",
