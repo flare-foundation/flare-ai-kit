@@ -1,6 +1,5 @@
 """Settings for Vector RAG."""
 
-
 from pydantic import Field, FilePath, PositiveInt, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
