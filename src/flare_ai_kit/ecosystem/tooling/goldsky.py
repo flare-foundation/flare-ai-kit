@@ -16,6 +16,7 @@ from typing import Any
 
 import aiohttp
 from pydantic import BaseModel, Field, field_validator
+from flare_ai_kit.ecosystem.settings_model import GoldskyConfig  
 
 logger = logging.getLogger(__name__)
 
