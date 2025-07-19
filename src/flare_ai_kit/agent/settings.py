@@ -7,6 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class AgentSettings(BaseSettings):
     """Configuration specific to the Flare ecosystem interactions."""
+
     model_config = SettingsConfigDict(
         env_prefix="AGENT__",
         env_file=".env",

@@ -8,7 +8,12 @@ import logging
 from flare_ai_kit.ingestion.github_ingestor import GithubIngestor
 from flare_ai_kit.ingestion.settings_models import IngestionSettingsModel
 from flare_ai_kit.rag.vector.factory import create_vector_rag_pipeline
-from flare_ai_kit.rag.vector.settings_models import VectorDbSettingsModel, DEFAULT_ALLOWED_EXTENSIONS, DEFAULT_IGNORED_DIRS, DEFAULT_IGNORED_FILES
+from flare_ai_kit.rag.vector.settings_models import (
+    VectorDbSettingsModel,
+    DEFAULT_ALLOWED_EXTENSIONS,
+    DEFAULT_IGNORED_DIRS,
+    DEFAULT_IGNORED_FILES,
+)
 from flare_ai_kit.agent.settings_models import AgentSettingsModel
 from flare_ai_kit.common.schemas import Chunk, ChunkMetadata
 from flare_ai_kit.rag.settings_models import RagRefreshSettings, RagSourceConfig
@@ -22,6 +27,7 @@ logging.basicConfig(level=logging.INFO)
 
 HASHES_FILE = Path(".data_freshness_hashes.json")
 
+
 # --- Utility functions ---
 def load_hashes() -> dict[str, str]:
     if HASHES_FILE.exists():
@@ -29,15 +35,18 @@ def load_hashes() -> dict[str, str]:
             return json.load(f)
     return {}
 
+
 def save_hashes(hashes: dict[str, str]):
     with open(HASHES_FILE, "w", encoding="utf-8") as f:
         json.dump(hashes, f)
+
 
 def compute_source_hash(chunks: list[Chunk]) -> str:
     m = hashlib.sha256()
     for chunk in chunks:
         m.update(chunk.text.encode("utf-8"))
     return m.hexdigest()
+
 
 # --- Ingestion functions ---
 def github_ingest_fn(config: dict[str, Any]) -> list[Chunk]:
@@ -51,6 +60,7 @@ def github_ingest_fn(config: dict[str, Any]) -> list[Chunk]:
     ingestor = GithubIngestor(ingestion_settings)
     return list(ingestor.ingest(config["repo"], branch=config.get("branch")))
 
+
 async def news_ingest_fn(config: dict[str, Any]) -> List[Chunk]:
     url = config.get("url", "https://flare.network/news")
     async with aiohttp.ClientSession() as session:
@@ -63,7 +73,12 @@ async def news_ingest_fn(config: dict[str, Any]) -> List[Chunk]:
             href_val = a.get("href", "")
             href = str(href_val) if href_val is not None else ""
             # Only add news articles, skip events, newsletter, etc.
-            if href.startswith("/news/") and href != "/news/" and "event" not in href and "newsletter" not in href:
+            if (
+                href.startswith("/news/")
+                and href != "/news/"
+                and "event" not in href
+                and "newsletter" not in href
+            ):
                 articles.append("https://flare.network" + href)
     articles = list(set(articles))  # deduplicate
     chunks: List[Chunk] = []
@@ -74,8 +89,14 @@ async def news_ingest_fn(config: dict[str, Any]) -> List[Chunk]:
         title = article_soup.find("h1")
         date = article_soup.find("time")
         author = article_soup.find("span", class_="author")
-        tags = [t.text for t in article_soup.find_all("a", class_="tag")] if article_soup.find_all("a", class_="tag") else []
-        content = article_soup.find("div", class_="entry-content") or article_soup.find("article")
+        tags = (
+            [t.text for t in article_soup.find_all("a", class_="tag")]
+            if article_soup.find_all("a", class_="tag")
+            else []
+        )
+        content = article_soup.find("div", class_="entry-content") or article_soup.find(
+            "article"
+        )
         text = (title.text.strip() if title else "") + "\n"
         if date:
             text += f"Date: {date.text.strip()}\n"
@@ -83,7 +104,7 @@ async def news_ingest_fn(config: dict[str, Any]) -> List[Chunk]:
             text += f"Author: {author.text.strip()}\n"
         if tags:
             text += f"Tags: {', '.join(tags)}\n"
-        text += (content.text.strip() if content else "")
+        text += content.text.strip() if content else ""
         if text.strip():
             meta = ChunkMetadata(
                 original_filepath=article_url,
@@ -98,6 +119,7 @@ async def news_ingest_fn(config: dict[str, Any]) -> List[Chunk]:
     logger.info(f"Ingested {len(chunks)} news articles from {url}")
     return chunks
 
+
 async def governance_ingest_fn(config: dict[str, Any]) -> List[Chunk]:
     url = config.get("url", "https://proposals.flare.network")
     async with aiohttp.ClientSession() as session:
@@ -109,7 +131,11 @@ async def governance_ingest_fn(config: dict[str, Any]) -> List[Chunk]:
         if isinstance(a, Tag):
             href_val = a.get("href", "")
             href = str(href_val) if href_val is not None else ""
-            if href.endswith(".html") and not href.startswith("http") and "index" not in href:
+            if (
+                href.endswith(".html")
+                and not href.startswith("http")
+                and "index" not in href
+            ):
                 articles.append(url.rstrip("/") + "/" + href.lstrip("/"))
     articles = list(set(articles))
     chunks: List[Chunk] = []
@@ -132,7 +158,7 @@ async def governance_ingest_fn(config: dict[str, Any]) -> List[Chunk]:
         content = article_soup.find("main") or article_soup.find("article")
         text = (title.text.strip() if title else "") + "\n"
         text += meta_info
-        text += (content.text.strip() if content else "")
+        text += content.text.strip() if content else ""
         if text.strip():
             meta = ChunkMetadata(
                 original_filepath=article_url,
@@ -146,6 +172,7 @@ async def governance_ingest_fn(config: dict[str, Any]) -> List[Chunk]:
             chunks.append(Chunk(text=text, metadata=meta))
     logger.info(f"Ingested {len(chunks)} governance proposals from {url}")
     return chunks
+
 
 # --- Async refresh logic ---
 async def refresh_source_async(source: RagSourceConfig, hashes: dict[str, str]):
@@ -189,7 +216,7 @@ async def refresh_source_async(source: RagSourceConfig, hashes: dict[str, str]):
     )
     agent_settings = AgentSettingsModel(
         gemini_api_key=SecretStr(""),  # Use SecretStr for required field
-        gemini_model="",    # Use empty string for required str
+        gemini_model="",  # Use empty string for required str
         openrouter_api_key=None,
     )
     pipeline = create_vector_rag_pipeline(vector_db_settings, agent_settings)
@@ -204,14 +231,20 @@ async def refresh_source_async(source: RagSourceConfig, hashes: dict[str, str]):
     hashes[source.name] = source_hash
     save_hashes(hashes)
 
+
 async def run_refresh_once_async():
     hashes = load_hashes()
     for source in refresh_settings.sources:
         try:
             await refresh_source_async(source, hashes)
         except Exception as e:
-            logger.exception(f"Error during refresh cycle: source={source.name}, error={e}")
-    logger.info(f"Sleeping until next refresh: seconds={refresh_settings.refresh_interval_seconds}")
+            logger.exception(
+                f"Error during refresh cycle: source={source.name}, error={e}"
+            )
+    logger.info(
+        f"Sleeping until next refresh: seconds={refresh_settings.refresh_interval_seconds}"
+    )
+
 
 async def run_refresh_periodically():
     """
@@ -221,6 +254,7 @@ async def run_refresh_periodically():
     while True:
         await run_refresh_once_async()
         await asyncio.sleep(refresh_settings.refresh_interval_seconds)
+
 
 # --- Configurable sources and refresh interval ---
 refresh_settings = RagRefreshSettings(
@@ -264,4 +298,4 @@ refresh_settings = RagRefreshSettings(
 if __name__ == "__main__":
     # Example: run a single refresh cycle (for testing)
     asyncio.run(run_refresh_once_async())
-    # To run periodically, use: asyncio.run(run_refresh_periodically()) 
+    # To run periodically, use: asyncio.run(run_refresh_periodically())
