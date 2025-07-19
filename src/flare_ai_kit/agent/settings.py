@@ -1,5 +1,6 @@
 """Settings for Agent."""
 
+from typing import Optional
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -20,7 +21,7 @@ class AgentSettings(BaseSettings):
         default="gemini-2.5-flash",
         description="Gemini model to use (e.g. gemini-2.5-flash, gemini-2.5-pro)",
     )
-    openrouter_api_key: SecretStr | None = Field(
+    openrouter_api_key: Optional[SecretStr] = Field(
         default=None,
         description="API key for OpenRouter.",
     )
