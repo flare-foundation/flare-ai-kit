@@ -13,3 +13,9 @@ wheels/
 .pytest_cache
 .vscode
 .DS_Store
+
+# Logsnode_modules/
+/node_modules/
+
+integrations/n8n/custom_nodes/FlareAiKit/FlareFtsoPrice/node_modules/
+
