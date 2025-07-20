@@ -9,7 +9,9 @@ from .base import BaseChunker, BaseIndexer
 
 class LocalFileIndexer(BaseIndexer):
     """
-    Indexes local files from a directory, chunks their content, and yields chunked data with metadata.
+    Index local files from a directory.
+
+    Chunks their content and yields chunked data with metadata.
     """
 
     def __init__(
@@ -17,15 +19,17 @@ class LocalFileIndexer(BaseIndexer):
         root_dir: str,
         chunker: BaseChunker,
         allowed_extensions: set[str] | None = None,
-    ):
+    ) -> None:
         self.root_dir = Path(root_dir)
         self.chunker = chunker
         self.allowed_extensions = allowed_extensions or {".md", ".txt", ".py"}
 
     def ingest(self) -> Iterator[dict[str, Any]]:
         """
-        Recursively scan the root directory for allowed files, read and chunk their content,
-        and yield each chunk with metadata (file path, chunk index).
+        Recursively scan root directory for files.
+
+        Read and chunk their content, and yield each chunk with metadata
+        (file path, chunk index).
         """
         for file_path in self.root_dir.rglob("*"):
             if not file_path.is_file():
@@ -35,8 +39,8 @@ class LocalFileIndexer(BaseIndexer):
                 continue
             try:
                 text = file_path.read_text(encoding="utf-8")
-            except Exception:
-                # Optionally log or skip unreadable files
+            except OSError:
+                # Skip unreadable files
                 continue
             chunks = self.chunker.chunk(text)
             for idx, chunk in enumerate(chunks):
