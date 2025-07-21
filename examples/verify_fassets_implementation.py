@@ -31,7 +31,7 @@ from flare_ai_kit.ecosystem.protocols.fassets import FAssets
 from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
 
 # Add the src directory to the path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 logger = logging.getLogger(__name__)
 
