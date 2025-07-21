@@ -1,6 +1,6 @@
 """Settings for Vector RAG."""
 
-from pydantic import Field, PositiveInt, model_validator
+from pydantic import Field, FilePath, PositiveInt, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_ALLOWED_EXTENSIONS = {
@@ -60,6 +60,56 @@ DEFAULT_IGNORED_FILES = {
 }
 
 
+class PDFFieldExtractionSettings(BaseSettings):
+    """Specifies fields to extract from a PDF and their locations."""
+
+    field_name: str = Field(description="The name of the field to extract.")
+    x0: int = Field(description="The starting x-coordinate of the bounding box.")
+    y0: int = Field(description="The starting y-coordinate of the bounding box.")
+    x1: int = Field(description="The ending x-coordinate of the bounding box.")
+    y1: int = Field(description="The ending y-coordinate of the bounding box.")
+    data_type: str = Field(
+        "string",
+        description="The data type of the field (e.g., 'string', 'integer', 'date').",
+    )
+
+
+class PDFTemplateSettings(BaseSettings):
+    """Defines a template for a specific type of PDF document."""
+
+    template_name: str = Field(description="A unique name for this PDF template.")
+    fields: list[PDFFieldExtractionSettings] = Field(
+        description="A list of fields to extract from this template."
+    )
+
+
+class OnchainContractSettings(BaseSettings):
+    """Settings for the smart contract to post data to."""
+
+    contract_address: str = Field(
+        description="The address of the OnchainDataRegistry smart contract."
+    )
+    abi_path: FilePath = Field(
+        description="The path to the ABI file for the smart contract."
+    )
+    function_name: str = Field(
+        "registerDocument",
+        description="The name of the function to call on the smart contract.",
+    )
+
+
+class PDFIngestionSettings(BaseSettings):
+    """Settings for the PDF ingestion and on-chain posting service."""
+
+    templates: list[PDFTemplateSettings] = Field(
+        description="A list of PDF templates to use for extraction."
+    )
+    contract_settings: OnchainContractSettings = Field(
+        description="Settings for the on-chain contract."
+    )
+    use_ocr: bool = Field(False, description="Whether to use OCR for text extraction.")
+
+
 class IngestionSettings(BaseSettings):
     """Configuration for Vector Database connections used in RAG."""
 
@@ -87,6 +137,9 @@ class IngestionSettings(BaseSettings):
     )
     github_ignored_files: set[str] = Field(
         DEFAULT_IGNORED_FILES, description="Files ignored by the indexer."
+    )
+    pdf_ingestion: PDFIngestionSettings | None = Field(
+        None, description="Settings for PDF ingestion."
     )
 
     @model_validator(mode="after")
