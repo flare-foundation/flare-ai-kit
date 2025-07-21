@@ -12,13 +12,11 @@ logger = structlog.get_logger(__name__)
 
 
 class LocalFileIndexer(BaseIndexer):
-
     """
     Index local files from a directory.
 
     Chunks their content and yields chunked data with metadata.
     """
-
 
     def __init__(
         self,
@@ -31,14 +29,12 @@ class LocalFileIndexer(BaseIndexer):
         self.allowed_extensions = allowed_extensions or {".md", ".txt", ".py"}
 
     def ingest(self) -> Iterator[dict[str, Any]]:
-
         """
         Recursively scan root directory for files.
 
         Read and chunk their content, and yield each chunk with metadata
         (file path, chunk index).
         """
-
         for file_path in self.root_dir.rglob("*"):
             if not file_path.is_file():
                 continue
