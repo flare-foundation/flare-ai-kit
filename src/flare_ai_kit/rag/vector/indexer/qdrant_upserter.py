@@ -8,9 +8,7 @@ from qdrant_client.http.models import Distance, PointStruct, VectorParams
 
 
 def make_id(metadata: dict[str, Any]) -> str:
-    """
-    Generate a deterministic UUID for a chunk using its metadata.
-    """
+    """Generate a deterministic UUID for a chunk using its metadata."""
     key = f"{metadata.get('file_path', '')}:{metadata.get('chunk_index', '')}"
     # Use UUID5 to deterministically generate a UUID from the key
     return str(uuid.uuid5(uuid.NAMESPACE_DNS, key))
@@ -27,7 +25,8 @@ def upsert_to_qdrant(
     Upserts embeddings and metadata into a Qdrant collection.
 
     Args:
-        data (List[Dict[str, Any]]): List of dicts with 'embedding', 'text', and 'metadata'.
+        data (List[Dict[str, Any]]): List of dicts with
+            'embedding', 'text', and 'metadata'.
         qdrant_url (str): Qdrant instance URL.
         collection_name (str): Name of the Qdrant collection.
         vector_size (int): Dimension of the embedding vectors.
