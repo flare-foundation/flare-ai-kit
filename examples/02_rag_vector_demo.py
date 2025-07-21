@@ -1,15 +1,20 @@
-import os
 from pathlib import Path
 
 from qdrant_client import QdrantClient
 
-from flare_ai_kit.rag.vector.embedding.gemini_embedding import GeminiEmbedding
-from flare_ai_kit.rag.vector.indexer.fixed_size_chunker import FixedSizeChunker
-from flare_ai_kit.rag.vector.indexer.ingest_and_embed import ingest_and_embed
-from flare_ai_kit.rag.vector.indexer.local_file_indexer import LocalFileIndexer
-from flare_ai_kit.rag.vector.indexer.qdrant_upserter import upsert_to_qdrant
-from flare_ai_kit.rag.vector.retriever.qdrant_retriever import QdrantRetriever
+from flare_ai_kit.agent import AgentSettings
+from flare_ai_kit.rag import (
+    FixedSizeChunker,
+    GeminiEmbedding,
+    LocalFileIndexer,
+    QdrantRetriever,
+    ingest_and_embed,
+    upsert_to_qdrant,
+)
 from flare_ai_kit.rag.vector.settings import VectorDbSettings
+
+agent = AgentSettings()  # pyright: ignore[reportCallIssue]
+vector_db = VectorDbSettings(qdrant_batch_size=8)
 
 if __name__ == "__main__":
     # 1. Prepare a sample text file in a dedicated directory
@@ -32,34 +37,31 @@ if __name__ == "__main__":
         root_dir=str(demo_dir), chunker=chunker, allowed_extensions={".txt"}
     )
 
-    # 3. Use the Gemini embedding model or MockEmbedding for testing
-    output_dimensionality = 768
-    USE_MOCK_EMBEDDING = os.environ.get("USE_MOCK_EMBEDDING", "0") == "1"
-    if USE_MOCK_EMBEDDING:
-        from flare_ai_kit.rag.vector.embedding.mock_embedding import MockEmbedding
-
-        embedding_model = MockEmbedding(output_dimensionality=output_dimensionality)
-        print("[INFO] Using MockEmbedding for testing.")
-    else:
-        api_key = os.environ.get("GEMINI_API_KEY")
-        model = "gemini-embedding-001"
-        embedding_model = GeminiEmbedding(
-            api_key=api_key, model=model, output_dimensionality=output_dimensionality
-        )
+    # 3. Use the Gemini embedding model for testing
+    embedding_model = GeminiEmbedding(
+        api_key=agent.gemini_api_key.get_secret_value(),
+        model=vector_db.embeddings_model,
+        output_dimensionality=vector_db.embeddings_output_dimensionality,
+    )
 
     # 4. Ingest and embed
     data = ingest_and_embed(indexer, embedding_model, batch_size=8)
     print(f"Ingested and embedded {len(data)} chunks.")
 
     # 5. Upsert to Qdrant
-    qdrant_url = "http://localhost:6333"
     collection_name = "demo-collection"
     vector_size = 768  # Gemini embedding output size
-    upsert_to_qdrant(data, qdrant_url, collection_name, vector_size, batch_size=8)
+    upsert_to_qdrant(
+        data,
+        str(vector_db.qdrant_url),
+        collection_name,
+        vector_size,
+        batch_size=vector_db.qdrant_batch_size,
+    )
     print(f"Upserted {len(data)} vectors to Qdrant collection '{collection_name}'.")
 
     # 6. Retrieve using QdrantRetriever
-    client = QdrantClient(qdrant_url)
+    client = QdrantClient(str(vector_db.qdrant_url))
     settings = VectorDbSettings()
     retriever = QdrantRetriever(client, embedding_model, settings)
     query = "What is RAG?"
