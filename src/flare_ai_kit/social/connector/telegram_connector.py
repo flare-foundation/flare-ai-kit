@@ -38,9 +38,7 @@ class TelegramConnector(SocialConnector):
 
         if self.token:
             try:
-                self.app = (
-                    Application.builder().token(self.token).build()
-                )
+                self.app = Application.builder().token(self.token).build()
                 self.is_configured = True
                 self.app.add_handler(
                     MessageHandler(filters.TEXT & (~filters.COMMAND), self._on_message)

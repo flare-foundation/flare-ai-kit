@@ -7,6 +7,7 @@ from flare_ai_kit.social.connector.telegram_connector import TelegramConnector
 
 monkeypatch = pytest.MonkeyPatch
 
+
 @pytest.fixture(autouse=True)
 def mock_env(monkeypatch):
     monkeypatch.setenv("SOCIAL__TELEGRAM_BOT_TOKEN", "fake-token")
