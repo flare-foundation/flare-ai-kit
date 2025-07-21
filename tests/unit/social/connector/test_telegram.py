@@ -1,13 +1,11 @@
 from unittest.mock import AsyncMock
 
 import pytest
-from dotenv import load_dotenv
 
 from flare_ai_kit.social.connector import SocialConnector
 from flare_ai_kit.social.connector.telegram_connector import TelegramConnector
 
-load_dotenv()
-
+monkeypatch = pytest.MonkeyPatch
 
 @pytest.fixture(autouse=True)
 def mock_env(monkeypatch):
@@ -15,7 +13,7 @@ def mock_env(monkeypatch):
     monkeypatch.setenv("SOCIAL__TELEGRAM_CHAT_ID", "123456")
 
 
-def test_inherits_base_class():
+def test_inherits_base_class(monkeypatch):
     connector = TelegramConnector()
     assert isinstance(connector, SocialConnector)
     assert connector.platform == "telegram"

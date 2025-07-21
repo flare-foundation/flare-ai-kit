@@ -6,6 +6,8 @@ import pytest
 from flare_ai_kit.social.connector import SocialConnector
 from flare_ai_kit.social.connector.farcaster import FarcasterConnector
 
+monkeypatch = pytest.MonkeyPatch
+
 
 def test_inherits_base_class(monkeypatch):
     monkeypatch.setenv("SOCIAL__FARCASTER_API_KEY", "fake-key")

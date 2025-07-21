@@ -1,8 +1,10 @@
 """Entry point for Flare AI Kit SDK."""
 
-from .config import AppSettings, settings
+from .config import AppSettings, get_settings
 from .ecosystem import BlockExplorer, Flare, FtsoV2
 from .ingestion import GithubIngestor
+from .ingestion.pdf_processor import PDFProcessor
+from .onchain.contract_poster import ContractPoster
 from .rag.vector import VectorRAGPipeline, create_vector_rag_pipeline
 from .social import TelegramClient, XClient
 
@@ -10,7 +12,7 @@ from .social import TelegramClient, XClient
 class FlareAIKit:
     """The main entry point for the Flare AI Kit SDK."""
 
-    def __init__(self, config: AppSettings | None = None) -> None:
+    def __init__(self, config: AppSettings | None) -> None:
         """
         Initializes the Flare AI Kit SDK with the provided or default configuration.
 
@@ -23,7 +25,7 @@ class FlareAIKit:
         ```
 
         """
-        self.settings = config or settings
+        self.settings = config or get_settings()
 
         # Lazy-loaded properties
         self._flare = None
@@ -33,6 +35,7 @@ class FlareAIKit:
         self._telegram = None
         self._github_ingestor = None
         self._x_client = None
+        self._pdf_processor = None
 
     # Ecosystem Interaction Methods
     @property
@@ -72,7 +75,7 @@ class FlareAIKit:
             self._x_client = XClient(self.settings.social)
         return self._x_client
 
-    # RAG Methods
+    # RAG and Ingestion Methods
     @property
     def vector_rag(self) -> VectorRAGPipeline:
         """Access the RAG retriever."""
@@ -83,8 +86,26 @@ class FlareAIKit:
             )
         return self._vector_rag
 
+    @property
     def github_ingestor(self) -> GithubIngestor:
         """Access the GitHub ingestor methods."""
         if self._github_ingestor is None:
             self._github_ingestor = GithubIngestor(self.settings.ingestion)
         return self._github_ingestor
+
+    @property
+    def pdf_processor(self) -> PDFProcessor:
+        """Access the PDF ingestion and on-chain posting service."""
+        if self._pdf_processor is None:
+            if not self.settings.ingestion or not self.settings.ingestion.pdf_ingestion:
+                raise ValueError("PDF ingestion settings are not configured.")
+
+            contract_poster = ContractPoster(
+                contract_settings=self.settings.ingestion.pdf_ingestion.contract_settings,
+                ecosystem_settings=self.settings.ecosystem,
+            )
+            self._pdf_processor = PDFProcessor(
+                settings=self.settings.ingestion.pdf_ingestion,
+                contract_poster=contract_poster,
+            )
+        return self._pdf_processor

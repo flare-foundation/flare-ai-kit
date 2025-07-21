@@ -4,7 +4,7 @@ from typing import Any
 
 import httpx
 
-from flare_ai_kit.config import settings
+from flare_ai_kit.config import get_settings
 from flare_ai_kit.social.connector import SocialConnector
 
 
@@ -13,6 +13,7 @@ class FarcasterConnector(SocialConnector):
 
     def __init__(self, client: httpx.AsyncClient | None = None) -> None:
         """Initialize the FarcasterConnector with API key."""
+        settings = get_settings()
         social_settings = settings.social
         self.api_key = (
             social_settings.farcaster_api_key.get_secret_value()
@@ -44,9 +45,6 @@ class FarcasterConnector(SocialConnector):
 
     async def fetch_mentions(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
         """Fetch mentions from Farcaster based on a query."""
-        if not self.api_key:
-            return []
-
         try:
             response = await self.client.get(
                 self.endpoint,
@@ -71,8 +69,6 @@ class FarcasterConnector(SocialConnector):
 
     async def post_message(self, content: str) -> dict[str, Any]:
         """Post a message to Farcaster."""
-        if not self.api_key:
-            return {"error": "API key not set"}
         try:
             response = await self.client.post(
                 f"{self.api_url}/v2/casts",

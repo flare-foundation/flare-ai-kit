@@ -8,7 +8,7 @@ from tweepy import API, OAuth1UserHandler
 from tweepy.asynchronous import AsyncClient
 from tweepy.errors import TweepyException
 
-from flare_ai_kit.config import settings
+from flare_ai_kit.config import get_settings
 from flare_ai_kit.social.connector import SocialConnector
 
 
@@ -17,6 +17,7 @@ class XConnector(SocialConnector):
 
     def __init__(self) -> None:
         """Initialize the XConnector with API keys and tokens."""
+        settings = get_settings()
         social_settings = settings.social
 
         self.bearer_token = (
