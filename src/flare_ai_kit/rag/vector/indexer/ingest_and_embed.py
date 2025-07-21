@@ -12,10 +12,12 @@ def ingest_and_embed(
     batch_size: int = 32,
 ) -> list[dict[str, Any]]:
     """
+
     Process chunks from indexer and generate embeddings.
 
     Processes all chunks from the indexer, generates embeddings using the
     embedding model, and returns a list of dicts with embedding, text, and metadata.
+
 
     Args:
         indexer (BaseIndexer): The data indexer yielding text chunks and metadata.
