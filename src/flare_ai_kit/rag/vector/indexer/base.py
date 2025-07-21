@@ -9,15 +9,18 @@ class BaseIndexer(ABC):
     """
     Abstract base class for data ingestion modules.
 
-    Responsible for processing raw data from a source and yielding cleaned, chunked text with metadata.
+    Responsible for processing raw data from a source and yielding cleaned,
+    chunked text with metadata.
     """
 
     @abstractmethod
     def ingest(self) -> Iterator[dict[str, Any]]:
         """
+        Ingest and process data from the source.
+
         Process the data source and yield dictionaries containing:
             - 'text': The chunked text content
-            - 'metadata': Associated metadata (e.g., source, title, url)
+            - 'metadata': Associated metadata (e.g., source, title, url).
 
         Yields:
             dict[str, Any]: A dictionary with 'text' and 'metadata' keys.
