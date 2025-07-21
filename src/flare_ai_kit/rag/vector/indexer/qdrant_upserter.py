@@ -25,7 +25,6 @@ def upsert_to_qdrant(
     Upserts embeddings and metadata into a Qdrant collection.
 
     Args:
-
         data (List[Dict[str, Any]]): List of dicts with 'embedding', 'text',
             and 'metadata'.
 

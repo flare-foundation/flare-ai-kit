@@ -82,9 +82,7 @@ class QdrantRetriever(BaseRetriever):
 
     def _create_collection(self, collection_name: str, vector_size: int) -> None:
         """
-
         Create or recreate a Qdrant collection.
-
 
         Warning: This will delete the collection if it already exists.
 
