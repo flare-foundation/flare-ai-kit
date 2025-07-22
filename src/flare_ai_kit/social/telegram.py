@@ -4,7 +4,7 @@ import structlog
 from telegram.error import TelegramError
 from telegram.ext import Application
 
-from flare_ai_kit.social.settings_models import SocialSettingsModel
+from flare_ai_kit.social.settings_models import SocialSettings
 
 logger = structlog.get_logger(__name__)
 
@@ -12,7 +12,7 @@ logger = structlog.get_logger(__name__)
 class TelegramClient:
     """A client to interact with the Telegram Bot API."""
 
-    def __init__(self, settings: SocialSettingsModel) -> None:
+    def __init__(self, settings: SocialSettings) -> None:
         """
         Initializes the TelegramClient.
 

@@ -5,11 +5,11 @@ from dataclasses import dataclass
 import structlog
 from qdrant_client import QdrantClient
 
-from flare_ai_kit.agent.settings_models import AgentSettingsModel
+from flare_ai_kit.agent.settings import AgentSettings
 from flare_ai_kit.common import FlareAIKitError
 from flare_ai_kit.rag.vector.embedding import GeminiEmbedding
 from flare_ai_kit.rag.vector.retriever import QdrantRetriever
-from flare_ai_kit.rag.vector.settings_models import VectorDbSettingsModel
+from flare_ai_kit.rag.vector.settings import VectorDbSetting
 
 logger = structlog.get_logger(__name__)
 
@@ -32,7 +32,7 @@ class VectorRAGPipeline:
 
 
 def create_vector_rag_pipeline(
-    vector_db_settings: VectorDbSettingsModel, agent_settings: AgentSettingsModel
+    vector_db_settings: VectorDbSetting, agent_settings: AgentSettings
 ) -> VectorRAGPipeline:
     """
     Builds and configures a complete vector RAG pipeline.
