@@ -67,6 +67,7 @@ class QdrantRetriever(BaseRetriever):
     """
     Interacting with Qdrant VectorDB, semantic search and indexing.
     """
+
     def __init__(
         self,
         qdrant_client: QdrantClient,
@@ -85,7 +86,9 @@ class QdrantRetriever(BaseRetriever):
         self.embedding_client = embedding_client
         self.vector_size = settings.qdrant_vector_size
         self.batch_size = settings.qdrant_batch_size
-        self.collection_name = settings.embeddings_model  # You may want to use a dedicated collection name field
+        self.collection_name = (
+            settings.embeddings_model
+        )  # You may want to use a dedicated collection name field
 
     def _create_collection(self, collection_name: str, vector_size: int) -> None:
         """
@@ -119,15 +122,21 @@ class QdrantRetriever(BaseRetriever):
         results = []
         for hit in search_result:
             payload = hit.payload or {}
-            results.append({
-                'text': payload.get('text', ''),
-                'metadata': {k: v for k, v in payload.items() if k != 'text'},
-                'score': hit.score,
-            })
+            results.append(
+                {
+                    "text": payload.get("text", ""),
+                    "metadata": {k: v for k, v in payload.items() if k != "text"},
+                    "score": hit.score,
+                }
+            )
         return results
 
     def semantic_search(
-        self, query: str, collection_name: str, top_k: int = 5, score_threshold: float | None = None
+        self,
+        query: str,
+        collection_name: str,
+        top_k: int = 5,
+        score_threshold: float | None = None,
     ) -> List[Dict[str, Any]]:
         """
         Perform semantic search using vector embeddings.
@@ -154,11 +163,13 @@ class QdrantRetriever(BaseRetriever):
         results = []
         for hit in search_result:
             payload = hit.payload or {}
-            results.append({
-                'text': payload.get('text', ''),
-                'metadata': {k: v for k, v in payload.items() if k != 'text'},
-                'score': hit.score,
-            })
+            results.append(
+                {
+                    "text": payload.get("text", ""),
+                    "metadata": {k: v for k, v in payload.items() if k != "text"},
+                    "score": hit.score,
+                }
+            )
         return results
 
     def keyword_search(
@@ -188,9 +199,11 @@ class QdrantRetriever(BaseRetriever):
         results = []
         for hit in points:
             payload = hit.payload or {}
-            results.append({
-                'text': payload.get('text', ''),
-                'metadata': {k: v for k, v in payload.items() if k != 'text'},
-                'score': 1.0,  # Keyword search doesn't provide a similarity score
-            })
+            results.append(
+                {
+                    "text": payload.get("text", ""),
+                    "metadata": {k: v for k, v in payload.items() if k != "text"},
+                    "score": 1.0,  # Keyword search doesn't provide a similarity score
+                }
+            )
         return results

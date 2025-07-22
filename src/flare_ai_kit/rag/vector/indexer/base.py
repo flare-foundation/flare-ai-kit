@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import Any, Iterator
 
+
 class BaseIndexer(ABC):
     """
     Abstract base class for data ingestion modules.
     Responsible for processing raw data from a source and yielding cleaned, chunked text with metadata.
     """
+
     @abstractmethod
     def ingest(self) -> Iterator[dict[str, Any]]:
         """
@@ -17,11 +19,13 @@ class BaseIndexer(ABC):
         """
         pass
 
+
 class BaseChunker(ABC):
     """
     Abstract base class for text chunking strategies.
     Splits raw text into smaller, meaningful chunks for embedding.
     """
+
     @abstractmethod
     def chunk(self, text: str) -> list[str]:
         """
@@ -31,4 +35,4 @@ class BaseChunker(ABC):
         Returns:
             list[str]: List of text chunks.
         """
-        pass 
+        pass
