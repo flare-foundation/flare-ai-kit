@@ -4,7 +4,7 @@ from typing import Any
 
 import httpx
 
-from flare_ai_kit.config import get_settings
+from flare_ai_kit.config import AppSettings
 from flare_ai_kit.social.connector import SocialConnector
 
 
@@ -13,26 +13,23 @@ class FarcasterConnector(SocialConnector):
 
     def __init__(self, client: httpx.AsyncClient | None = None) -> None:
         """Initialize the FarcasterConnector with API key."""
-        settings = get_settings()
-        social_settings = settings.social
+        settings = AppSettings().social
         self.api_key = (
-            social_settings.farcaster_api_key.get_secret_value()
-            if social_settings.farcaster_api_key
+            settings.farcaster_api_key.get_secret_value()
+            if settings.farcaster_api_key
             else ""
         )
         self.signer_uuid = (
-            social_settings.farcaster_signer_uuid.get_secret_value()
-            if social_settings.farcaster_signer_uuid
+            settings.farcaster_signer_uuid.get_secret_value()
+            if settings.farcaster_signer_uuid
             else ""
         )
         self.fid = (
-            social_settings.farcaster_fid.get_secret_value()
-            if social_settings.farcaster_fid
-            else ""
+            settings.farcaster_fid.get_secret_value() if settings.farcaster_fid else ""
         )
         self.api_url = (
-            social_settings.farcaster_api_url.get_secret_value()
-            if social_settings.farcaster_api_url
+            settings.farcaster_api_url.get_secret_value()
+            if settings.farcaster_api_url
             else ""
         )
         self.endpoint = f"{self.api_url}/v2/farcaster/feed/search"

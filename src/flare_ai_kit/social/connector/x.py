@@ -8,7 +8,7 @@ from tweepy import API, OAuth1UserHandler
 from tweepy.asynchronous import AsyncClient
 from tweepy.errors import TweepyException
 
-from flare_ai_kit.config import get_settings
+from flare_ai_kit.config import AppSettings
 from flare_ai_kit.social.connector import SocialConnector
 
 
@@ -17,29 +17,23 @@ class XConnector(SocialConnector):
 
     def __init__(self) -> None:
         """Initialize the XConnector with API keys and tokens."""
-        settings = get_settings()
-        social_settings = settings.social
-
+        settings = AppSettings().social
         self.bearer_token = (
-            social_settings.x_api_key.get_secret_value()
-            if social_settings.x_api_key
-            else ""
+            settings.x_api_key.get_secret_value() if settings.x_api_key else ""
         )
 
         self.client = AsyncClient(bearer_token=self.bearer_token)  # type: ignore[reportGeneralTypeIssues]
 
         self.auth = OAuth1UserHandler(
-            social_settings.x_api_key.get_secret_value()
-            if social_settings.x_api_key
+            settings.x_api_key.get_secret_value() if settings.x_api_key else "",
+            settings.x_api_key_secret.get_secret_value()
+            if settings.x_api_key_secret
             else "",
-            social_settings.x_api_key_secret.get_secret_value()
-            if social_settings.x_api_key_secret
+            settings.x_access_token.get_secret_value()
+            if settings.x_access_token
             else "",
-            social_settings.x_access_token.get_secret_value()
-            if social_settings.x_access_token
-            else "",
-            social_settings.x_access_token_secret.get_secret_value()
-            if social_settings.x_access_token_secret
+            settings.x_access_token_secret.get_secret_value()
+            if settings.x_access_token_secret
             else "",
         )
 

@@ -33,7 +33,7 @@ class SocialSettings(BaseSettings):
         None,
         description="API key for Telegram.",
     )
-    telegram_channel_id: SecretStr | None = Field(
+    telegram_chat_id: SecretStr | None = Field(
         None,
         description="API key for Telegram.",
     )

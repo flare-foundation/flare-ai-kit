@@ -4,7 +4,7 @@ from typing import Any
 
 import httpx
 
-from flare_ai_kit.config import get_settings
+from flare_ai_kit.config import AppSettings
 from flare_ai_kit.social.connector import SocialConnector
 
 
@@ -13,17 +13,12 @@ class GitHubConnector(SocialConnector):
 
     def __init__(self) -> None:
         """Initialize the GitHubConnector with API token and repository."""
-        settings = get_settings()
-        social_settings = settings.social
+        settings = AppSettings().social
         self.token = (
-            social_settings.github_token.get_secret_value()
-            if social_settings.github_token
-            else ""
+            settings.github_token.get_secret_value() if settings.github_token else ""
         )
         self.repo = (
-            social_settings.github_repo.get_secret_value()
-            if social_settings.github_repo
-            else ""
+            settings.github_repo.get_secret_value() if settings.github_repo else ""
         )
         self.client = httpx.AsyncClient()
         self.endpoint = f"https://api.github.com/repos/{self.repo}/issues/comments"

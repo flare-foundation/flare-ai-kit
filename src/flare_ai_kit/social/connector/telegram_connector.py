@@ -7,7 +7,7 @@ import structlog
 from telegram import Update
 from telegram.ext import Application, ContextTypes, MessageHandler, filters
 
-from flare_ai_kit.config import get_settings
+from flare_ai_kit.config import AppSettings
 from flare_ai_kit.social.connector import SocialConnector
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -19,16 +19,15 @@ class TelegramConnector(SocialConnector):
 
     def __init__(self) -> None:
         """Initialize the TelegramConnector with API token and chat ID."""
-        settings = get_settings()
-        social_settings = settings.social
+        settings = AppSettings().social
         self.token = (
-            social_settings.telegram_bot_token.get_secret_value()
-            if social_settings.telegram_bot_token
+            settings.telegram_bot_token.get_secret_value()
+            if settings.telegram_bot_token
             else ""
         )
         self.chat_id = (
-            social_settings.telegram_channel_id.get_secret_value()
-            if social_settings.telegram_channel_id
+            settings.telegram_chat_id.get_secret_value()
+            if settings.telegram_chat_id
             else ""
         )
 

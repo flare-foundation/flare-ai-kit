@@ -5,7 +5,7 @@ from typing import Any
 
 from discord import Client, Intents, Message, TextChannel
 
-from flare_ai_kit.config import get_settings
+from flare_ai_kit.config import AppSettings
 from flare_ai_kit.social.connector import SocialConnector
 
 
@@ -14,16 +14,15 @@ class DiscordConnector(SocialConnector):
 
     def __init__(self) -> None:
         """Initialize the DiscordConnector with API token and channel ID."""
-        settings = get_settings()
-        social_settings = settings.social
+        settings = AppSettings().social
         self.token: str = (
-            social_settings.discord_bot_token.get_secret_value()
-            if social_settings.discord_bot_token
+            settings.discord_bot_token.get_secret_value()
+            if settings.discord_bot_token
             else ""
         )
         self.channel_id: int = int(
-            social_settings.discord_channel_id.get_secret_value()
-            if social_settings.discord_channel_id
+            settings.discord_channel_id.get_secret_value()
+            if settings.discord_channel_id
             else 0
         )
         self.client: Client = Client(intents=Intents.default())

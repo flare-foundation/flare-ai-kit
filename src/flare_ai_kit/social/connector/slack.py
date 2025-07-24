@@ -6,7 +6,7 @@ from typing import Any
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
-from flare_ai_kit.config import get_settings
+from flare_ai_kit.config import AppSettings
 from flare_ai_kit.social.connector import SocialConnector
 
 logger = logging.getLogger(__name__)
@@ -18,16 +18,15 @@ class SlackConnector(SocialConnector):
 
     def __init__(self, client: WebClient | None) -> None:
         """Initialize the SlackConnector with API token and channel ID."""
-        settings = get_settings()
-        social_settings = settings.social
+        settings = AppSettings().social
         self.token = (
-            social_settings.slack_bot_token.get_secret_value()
-            if social_settings.slack_bot_token
+            settings.slack_bot_token.get_secret_value()
+            if settings.slack_bot_token
             else ""
         )
         self.channel_id = (
-            social_settings.slack_channel_id.get_secret_value()
-            if social_settings.slack_channel_id
+            settings.slack_channel_id.get_secret_value()
+            if settings.slack_channel_id
             else ""
         )
         self.client: WebClient = client or WebClient(token=self.token)
