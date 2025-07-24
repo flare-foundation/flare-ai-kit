@@ -8,7 +8,7 @@ class FixedSizeChunker(BaseChunker):
 
     def __init__(self, chunk_size: int = 200, overlap: int = 0) -> None:
         """
-        Initialize the chunker with specified chunk size and overlap.
+        Initialize the FixedSizeChunker.
 
         Args:
             chunk_size (int): Number of words per chunk.

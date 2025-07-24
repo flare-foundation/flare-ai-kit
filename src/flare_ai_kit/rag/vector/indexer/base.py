@@ -16,11 +16,12 @@ class BaseIndexer(ABC):
     @abstractmethod
     def ingest(self) -> Iterator[dict[str, Any]]:
         """
-        Ingest and process data from the source.
 
-        Process the data source and yield dictionaries containing:
-            - 'text': The chunked text content
-            - 'metadata': Associated metadata (e.g., source, title, url).
+        Process the data source and yield dictionaries containing.
+
+        - 'text': The chunked text content
+        - 'metadata': Associated metadata (e.g., source, title, url)
+
 
         Yields:
             dict[str, Any]: A dictionary with 'text' and 'metadata' keys.
