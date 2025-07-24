@@ -66,8 +66,10 @@ class QdrantRetriever(BaseRetriever):
             qdrant_client (QdrantClient): An initialized QdrantClient instance.
             embedding_client (BaseEmbedding): An embedding client
                 (e.g., GeminiEmbedding).
-            settings (VectorDbSettings): Configuration object containing settings like
-                collection_name, vector_size, embedding models.
+
+            settings (VectorDbSettings): Configuration object containing
+                settings like collection_name, vector_size, embedding models.
+
 
         """
         self.client = qdrant_client
@@ -80,7 +82,7 @@ class QdrantRetriever(BaseRetriever):
 
     def _create_collection(self, collection_name: str, vector_size: int) -> None:
         """
-        Creates or recreates a Qdrant collection.
+        Create or recreate a Qdrant collection.
 
         Warning: This will delete the collection if it already exists.
 
@@ -96,7 +98,11 @@ class QdrantRetriever(BaseRetriever):
 
     def retrieve(self, query: str, top_k: int = 5) -> list[SemanticSearchResult]:
         """
-        Embed the query, search for top-k similar vectors, return results.
+
+        Embed the query, search Qdrant for top-k similar vectors.
+
+        Return SemanticSearchResult objects.
+
 
         Args:
             query (str): The search query string.
@@ -129,7 +135,10 @@ class QdrantRetriever(BaseRetriever):
             query (str): The input query string.
             collection_name (str): The name of the Qdrant collection.
             top_k (int): Number of top results to return.
-            score_threshold (float | None): Optional min score threshold for results.
+
+            score_threshold (float | None): Optional minimum score threshold
+                for results.
+
 
         Returns:
             list[SemanticSearchResult]: List of documents with content and metadata.

@@ -12,7 +12,11 @@ logger = structlog.get_logger(__name__)
 
 
 class LocalFileIndexer(BaseIndexer):
-    """Indexes local files, chunks and extracts metadata."""
+    """
+    Index local files from a directory.
+
+    Chunks their content and yields chunked data with metadata.
+    """
 
     def __init__(
         self,
@@ -25,7 +29,12 @@ class LocalFileIndexer(BaseIndexer):
         self.allowed_extensions = allowed_extensions or {".md", ".txt", ".py"}
 
     def ingest(self) -> Iterator[dict[str, Any]]:
-        """Scan directory for files with allowed extensions."""
+        """
+        Recursively scan root directory for files.
+
+        Read and chunk their content, and yield each chunk with metadata
+        (file path, chunk index).
+        """
         for file_path in self.root_dir.rglob("*"):
             if not file_path.is_file():
                 continue
@@ -34,8 +43,10 @@ class LocalFileIndexer(BaseIndexer):
                 continue
             try:
                 text = file_path.read_text(encoding="utf-8")
-            except Exception:
-                logger.exception("Failed to read file", file_path=str(file_path))
+
+            except OSError:
+                # Skip unreadable files
+
                 continue
             chunks = self.chunker.chunk(text)
             for idx, chunk in enumerate(chunks):
