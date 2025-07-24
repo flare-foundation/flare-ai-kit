@@ -5,8 +5,16 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      uv-all:
+        patterns:
+          - "*"
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions-all:
+        patterns:
+          - "*"
