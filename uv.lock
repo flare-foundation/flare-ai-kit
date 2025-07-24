@@ -2242,9 +2242,9 @@ wheels = [
 name = "tenacity"
 version = "8.5.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a3/4d/6a19536c50b849338fcbe9290d562b52cbdcf30d8963d3588a68a4107df1/tenacity-8.5.0.tar.gz", hash = "sha256:8bc6c0c8a09b31e6cad13c47afbed1a567518250a9a171418582ed8d9c20ca78", size = 47309 }
+sdist = { url = "https://files.pythonhosted.org/packages/a3/4d/6a19536c50b849338fcbe9290d562b52cbdcf30d8963d3588a68a4107df1/tenacity-8.5.0.tar.gz", hash = "sha256:8bc6c0c8a09b31e6cad13c47afbed1a567518250a9a171418582ed8d9c20ca78", size = 47309, upload-time = "2024-07-05T07:25:31.836Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d2/3f/8ba87d9e287b9d385a02a7114ddcef61b26f86411e121c9003eb509a1773/tenacity-8.5.0-py3-none-any.whl", hash = "sha256:b594c2a5945830c267ce6b79a166228323ed52718f30302c1359836112346687", size = 28165 },
+    { url = "https://files.pythonhosted.org/packages/d2/3f/8ba87d9e287b9d385a02a7114ddcef61b26f86411e121c9003eb509a1773/tenacity-8.5.0-py3-none-any.whl", hash = "sha256:b594c2a5945830c267ce6b79a166228323ed52718f30302c1359836112346687", size = 28165, upload-time = "2024-07-05T07:25:29.591Z" },
 ]
 
 [[package]]
@@ -2373,7 +2373,7 @@ wheels = [
 
 [[package]]
 name = "web3"
-version = "7.12.0"
+version = "7.12.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -2391,9 +2391,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7d/1e/fc1f5b5a12615cbdca57d35014cdb9823db7392d73b730fa0d89d6a13f6a/web3-7.12.0.tar.gz", hash = "sha256:08fbe79a2e2503c9820132ebad24ba0372831588cabac5f467999c97ace7dda3", size = 2195693, upload-time = "2025-05-22T21:06:05.381Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7e/5e/1660d8d0f78e3391cc48833ddd7a2bcc7e02d5cf267a5ae5defa6d3e459d/web3-7.12.1.tar.gz", hash = "sha256:97f6a116ccaeb5907bb4cb6c771cc23bc942bf09528a840189e9b509b7b8347c", size = 2197920, upload-time = "2025-07-14T16:34:24.958Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b8/df/0ccf18f244b96a93ba2710f7ce696da1f8dd44ef1126e3603dfb65cd68fe/web3-7.12.0-py3-none-any.whl", hash = "sha256:c7e2b9c1db5a379ef53b45fe8a19bdc2d47ad262039fbf6675794bc40f74bf06", size = 1369328, upload-time = "2025-05-22T21:06:03.124Z" },
+    { url = "https://files.pythonhosted.org/packages/04/60/053fc9381fbdb8ac12b1af7b105d7de3f07b400761c335d2021f82fceddb/web3-7.12.1-py3-none-any.whl", hash = "sha256:eac9a0d4bba128a0811828312ae0faaaa122a258efffd77e1e7cf06a0629a043", size = 1369540, upload-time = "2025-07-14T16:34:22.239Z" },
 ]
 
 [[package]]
