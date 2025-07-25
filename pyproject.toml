@@ -59,6 +59,9 @@ tee = [
     "pyjwt>=2.10.1",
     "pyopenssl>=25.0.0",
 ]
+a2a = [
+    "fastapi[standard]>=0.116.1",
+]
 
 [build-system]
 requires = ["hatchling"]
