@@ -1,8 +1,8 @@
 """Entry point for Flare AI Kit SDK."""
 
+from .a2a import A2AClient
 from .config import AppSettings
 from .ecosystem import BlockExplorer, FAssets, Flare, FtsoV2
-from .a2a import A2AClient
 from .ingestion import GithubIngestor
 from .ingestion.pdf_processor import PDFProcessor
 from .onchain.contract_poster import ContractPoster
