@@ -6,9 +6,12 @@ from enum import Enum
 from typing import Any
 
 try:
-    from pydantic import BaseModel as PydanticBaseModel
+    from pydantic import BaseModel as _PydanticBaseModel
 
-    BaseModel = PydanticBaseModel
+    class BaseModel(_PydanticBaseModel):  # type: ignore[misc]
+        """Base model using pydantic."""
+
+        pass
 except ImportError:
     # Fallback for when pydantic is not available
     class BaseModel:  # type: ignore[misc]
@@ -40,7 +43,7 @@ class MessagePriority(str, Enum):
     CRITICAL = "critical"
 
 
-class AgentMessage(BaseModel):
+class AgentMessage(BaseModel):  # type: ignore[misc]
     """Standard message format for inter-agent communication."""
 
     message_id: str

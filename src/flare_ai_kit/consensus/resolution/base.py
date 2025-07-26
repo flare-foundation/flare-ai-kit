@@ -5,9 +5,12 @@ from enum import Enum
 from typing import Any
 
 try:
-    from pydantic import BaseModel as PydanticBaseModel
+    from pydantic import BaseModel as _PydanticBaseModel
 
-    BaseModel = PydanticBaseModel
+    class BaseModel(_PydanticBaseModel):  # type: ignore[misc]
+        """Base model using pydantic."""
+
+        pass
 except ImportError:
     # Fallback for when pydantic is not available
     class BaseModel:  # type: ignore[misc]
@@ -41,7 +44,7 @@ class ConflictSeverity(str, Enum):
     CRITICAL = "critical"
 
 
-class ConflictContext(BaseModel):
+class ConflictContext(BaseModel):  # type: ignore[misc]
     """Context information for conflict resolution."""
 
     task_id: str
@@ -51,7 +54,7 @@ class ConflictContext(BaseModel):
     metadata: dict[str, Any] = {}
 
 
-class ResolutionResult(BaseModel):
+class ResolutionResult(BaseModel):  # type: ignore[misc]
     """Result of conflict resolution process."""
 
     resolved_prediction: Prediction

@@ -8,9 +8,12 @@ from enum import Enum
 from typing import Any
 
 try:
-    from pydantic import BaseModel as PydanticBaseModel
+    from pydantic import BaseModel as _PydanticBaseModel
 
-    BaseModel = PydanticBaseModel
+    class BaseModel(_PydanticBaseModel):  # type: ignore[misc]
+        """Base model using pydantic."""
+
+        pass
 except ImportError:
     # Fallback for when pydantic is not available
     class BaseModel:  # type: ignore[misc]
@@ -37,7 +40,7 @@ class InteractionPattern(str, Enum):
     COMPETITIVE = "competitive"  # Agents compete for best solution
 
 
-class AgentPerformanceMetrics(BaseModel):
+class AgentPerformanceMetrics(BaseModel):  # type: ignore[misc]
     """Performance metrics for individual agents."""
 
     agent_id: str
@@ -46,12 +49,12 @@ class AgentPerformanceMetrics(BaseModel):
     response_time_avg: float = 0.0
     confidence_calibration: float = 0.0  # How well confidence matches actual accuracy
     collaboration_score: float = 0.0  # How well agent works with others
-    domain_expertise: dict[str, float] = field(default_factory=dict)
+    domain_expertise: dict[str, float] = field(default_factory=lambda: {})
     task_count: int = 0
     last_active: float = 0.0
 
 
-class TaskComplexity(BaseModel):
+class TaskComplexity(BaseModel):  # type: ignore[misc]
     """Metadata about task complexity to guide interaction patterns."""
 
     difficulty: float = 0.5  # 0-1 scale
@@ -142,24 +145,26 @@ class DynamicInteractionManager:
         pattern_config: dict[str, Any],
     ) -> list[Prediction]:
         """Coordinate agents according to the selected interaction pattern."""
+        # Track start time for potential future use
         _start_time = time.time()
 
         if pattern == InteractionPattern.BROADCAST:
             return await self._coordinate_broadcast(agents, task, pattern_config)
-        if pattern == InteractionPattern.HIERARCHICAL:
+        elif pattern == InteractionPattern.HIERARCHICAL:
             return await self._coordinate_hierarchical(agents, task, pattern_config)
-        if pattern == InteractionPattern.PEER_TO_PEER:
+        elif pattern == InteractionPattern.PEER_TO_PEER:
             return await self._coordinate_peer_to_peer(agents, task, pattern_config)
-        if pattern == InteractionPattern.CONSENSUS_ROUNDS:
+        elif pattern == InteractionPattern.CONSENSUS_ROUNDS:
             return await self._coordinate_consensus_rounds(agents, task, pattern_config)
-        if pattern == InteractionPattern.EXPERT_CONSULTATION:
+        elif pattern == InteractionPattern.EXPERT_CONSULTATION:
             return await self._coordinate_expert_consultation(
                 agents, task, pattern_config
             )
-        if pattern == InteractionPattern.COMPETITIVE:
+        elif pattern == InteractionPattern.COMPETITIVE:
             return await self._coordinate_competitive(agents, task, pattern_config)
-        # Fallback to broadcast
-        return await self._coordinate_broadcast(agents, task, pattern_config)
+        else:
+            # Fallback to broadcast
+            return await self._coordinate_broadcast(agents, task, pattern_config)
 
     async def _coordinate_broadcast(
         self, agents: list[CoordinatorAgent], task: str, config: dict[str, Any]
@@ -178,13 +183,17 @@ class DynamicInteractionManager:
             results = ["timeout"] * len(agents)
 
         # Convert to predictions
-        predictions = []
+        predictions: list[Prediction] = []
         for agent, result in zip(agents, results, strict=False):
             if result != "timeout" and not isinstance(result, Exception):
+                # Convert result to string if needed
+                prediction_value: str | float = (
+                    str(result) if not isinstance(result, (str, int, float)) else result
+                )
                 predictions.append(
                     Prediction(
                         agent_id=agent.agent_id,
-                        prediction=result,
+                        prediction=prediction_value,
                         confidence=agent.config.get("confidence", 1.0),
                     )
                 )
@@ -201,7 +210,7 @@ class DynamicInteractionManager:
         # Create groups
         groups = [agents[i : i + group_size] for i in range(0, len(agents), group_size)]
 
-        group_predictions = []
+        group_predictions: list[Prediction] = []
 
         for group in groups:
             if not group:
@@ -225,10 +234,16 @@ class DynamicInteractionManager:
                 consolidation_task = f"Consolidate these predictions for task '{task}': {[str(p.prediction) for p in group_results]}"
                 leader_result = await leader.agent.run(consolidation_task)
 
+                # Convert result to appropriate type
+                prediction_value: str | float = (
+                    str(leader_result)
+                    if not isinstance(leader_result, (str, int, float))
+                    else leader_result
+                )
                 group_predictions.append(
                     Prediction(
                         agent_id=f"group_leader_{leader.agent_id}",
-                        prediction=leader_result,
+                        prediction=prediction_value,
                         confidence=0.8,  # Slightly reduced for group decision
                     )
                 )
@@ -247,7 +262,7 @@ class DynamicInteractionManager:
         )
 
         # Second round: peer reviews
-        reviewed_predictions = []
+        reviewed_predictions: list[Prediction] = []
 
         for pair in review_pairs:
             if len(pair) != 2:
@@ -277,16 +292,28 @@ class DynamicInteractionManager:
                 review_task = f"Review this prediction for task '{task}': {pred_1.prediction}. Provide feedback or improved version."
                 reviewed_2 = await agent_2.agent.run(review_task)
 
+                # Convert results to appropriate types
+                pred_1_value: str | float = (
+                    str(reviewed_1)
+                    if not isinstance(reviewed_1, (str, int, float))
+                    else reviewed_1
+                )
+                pred_2_value: str | float = (
+                    str(reviewed_2)
+                    if not isinstance(reviewed_2, (str, int, float))
+                    else reviewed_2
+                )
+
                 reviewed_predictions.extend(
                     [
                         Prediction(
                             agent_id=f"reviewed_{agent_1_id}",
-                            prediction=reviewed_1,
+                            prediction=pred_1_value,
                             confidence=0.85,
                         ),
                         Prediction(
                             agent_id=f"reviewed_{agent_2_id}",
-                            prediction=reviewed_2,
+                            prediction=pred_2_value,
                             confidence=0.85,
                         ),
                     ]
@@ -305,7 +332,7 @@ class DynamicInteractionManager:
             agents, task, {"timeout": 30}
         )
 
-        for round_num in range(max_rounds - 1):
+        for _round_num in range(max_rounds - 1):
             # Check for convergence
             if self._check_convergence(current_predictions, convergence_threshold):
                 break
@@ -379,13 +406,17 @@ class DynamicInteractionManager:
             results = ["timeout"] * len(agents)
 
         # Only return successful results
-        predictions = []
+        predictions: list[Prediction] = []
         for agent, result in zip(agents, results, strict=False):
             if result != "timeout" and not isinstance(result, Exception):
+                # Convert result to appropriate type
+                prediction_value: str | float = (
+                    str(result) if not isinstance(result, (str, int, float)) else result
+                )
                 predictions.append(
                     Prediction(
                         agent_id=agent.agent_id,
-                        prediction=result,
+                        prediction=prediction_value,
                         confidence=agent.config.get("confidence", 1.0),
                     )
                 )
@@ -396,7 +427,7 @@ class DynamicInteractionManager:
         self, domain: str, agents: list[CoordinatorAgent]
     ) -> list[CoordinatorAgent]:
         """Find agents with expertise in a specific domain."""
-        experts = []
+        experts: list[CoordinatorAgent] = []
         for agent in agents:
             metrics = self.agent_metrics.get(agent.agent_id)
             if metrics and metrics.domain_expertise.get(domain, 0.0) > 0.7:
@@ -407,7 +438,7 @@ class DynamicInteractionManager:
         self, agents: list[CoordinatorAgent]
     ) -> list[tuple[str, str]]:
         """Create pairs of agents for peer review."""
-        pairs = []
+        pairs: list[tuple[str, str]] = []
         agent_ids = [a.agent_id for a in agents]
 
         for i in range(0, len(agent_ids) - 1, 2):
@@ -442,7 +473,7 @@ class DynamicInteractionManager:
         if not predictions:
             return "No predictions available"
 
-        summary_parts = []
+        summary_parts: list[str] = []
         for pred in predictions:
             summary_parts.append(
                 f"Agent {pred.agent_id}: {pred.prediction} (confidence: {pred.confidence:.2f})"

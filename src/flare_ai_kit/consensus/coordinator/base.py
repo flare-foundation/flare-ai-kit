@@ -4,17 +4,24 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 try:
-    from pydantic_ai import Agent
+    from pydantic_ai import Agent as _PydanticAgent  # type: ignore[import-untyped]
+
+    Agent = _PydanticAgent  # type: ignore[misc]
 except ImportError:
     # Fallback for when pydantic_ai is not available
-    from typing import Any as Agent  # type: ignore[misc]
+    class Agent:  # type: ignore[misc]
+        """Fallback Agent when pydantic_ai is not available."""
+
+        def __init__(self, **kwargs: Any) -> None:
+            for key, value in kwargs.items():
+                setattr(self, key, value)
 
 
 class BaseCoordinator(ABC):
     """Base coordinator class."""
 
     @abstractmethod
-    def add_agent(self, agent: Agent, role: str) -> None:
+    def add_agent(self, agent: Any, role: str) -> None:
         """Add an agent and its role to the pool."""
 
     @abstractmethod

@@ -5,10 +5,18 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, cast
 
 try:
-    from pydantic_ai import Agent
+    from pydantic_ai import Agent as _PydanticAgent  # type: ignore[import-untyped]
+
+    Agent = _PydanticAgent  # type: ignore[misc]
 except ImportError:
     # Fallback for when pydantic_ai is not available
-    from typing import Any as Agent  # type: ignore[misc]
+    class Agent:  # type: ignore[misc]
+        """Fallback Agent when pydantic_ai is not available."""
+
+        def __init__(self, **kwargs: Any) -> None:
+            for key, value in kwargs.items():
+                setattr(self, key, value)
+
 
 from flare_ai_kit.common import Prediction
 from flare_ai_kit.consensus.coordinator.base import BaseCoordinator
@@ -21,14 +29,14 @@ class CoordinatorAgent:
     """Represents an agent managed by the coordinator."""
 
     agent_id: str
-    agent: Agent[Any, Any]
+    agent: Any
     role: AgentRole
     config: dict[str, Any] = field(default_factory=lambda: dict[str, Any]())
 
     @property
     def status(self) -> str:
         """Returns the status of the agent."""
-        return getattr(self.agent, "status", "unknown")
+        return getattr(self.agent, "status", "unknown")  # type: ignore[arg-type]
 
 
 class SimpleCoordinator(BaseCoordinator):
@@ -39,7 +47,7 @@ class SimpleCoordinator(BaseCoordinator):
 
     def add_agent(
         self,
-        agent: Agent[Any, Any],
+        agent: Any,
         role: str,  # Changed to str to match base class
         config: dict[str, Any] | None = None,
     ) -> None:
