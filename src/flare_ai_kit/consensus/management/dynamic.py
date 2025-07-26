@@ -3,10 +3,21 @@
 import asyncio
 import time
 from collections import defaultdict
+from dataclasses import field
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel
+try:
+    from pydantic import BaseModel
+except ImportError:
+    # Fallback for when pydantic is not available
+    class BaseModel:  # type: ignore[no-redef]
+        """Fallback BaseModel when pydantic is not available."""
+
+        def __init__(self, **kwargs: Any) -> None:
+            for key, value in kwargs.items():
+                setattr(self, key, value)
+
 
 from flare_ai_kit.common.schemas import Prediction
 from flare_ai_kit.consensus.communication import CommunicationManager
@@ -33,7 +44,7 @@ class AgentPerformanceMetrics(BaseModel):
     response_time_avg: float = 0.0
     confidence_calibration: float = 0.0  # How well confidence matches actual accuracy
     collaboration_score: float = 0.0  # How well agent works with others
-    domain_expertise: dict[str, float] = {}
+    domain_expertise: dict[str, float] = field(default_factory=dict)
     task_count: int = 0
     last_active: float = 0.0
 
@@ -129,7 +140,7 @@ class DynamicInteractionManager:
         pattern_config: dict[str, Any],
     ) -> list[Prediction]:
         """Coordinate agents according to the selected interaction pattern."""
-        start_time = time.time()
+        _start_time = time.time()
 
         if pattern == InteractionPattern.BROADCAST:
             return await self._coordinate_broadcast(agents, task, pattern_config)
@@ -183,7 +194,7 @@ class DynamicInteractionManager:
     ) -> list[Prediction]:
         """Hierarchical pattern with group leaders."""
         group_size = config.get("group_size", 3)
-        rounds = config.get("coordination_rounds", 2)
+        _rounds = config.get("coordination_rounds", 2)
 
         # Create groups
         groups = [agents[i : i + group_size] for i in range(0, len(agents), group_size)]
@@ -505,4 +516,3 @@ class DynamicInteractionManager:
                 metrics.collaboration_score * 0.9
                 + task_result["collaboration_rating"] * 0.1
             )
-

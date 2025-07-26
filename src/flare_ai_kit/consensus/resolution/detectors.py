@@ -272,4 +272,3 @@ class DomainConflictDetector(BaseConflictDetector):
             )
 
         return conflicts
-

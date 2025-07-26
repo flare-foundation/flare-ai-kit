@@ -222,4 +222,3 @@ class CommunicationManager:
                 "timestamp": time.time(),
             },
         )
-

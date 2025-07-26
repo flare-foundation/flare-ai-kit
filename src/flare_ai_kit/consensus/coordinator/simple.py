@@ -4,7 +4,11 @@ import asyncio
 from dataclasses import dataclass, field
 from typing import Any, Literal, cast
 
-from pydantic_ai import Agent
+try:
+    from pydantic_ai import Agent
+except ImportError:
+    # Fallback for when pydantic_ai is not available
+    from typing import Any as Agent  # type: ignore[misc]
 
 from flare_ai_kit.common import Prediction
 from flare_ai_kit.consensus.coordinator.base import BaseCoordinator

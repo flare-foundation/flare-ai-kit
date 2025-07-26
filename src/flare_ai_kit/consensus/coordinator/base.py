@@ -3,7 +3,11 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from pydantic_ai import Agent
+try:
+    from pydantic_ai import Agent
+except ImportError:
+    # Fallback for when pydantic_ai is not available
+    from typing import Any as Agent  # type: ignore[misc]
 
 
 class BaseCoordinator(ABC):

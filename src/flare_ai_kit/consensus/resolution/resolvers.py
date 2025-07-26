@@ -219,9 +219,8 @@ class NegotiationProtocol(BaseNegotiationProtocol):
         negotiation_id = str(uuid.uuid4())
 
         # Start negotiation process
-        for round_num in range(max_rounds):
+        for _round_num in range(max_rounds):
             # Send negotiation requests to all agents
-            responses = []
             for agent_id in agent_ids:
                 await self.communication_manager.request_collaboration(
                     requester_id="consensus_engine",
@@ -310,4 +309,3 @@ class HybridConflictResolver(BaseConflictResolver):
     def can_handle(self, conflict_type: ConflictType) -> bool:
         """Check if any of the available resolvers can handle this conflict type."""
         return any(r.can_handle(conflict_type) for r in self.resolvers)
-

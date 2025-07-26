@@ -4,7 +4,17 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel
+try:
+    from pydantic import BaseModel
+except ImportError:
+    # Fallback for when pydantic is not available
+    class BaseModel:  # type: ignore[no-redef]
+        """Fallback BaseModel when pydantic is not available."""
+
+        def __init__(self, **kwargs: Any) -> None:
+            for key, value in kwargs.items():
+                setattr(self, key, value)
+
 
 from flare_ai_kit.common.schemas import Prediction
 
@@ -79,4 +89,3 @@ class BaseNegotiationProtocol(ABC):
         self, agent_ids: list[str], conflict: ConflictContext, max_rounds: int = 3
     ) -> ResolutionResult:
         """Conduct negotiation between conflicting agents."""
-

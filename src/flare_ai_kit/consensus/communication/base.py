@@ -4,7 +4,16 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel
+try:
+    from pydantic import BaseModel
+except ImportError:
+    # Fallback for when pydantic is not available
+    class BaseModel:  # type: ignore[no-redef]
+        """Fallback BaseModel when pydantic is not available."""
+
+        def __init__(self, **kwargs: Any) -> None:
+            for key, value in kwargs.items():
+                setattr(self, key, value)
 
 
 class MessageType(str, Enum):
@@ -82,4 +91,3 @@ class BaseEventBus(ABC):
     @abstractmethod
     async def unsubscribe_from_event(self, event_type: str, agent_id: str) -> None:
         """Unsubscribe from an event type."""
-
