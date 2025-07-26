@@ -100,13 +100,15 @@ class SimpleCoordinator(BaseCoordinator):
             A list of tuples (agent_id, result).
 
         """
-        selected = [
+        selected: list[tuple[str, Any]] = [
             (a.agent_id, a.agent)
             for a in self.agents.values()
             if role is None or a.role == role
         ]
 
-        results = await asyncio.gather(*(agent.run(task) for _, agent in selected))
+        results: list[Any] = list(
+            await asyncio.gather(*(agent.run(task) for _, agent in selected))
+        )
 
         return list(zip((aid for aid, _ in selected), results, strict=False))
 

@@ -71,7 +71,7 @@ class WeightedVotingResolver(BaseConflictResolver):
             value_scores[value] = total_weight
 
         # Select value with highest weighted score
-        winning_value = max(value_scores.keys(), key=lambda v: value_scores[v])
+        winning_value = max(value_scores.keys(), key=lambda v: value_scores[v])  # type: ignore[arg-type]
         winning_preds = value_groups[winning_value]
 
         # Create consensus prediction
@@ -177,7 +177,7 @@ class ExpertiseBasedResolver(BaseConflictResolver):
             )
 
         # Select prediction from most expert agent
-        expert_agent = max(expert_scores.keys(), key=lambda aid: expert_scores[aid])
+        expert_agent = max(expert_scores.keys(), key=lambda aid: expert_scores[aid])  # type: ignore[arg-type]
         expert_pred = next(p for p in predictions if p.agent_id == expert_agent)
 
         return ResolutionResult(

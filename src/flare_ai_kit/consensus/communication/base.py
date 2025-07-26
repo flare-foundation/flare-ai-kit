@@ -1,14 +1,17 @@
 """Base communication interfaces for inter-agent communication."""
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from enum import Enum
 from typing import Any
 
 try:
-    from pydantic import BaseModel
+    from pydantic import BaseModel as PydanticBaseModel
+
+    BaseModel = PydanticBaseModel
 except ImportError:
     # Fallback for when pydantic is not available
-    class BaseModel:  # type: ignore[no-redef]
+    class BaseModel:  # type: ignore[misc]
         """Fallback BaseModel when pydantic is not available."""
 
         def __init__(self, **kwargs: Any) -> None:
@@ -84,7 +87,7 @@ class BaseEventBus(ABC):
 
     @abstractmethod
     async def subscribe_to_event(
-        self, event_type: str, handler: Any, agent_id: str
+        self, event_type: str, handler: Callable[..., Any], agent_id: str
     ) -> None:
         """Subscribe to a specific event type."""
 

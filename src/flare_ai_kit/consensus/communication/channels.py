@@ -4,6 +4,7 @@ import asyncio
 import time
 import uuid
 from collections import defaultdict
+from collections.abc import Callable
 from typing import Any
 
 from flare_ai_kit.consensus.communication.base import (
@@ -76,7 +77,7 @@ class EventBus(BaseEventBus):
     """Event bus implementation for agent coordination."""
 
     def __init__(self) -> None:
-        self.handlers: dict[str, dict[str, Any]] = defaultdict(dict)
+        self.handlers: dict[str, dict[str, Callable[..., Any]]] = defaultdict(dict)
         self._lock = asyncio.Lock()
 
     async def publish_event(self, event_type: str, data: dict[str, Any]) -> None:
@@ -86,7 +87,7 @@ class EventBus(BaseEventBus):
 
         # Execute handlers concurrently
         if handlers:
-            tasks = []
+            tasks: list[Any] = []
             for handler in handlers.values():
                 if asyncio.iscoroutinefunction(handler):
                     tasks.append(handler(data))
@@ -100,7 +101,7 @@ class EventBus(BaseEventBus):
                 await asyncio.gather(*tasks, return_exceptions=True)
 
     async def subscribe_to_event(
-        self, event_type: str, handler: Any, agent_id: str
+        self, event_type: str, handler: Callable[..., Any], agent_id: str
     ) -> None:
         """Subscribe to a specific event type."""
         async with self._lock:

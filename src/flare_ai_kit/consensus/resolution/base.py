@@ -5,10 +5,12 @@ from enum import Enum
 from typing import Any
 
 try:
-    from pydantic import BaseModel
+    from pydantic import BaseModel as PydanticBaseModel
+
+    BaseModel = PydanticBaseModel
 except ImportError:
     # Fallback for when pydantic is not available
-    class BaseModel:  # type: ignore[no-redef]
+    class BaseModel:  # type: ignore[misc]
         """Fallback BaseModel when pydantic is not available."""
 
         def __init__(self, **kwargs: Any) -> None:

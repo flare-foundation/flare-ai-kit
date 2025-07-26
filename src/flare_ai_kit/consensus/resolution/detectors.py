@@ -53,11 +53,11 @@ class StatisticalConflictDetector(BaseConflictDetector):
         self, predictions: list[Prediction], task_id: str
     ) -> list[ConflictContext]:
         """Detect disagreements in prediction values."""
-        conflicts = []
+        conflicts: list[ConflictContext] = []
 
         # For numerical predictions
-        numerical_preds = []
-        string_preds = []
+        numerical_preds: list[Prediction] = []
+        string_preds: list[Prediction] = []
 
         for pred in predictions:
             if isinstance(pred.prediction, (int, float)):
@@ -117,7 +117,7 @@ class StatisticalConflictDetector(BaseConflictDetector):
         self, predictions: list[Prediction], task_id: str
     ) -> list[ConflictContext]:
         """Detect mismatches between high confidence and disagreeing values."""
-        conflicts = []
+        conflicts: list[ConflictContext] = []
 
         # Find high-confidence predictions that disagree
         high_conf_preds = [
@@ -152,7 +152,7 @@ class StatisticalConflictDetector(BaseConflictDetector):
         self, predictions: list[Prediction], task_id: str
     ) -> list[ConflictContext]:
         """Detect outlier predictions using statistical methods."""
-        conflicts = []
+        conflicts: list[ConflictContext] = []
 
         # Only works for numerical predictions
         numerical_preds = [
@@ -169,7 +169,7 @@ class StatisticalConflictDetector(BaseConflictDetector):
         if std_dev == 0:
             return conflicts
 
-        outliers = []
+        outliers: list[Prediction] = []
         for pred in numerical_preds:
             z_score = abs((float(pred.prediction) - mean_val) / std_dev)
             if z_score > self.outlier_threshold:
@@ -224,7 +224,7 @@ class DomainConflictDetector(BaseConflictDetector):
         if len(predictions) < 2:
             return []
 
-        conflicts = []
+        conflicts: list[ConflictContext] = []
         task_id = context.get("task_id", "unknown") if context else "unknown"
         domain = context.get("domain", "general") if context else "general"
 
@@ -240,10 +240,10 @@ class DomainConflictDetector(BaseConflictDetector):
         self, predictions: list[Prediction], task_id: str, domain: str
     ) -> list[ConflictContext]:
         """Detect when domain experts disagree."""
-        conflicts = []
+        conflicts: list[ConflictContext] = []
 
         # Find experts in this domain
-        expert_preds = []
+        expert_preds: list[tuple[Prediction, float]] = []
         for pred in predictions:
             expertise = self.agent_expertise.get(pred.agent_id, {}).get(domain, 0.0)
             if expertise > 0.7:  # High expertise threshold
