@@ -1,7 +1,6 @@
 """Base classes for conflict resolution in multi-agent consensus."""
 
 from abc import ABC, abstractmethod
-from dataclasses import field
 from enum import Enum
 from typing import Any
 
@@ -10,6 +9,11 @@ try:
 
     class BaseModel(_PydanticBaseModel):  # type: ignore[misc]
         """Base model using pydantic."""
+
+        class Config:
+            """Pydantic configuration."""
+
+            arbitrary_types_allowed = True
 
 except ImportError:
     # Fallback for when pydantic is not available
@@ -51,7 +55,7 @@ class ConflictContext(BaseModel):  # type: ignore[misc]
     conflict_type: ConflictType
     severity: ConflictSeverity
     conflicting_predictions: list[Prediction]
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = {}  # type: ignore[assignment,misc]  # noqa: RUF012
 
 
 class ResolutionResult(BaseModel):  # type: ignore[misc]
@@ -61,7 +65,7 @@ class ResolutionResult(BaseModel):  # type: ignore[misc]
     resolution_method: str
     confidence_adjustment: float = 0.0
     rationale: str = ""
-    additional_info: dict[str, Any] = field(default_factory=dict)
+    additional_info: dict[str, Any] = {}  # type: ignore[assignment,misc]  # noqa: RUF012
 
 
 class BaseConflictDetector(ABC):

@@ -11,6 +11,11 @@ try:
     class BaseModel(_PydanticBaseModel):  # type: ignore[misc]
         """Base model using pydantic."""
 
+        class Config:
+            """Pydantic configuration."""
+
+            arbitrary_types_allowed = True
+
 except ImportError:
     # Fallback for when pydantic is not available
     class BaseModel:  # type: ignore[misc]

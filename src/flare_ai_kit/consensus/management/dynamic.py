@@ -3,7 +3,6 @@
 import asyncio
 import time
 from collections import defaultdict
-from dataclasses import field
 from enum import Enum
 from typing import Any
 
@@ -12,6 +11,11 @@ try:
 
     class BaseModel(_PydanticBaseModel):  # type: ignore[misc]
         """Base model using pydantic."""
+
+        class Config:
+            """Pydantic configuration."""
+
+            arbitrary_types_allowed = True
 
 except ImportError:
     # Fallback for when pydantic is not available
@@ -58,7 +62,7 @@ class AgentPerformanceMetrics(BaseModel):  # type: ignore[misc]
     response_time_avg: float = 0.0
     confidence_calibration: float = 0.0  # How well confidence matches actual accuracy
     collaboration_score: float = 0.0  # How well agent works with others
-    domain_expertise: dict[str, float] = field(default_factory=dict)
+    domain_expertise: dict[str, float] = {}  # type: ignore[assignment,misc]  # noqa: RUF012
     task_count: int = 0
     last_active: float = 0.0
 
