@@ -11,6 +11,15 @@ from flare_ai_kit.consensus.resolution.base import (
     ConflictType,
 )
 
+# Constants for conflict detection
+MIN_PREDICTIONS_FOR_ANALYSIS = 2
+MIN_EXPERTS_FOR_CONFLICT = 2
+EXPERTISE_THRESHOLD = 0.7
+MIN_OUTLIER_DETECTION_SIZE = 3
+CRITICAL_CV_THRESHOLD = 0.8
+HIGH_CV_THRESHOLD = 0.5
+MEDIUM_CV_THRESHOLD = 0.3
+
 
 class StatisticalConflictDetector(BaseConflictDetector):
     """Detects conflicts using statistical analysis of predictions."""
@@ -29,7 +38,7 @@ class StatisticalConflictDetector(BaseConflictDetector):
         self, predictions: list[Prediction], context: dict[str, Any] | None = None
     ) -> list[ConflictContext]:
         """Detect statistical conflicts in predictions."""
-        if len(predictions) < 2:
+        if len(predictions) < MIN_PREDICTIONS_FOR_ANALYSIS:
             return []
 
         conflicts: list[ConflictContext] = []
@@ -66,7 +75,7 @@ class StatisticalConflictDetector(BaseConflictDetector):
                 string_preds.append(pred)
 
         # Handle numerical disagreements
-        if len(numerical_preds) >= 2:
+        if len(numerical_preds) >= MIN_PREDICTIONS_FOR_ANALYSIS:
             values = [float(p.prediction) for p in numerical_preds]
             if len(set(values)) > 1:  # Different values exist
                 std_dev = statistics.stdev(values)
@@ -90,8 +99,8 @@ class StatisticalConflictDetector(BaseConflictDetector):
                     )
 
         # Handle string disagreements
-        if len(string_preds) >= 2:
-            unique_values = set(str(p.prediction) for p in string_preds)
+        if len(string_preds) >= MIN_PREDICTIONS_FOR_ANALYSIS:
+            unique_values = {str(p.prediction) for p in string_preds}
             if len(unique_values) > 1:
                 conflicts.append(
                     ConflictContext(
@@ -124,7 +133,7 @@ class StatisticalConflictDetector(BaseConflictDetector):
             p for p in predictions if p.confidence >= self.confidence_threshold
         ]
 
-        if len(high_conf_preds) >= 2:
+        if len(high_conf_preds) >= MIN_PREDICTIONS_FOR_ANALYSIS:
             # Check if high-confidence predictions have different values
             values = [str(p.prediction) for p in high_conf_preds]
             if len(set(values)) > 1:
@@ -159,7 +168,7 @@ class StatisticalConflictDetector(BaseConflictDetector):
             p for p in predictions if isinstance(p.prediction, (int, float))
         ]
 
-        if len(numerical_preds) < 3:
+        if len(numerical_preds) < MIN_OUTLIER_DETECTION_SIZE:
             return conflicts
 
         values = [float(p.prediction) for p in numerical_preds]
@@ -199,11 +208,11 @@ class StatisticalConflictDetector(BaseConflictDetector):
         """Calculate conflict severity based on statistical measures."""
         cv = std_dev / max(abs(mean_val), 1)
 
-        if cv > 0.8:
+        if cv > CRITICAL_CV_THRESHOLD:
             return ConflictSeverity.CRITICAL
-        if cv > 0.5:
+        if cv > HIGH_CV_THRESHOLD:
             return ConflictSeverity.HIGH
-        if cv > 0.3:
+        if cv > MEDIUM_CV_THRESHOLD:
             return ConflictSeverity.MEDIUM
         return ConflictSeverity.LOW
 
@@ -214,14 +223,13 @@ class DomainConflictDetector(BaseConflictDetector):
     def __init__(
         self, agent_expertise: dict[str, dict[str, float]] | None = None
     ) -> None:
-        # agent_expertise[agent_id][domain] = expertise_score (0-1)
         self.agent_expertise = agent_expertise or {}
 
     async def detect_conflicts(
         self, predictions: list[Prediction], context: dict[str, Any] | None = None
     ) -> list[ConflictContext]:
         """Detect conflicts based on domain expertise."""
-        if len(predictions) < 2:
+        if len(predictions) < MIN_PREDICTIONS_FOR_ANALYSIS:
             return []
 
         conflicts: list[ConflictContext] = []
@@ -246,10 +254,10 @@ class DomainConflictDetector(BaseConflictDetector):
         expert_preds: list[tuple[Prediction, float]] = []
         for pred in predictions:
             expertise = self.agent_expertise.get(pred.agent_id, {}).get(domain, 0.0)
-            if expertise > 0.7:  # High expertise threshold
+            if expertise > EXPERTISE_THRESHOLD:  # High expertise threshold
                 expert_preds.append((pred, expertise))
 
-        if len(expert_preds) < 2:
+        if len(expert_preds) < MIN_EXPERTS_FOR_CONFLICT:
             return conflicts
 
         # Check if experts disagree

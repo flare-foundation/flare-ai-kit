@@ -13,7 +13,6 @@ try:
     class BaseModel(_PydanticBaseModel):  # type: ignore[misc]
         """Base model using pydantic."""
 
-        pass
 except ImportError:
     # Fallback for when pydantic is not available
     class BaseModel:  # type: ignore[misc]
@@ -27,6 +26,16 @@ except ImportError:
 from flare_ai_kit.common.schemas import Prediction
 from flare_ai_kit.consensus.communication import CommunicationManager
 from flare_ai_kit.consensus.coordinator.simple import CoordinatorAgent
+
+# Constants for interaction pattern thresholds
+MIN_AGENTS_FOR_COMPETITIVE = 3
+MIN_AGENTS_FOR_COLLABORATION = 3
+MAX_AGENTS_FOR_CONSENSUS = 6
+COLLABORATIVE_BENEFIT_THRESHOLD = 0.7
+CONFLICT_LIKELIHOOD_THRESHOLD = 0.6
+EXPERTISE_THRESHOLD = 0.7
+PAIR_SIZE = 2
+MIN_PREDICTIONS_FOR_CONVERGENCE = 2
 
 
 class InteractionPattern(str, Enum):
@@ -49,7 +58,7 @@ class AgentPerformanceMetrics(BaseModel):  # type: ignore[misc]
     response_time_avg: float = 0.0
     confidence_calibration: float = 0.0  # How well confidence matches actual accuracy
     collaboration_score: float = 0.0  # How well agent works with others
-    domain_expertise: dict[str, float] = field(default_factory=lambda: {})
+    domain_expertise: dict[str, float] = field(default_factory=dict)
     task_count: int = 0
     last_active: float = 0.0
 
@@ -108,14 +117,17 @@ class DynamicInteractionManager:
                     "consultation_rounds": 2,
                 }
 
-        if task_complexity.time_sensitive and agent_count > 3:
+        if task_complexity.time_sensitive and agent_count > MIN_AGENTS_FOR_COMPETITIVE:
             return InteractionPattern.COMPETITIVE, {
                 "time_limit": 30,  # seconds
                 "selection_criteria": "fastest_accurate",
             }
 
-        if task_complexity.collaborative_benefit > 0.7 and agent_count >= 3:
-            if agent_count > 6:
+        if (
+            task_complexity.collaborative_benefit > COLLABORATIVE_BENEFIT_THRESHOLD
+            and agent_count >= MIN_AGENTS_FOR_COLLABORATION
+        ):
+            if agent_count > MAX_AGENTS_FOR_CONSENSUS:
                 return InteractionPattern.HIERARCHICAL, {
                     "group_size": 3,
                     "coordination_rounds": 2,
@@ -125,7 +137,7 @@ class DynamicInteractionManager:
                 "convergence_threshold": 0.8,
             }
 
-        if task_complexity.conflict_likelihood > 0.6:
+        if task_complexity.conflict_likelihood > CONFLICT_LIKELIHOOD_THRESHOLD:
             return InteractionPattern.PEER_TO_PEER, {
                 "review_pairs": self._create_review_pairs(available_agents),
                 "negotiation_enabled": True,
@@ -148,23 +160,24 @@ class DynamicInteractionManager:
         # Track start time for potential future use
         _start_time = time.time()
 
-        if pattern == InteractionPattern.BROADCAST:
-            return await self._coordinate_broadcast(agents, task, pattern_config)
-        elif pattern == InteractionPattern.HIERARCHICAL:
-            return await self._coordinate_hierarchical(agents, task, pattern_config)
-        elif pattern == InteractionPattern.PEER_TO_PEER:
-            return await self._coordinate_peer_to_peer(agents, task, pattern_config)
-        elif pattern == InteractionPattern.CONSENSUS_ROUNDS:
-            return await self._coordinate_consensus_rounds(agents, task, pattern_config)
-        elif pattern == InteractionPattern.EXPERT_CONSULTATION:
-            return await self._coordinate_expert_consultation(
-                agents, task, pattern_config
-            )
-        elif pattern == InteractionPattern.COMPETITIVE:
-            return await self._coordinate_competitive(agents, task, pattern_config)
-        else:
-            # Fallback to broadcast
-            return await self._coordinate_broadcast(agents, task, pattern_config)
+        # Map interaction patterns to coordination methods
+        coordination_methods = {
+            InteractionPattern.BROADCAST: self._coordinate_broadcast,
+            InteractionPattern.HIERARCHICAL: self._coordinate_hierarchical,
+            InteractionPattern.PEER_TO_PEER: self._coordinate_peer_to_peer,
+            InteractionPattern.CONSENSUS_ROUNDS: self._coordinate_consensus_rounds,
+            InteractionPattern.EXPERT_CONSULTATION: (
+                self._coordinate_expert_consultation
+            ),
+            InteractionPattern.COMPETITIVE: self._coordinate_competitive,
+        }
+
+        # Get the coordination method or fallback to broadcast
+        coordination_method = coordination_methods.get(
+            pattern, self._coordinate_broadcast
+        )
+
+        return await coordination_method(agents, task, pattern_config)
 
     async def _coordinate_broadcast(
         self, agents: list[CoordinatorAgent], task: str, config: dict[str, Any]
@@ -231,7 +244,11 @@ class DynamicInteractionManager:
 
             if group_results:
                 # Leader consolidates group results
-                consolidation_task = f"Consolidate these predictions for task '{task}': {[str(p.prediction) for p in group_results]}"
+                prediction_strs = [str(p.prediction) for p in group_results]
+                consolidation_task = (
+                    f"Consolidate these predictions for task '{task}': "
+                    f"{prediction_strs}"
+                )
                 leader_result = await leader.agent.run(consolidation_task)
 
                 # Convert result to appropriate type
@@ -265,7 +282,7 @@ class DynamicInteractionManager:
         reviewed_predictions: list[Prediction] = []
 
         for pair in review_pairs:
-            if len(pair) != 2:
+            if len(pair) != PAIR_SIZE:
                 continue
 
             agent_1_id, agent_2_id = pair
@@ -285,11 +302,17 @@ class DynamicInteractionManager:
 
             if pred_1 and pred_2:
                 # Agent 1 reviews Agent 2's prediction
-                review_task = f"Review this prediction for task '{task}': {pred_2.prediction}. Provide feedback or improved version."
+                review_task = (
+                    f"Review this prediction for task '{task}': {pred_2.prediction}. "
+                    "Provide feedback or improved version."
+                )
                 reviewed_1 = await agent_1.agent.run(review_task)
 
                 # Agent 2 reviews Agent 1's prediction
-                review_task = f"Review this prediction for task '{task}': {pred_1.prediction}. Provide feedback or improved version."
+                review_task = (
+                    f"Review this prediction for task '{task}': {pred_1.prediction}. "
+                    "Provide feedback or improved version."
+                )
                 reviewed_2 = await agent_2.agent.run(review_task)
 
                 # Convert results to appropriate types
@@ -343,9 +366,9 @@ class DynamicInteractionManager:
             # Run another round with context
             refined_task = f"""
             Task: {task}
-            
+
             Previous round predictions: {prediction_summary}
-            
+
             Please refine your prediction considering the above results.
             """
 
@@ -376,9 +399,9 @@ class DynamicInteractionManager:
 
             contextual_task = f"""
             Task: {task}
-            
+
             Expert analysis: {expert_summary}
-            
+
             Please provide your analysis considering the expert input above.
             """
 
@@ -430,7 +453,10 @@ class DynamicInteractionManager:
         experts: list[CoordinatorAgent] = []
         for agent in agents:
             metrics = self.agent_metrics.get(agent.agent_id)
-            if metrics and metrics.domain_expertise.get(domain, 0.0) > 0.7:
+            if (
+                metrics
+                and metrics.domain_expertise.get(domain, 0.0) > EXPERTISE_THRESHOLD
+            ):
                 experts.append(agent)
         return experts
 
@@ -438,20 +464,19 @@ class DynamicInteractionManager:
         self, agents: list[CoordinatorAgent]
     ) -> list[tuple[str, str]]:
         """Create pairs of agents for peer review."""
-        pairs: list[tuple[str, str]] = []
         agent_ids = [a.agent_id for a in agents]
 
-        for i in range(0, len(agent_ids) - 1, 2):
-            if i + 1 < len(agent_ids):
-                pairs.append((agent_ids[i], agent_ids[i + 1]))
-
-        return pairs
+        return [
+            (agent_ids[i], agent_ids[i + 1])
+            for i in range(0, len(agent_ids) - 1, 2)
+            if i + 1 < len(agent_ids)
+        ]
 
     def _check_convergence(
         self, predictions: list[Prediction], threshold: float
     ) -> bool:
         """Check if predictions have converged."""
-        if len(predictions) < 2:
+        if len(predictions) < MIN_PREDICTIONS_FOR_CONVERGENCE:
             return True
 
         # Simple convergence check based on prediction similarity
@@ -473,11 +498,11 @@ class DynamicInteractionManager:
         if not predictions:
             return "No predictions available"
 
-        summary_parts: list[str] = []
-        for pred in predictions:
-            summary_parts.append(
-                f"Agent {pred.agent_id}: {pred.prediction} (confidence: {pred.confidence:.2f})"
-            )
+        summary_parts = [
+            f"Agent {pred.agent_id}: {pred.prediction} "
+            f"(confidence: {pred.confidence:.2f})"
+            for pred in predictions
+        ]
 
         return "; ".join(summary_parts)
 

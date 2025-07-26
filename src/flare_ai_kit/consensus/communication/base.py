@@ -11,7 +11,6 @@ try:
     class BaseModel(_PydanticBaseModel):  # type: ignore[misc]
         """Base model using pydantic."""
 
-        pass
 except ImportError:
     # Fallback for when pydantic is not available
     class BaseModel:  # type: ignore[misc]

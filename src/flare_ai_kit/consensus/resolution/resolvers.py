@@ -37,7 +37,10 @@ class WeightedVotingResolver(BaseConflictResolver):
         return ResolutionResult(
             resolved_prediction=best_pred,
             resolution_method="weighted_selection",
-            rationale=f"Selected prediction from agent {best_pred.agent_id} with highest weighted confidence",
+            rationale=(
+                f"Selected prediction from agent {best_pred.agent_id} "
+                "with highest weighted confidence"
+            ),
         )
 
     def can_handle(self, conflict_type: ConflictType) -> bool:
@@ -85,7 +88,10 @@ class WeightedVotingResolver(BaseConflictResolver):
         return ResolutionResult(
             resolved_prediction=resolved_pred,
             resolution_method="weighted_voting",
-            rationale=f"Weighted voting selected '{winning_value}' with score {value_scores[winning_value]:.3f}",
+            rationale=(
+                f"Weighted voting selected '{winning_value}' with score "
+                f"{value_scores[winning_value]:.3f}"
+            ),
             additional_info={
                 "value_scores": value_scores,
                 "participating_agents": [p.agent_id for p in winning_preds],
@@ -117,7 +123,10 @@ class WeightedVotingResolver(BaseConflictResolver):
             resolved_prediction=resolved_pred,
             resolution_method="confidence_adjustment",
             confidence_adjustment=-confidence_penalty,
-            rationale=f"Selected prediction from {best_pred.agent_id} with adjusted confidence due to disagreement",
+            rationale=(
+                f"Selected prediction from {best_pred.agent_id} with adjusted "
+                "confidence due to disagreement"
+            ),
         )
 
     async def _resolve_outlier_conflict(
@@ -135,7 +144,10 @@ class WeightedVotingResolver(BaseConflictResolver):
                 confidence=0.5,
             ),
             resolution_method="outlier_exclusion",
-            rationale=f"Detected {len(outliers)} outlier predictions that should be excluded from consensus",
+            rationale=(
+                f"Detected {len(outliers)} outlier predictions that should be "
+                "excluded from consensus"
+            ),
             additional_info={
                 "outlier_agents": [p.agent_id for p in outliers],
                 "outlier_values": [p.prediction for p in outliers],
@@ -153,7 +165,6 @@ class ExpertiseBasedResolver(BaseConflictResolver):
     def __init__(
         self, agent_expertise: dict[str, dict[str, float]] | None = None
     ) -> None:
-        # agent_expertise[agent_id][domain] = expertise_score (0-1)
         self.agent_expertise = agent_expertise or {}
 
     async def resolve_conflict(self, conflict: ConflictContext) -> ResolutionResult:
@@ -173,7 +184,10 @@ class ExpertiseBasedResolver(BaseConflictResolver):
             return ResolutionResult(
                 resolved_prediction=best_pred,
                 resolution_method="highest_confidence_fallback",
-                rationale="No expertise data available, selected highest confidence prediction",
+                rationale=(
+                    "No expertise data available, selected highest confidence "
+                    "prediction"
+                ),
             )
 
         # Select prediction from most expert agent
@@ -183,7 +197,10 @@ class ExpertiseBasedResolver(BaseConflictResolver):
         return ResolutionResult(
             resolved_prediction=expert_pred,
             resolution_method="expertise_based",
-            rationale=f"Deferred to expert agent {expert_agent} with expertise score {expert_scores[expert_agent]:.3f} in domain '{domain}'",
+            rationale=(
+                f"Deferred to expert agent {expert_agent} with expertise score "
+                f"{expert_scores[expert_agent]:.3f} in domain '{domain}'"
+            ),
             additional_info={
                 "domain": domain,
                 "expert_scores": expert_scores,
@@ -225,7 +242,9 @@ class NegotiationProtocol(BaseNegotiationProtocol):
                 await self.communication_manager.request_collaboration(
                     requester_id="consensus_engine",
                     target_id=agent_id,
-                    task_description=f"Negotiate resolution for conflict {conflict.task_id}",
+                    task_description=(
+                        f"Negotiate resolution for conflict {conflict.task_id}"
+                    ),
                     collaboration_type="negotiation",
                 )
 
@@ -252,7 +271,10 @@ class NegotiationProtocol(BaseNegotiationProtocol):
         return ResolutionResult(
             resolved_prediction=resolved_pred,
             resolution_method="negotiation",
-            rationale=f"Negotiated resolution after {max_rounds} rounds with {len(agent_ids)} agents",
+            rationale=(
+                f"Negotiated resolution after {max_rounds} rounds with "
+                f"{len(agent_ids)} agents"
+            ),
             additional_info={
                 "negotiation_id": negotiation_id,
                 "rounds_conducted": 1,
