@@ -33,6 +33,7 @@ dependencies = [
     "pillow>=11.3.0",
     "pymupdf>=1.26.1",
     "pytesseract>=0.3.13",
+    "google-adk>=1.8.0",
 ]
 
 [project.urls]
