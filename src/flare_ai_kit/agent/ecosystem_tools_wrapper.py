@@ -207,7 +207,7 @@ async def post_to_x(content: str) -> bool:
     from flare_ai_kit.social.settings import SocialSettings
     from flare_ai_kit.social.x import XClient
 
-    settings = SocialSettings() # type: ignore[call-arg]
+    settings = SocialSettings()  # type: ignore[call-arg]
     x_client = XClient(settings)
     if not x_client.is_configured:
         raise ValueError(
@@ -239,7 +239,7 @@ async def send_telegram_message(chat_id: str, message: str) -> bool:
     from flare_ai_kit.social.settings import SocialSettings
     from flare_ai_kit.social.telegram import TelegramClient
 
-    settings = SocialSettings() # type: ignore[call-arg]
+    settings = SocialSettings()  # type: ignore[call-arg]
     telegram_client = TelegramClient(settings)
     if not telegram_client.is_configured:
         raise ValueError(
