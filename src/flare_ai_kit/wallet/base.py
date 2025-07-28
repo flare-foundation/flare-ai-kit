@@ -1,7 +1,7 @@
 """Base wallet interface for all wallet implementations."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -11,8 +11,8 @@ class WalletAddress(BaseModel):
 
     address: str
     wallet_id: str
-    derivation_path: Optional[str] = None
-    chain_id: Optional[int] = None
+    derivation_path: str | None = None
+    chain_id: int | None = None
 
 
 class TransactionRequest(BaseModel):
@@ -20,10 +20,10 @@ class TransactionRequest(BaseModel):
 
     to: str
     value: str
-    data: Optional[str] = None
-    gas_limit: Optional[str] = None
-    gas_price: Optional[str] = None
-    nonce: Optional[int] = None
+    data: str | None = None
+    gas_limit: str | None = None
+    gas_price: str | None = None
+    nonce: int | None = None
     chain_id: int
 
 
@@ -55,12 +55,12 @@ class WalletInterface(ABC):
         """Sign a transaction with the specified wallet."""
 
     @abstractmethod
-    async def export_wallet(self, wallet_id: str, password: str) -> Dict[str, Any]:
+    async def export_wallet(self, wallet_id: str, password: str) -> dict[str, Any]:
         """Export wallet with encryption."""
 
     @abstractmethod
     async def import_wallet(
-        self, encrypted_wallet: Dict[str, Any], password: str
+        self, encrypted_wallet: dict[str, Any], password: str
     ) -> str:
         """Import an encrypted wallet and return its ID."""
 
