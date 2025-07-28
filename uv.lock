@@ -738,8 +738,8 @@ requires-dist = [
     { name = "pyjwt", marker = "extra == 'tee'", specifier = ">=2.10.1" },
     { name = "pymupdf", specifier = ">=1.26.1" },
     { name = "pyopenssl", marker = "extra == 'tee'", specifier = ">=25.0.0" },
-    { name = "python-dotenv", marker = "extra == 'tee'", specifier = ">=1.0.1" },
     { name = "pytesseract", specifier = ">=0.3.13" },
+    { name = "python-dotenv", marker = "extra == 'tee'", specifier = ">=1.0.1" },
     { name = "python-telegram-bot", marker = "extra == 'social'", specifier = ">=22.0" },
     { name = "qdrant-client", marker = "extra == 'rag'", specifier = ">=1.13.3" },
     { name = "slack-sdk", marker = "extra == 'social'", specifier = ">=3.26.2" },
@@ -1043,7 +1043,7 @@ wheels = [
 
 [[package]]
 name = "huggingface-hub"
-version = "0.33.4"
+version = "0.34.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "filelock" },
@@ -1055,9 +1055,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4b/9e/9366b7349fc125dd68b9d384a0fea84d67b7497753fe92c71b67e13f47c4/huggingface_hub-0.33.4.tar.gz", hash = "sha256:6af13478deae120e765bfd92adad0ae1aec1ad8c439b46f23058ad5956cbca0a", size = 426674, upload-time = "2025-07-11T12:32:48.694Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/22/cd/841bc8e0550d69f632a15cdd70004e95ba92cd0fbe13087d6669e2bb5f44/huggingface_hub-0.34.1.tar.gz", hash = "sha256:6978ed89ef981de3c78b75bab100a214843be1cc9d24f8e9c0dc4971808ef1b1", size = 456783, upload-time = "2025-07-25T14:54:54.758Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/46/7b/98daa50a2db034cab6cd23a3de04fa2358cb691593d28e9130203eb7a805/huggingface_hub-0.33.4-py3-none-any.whl", hash = "sha256:09f9f4e7ca62547c70f8b82767eefadd2667f4e116acba2e3e62a5a81815a7bb", size = 515339, upload-time = "2025-07-11T12:32:46.346Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/cf/dd53c0132f50f258b06dd37a4616817b1f1f6a6b38382c06effd04bb6881/huggingface_hub-0.34.1-py3-none-any.whl", hash = "sha256:60d843dcb7bc335145b20e7d2f1dfe93910f6787b2b38a936fb772ce2a83757c", size = 558788, upload-time = "2025-07-25T14:54:52.957Z" },
 ]
 
 [package.optional-dependencies]
@@ -1728,19 +1728,19 @@ wheels = [
 
 [[package]]
 name = "pydantic-ai"
-version = "0.4.6"
+version = "0.4.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic-ai-slim", extra = ["ag-ui", "anthropic", "bedrock", "cli", "cohere", "evals", "google", "groq", "huggingface", "mcp", "mistral", "openai", "vertexai"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3b/0f/507f4e4b16f51ad5d61e61c9c4ba051b3f16558c69724e2998312e9d8272/pydantic_ai-0.4.6.tar.gz", hash = "sha256:939b267a0a3c1b33b4a42b7fdc3d44ba71b1c7572b6b2feb55959862b191a862", size = 41409393, upload-time = "2025-07-23T14:52:28.575Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/88/598d1e0eac500525391f54ef9baccdd5267d2b27d743e39d6c9cfae19eb5/pydantic_ai-0.4.7.tar.gz", hash = "sha256:456cfd5d1e8c94da25e78f75dc29997b308d8b06a79dad7b09175f2e71cade2d", size = 43549424, upload-time = "2025-07-24T21:47:48.947Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/a8/4a41d7de8543e50d1247df515d7d6e61550203027e888561b04f820f416f/pydantic_ai-0.4.6-py3-none-any.whl", hash = "sha256:d77090ee1c5abbf9d86403dd73ceb93ebf0f2aef647916aa4ab085b5441a17ba", size = 10180, upload-time = "2025-07-23T14:52:19.899Z" },
+    { url = "https://files.pythonhosted.org/packages/28/d5/f8a7dd3e9082b6c3907191e1a43991889be4ec4a701097f2068d01705808/pydantic_ai-0.4.7-py3-none-any.whl", hash = "sha256:3624595b542fe13d7b48a4aaedc6eac567424be9e8788697accacc986cb7a2e6", size = 10180, upload-time = "2025-07-24T21:47:40.28Z" },
 ]
 
 [[package]]
 name = "pydantic-ai-slim"
-version = "0.4.6"
+version = "0.4.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "eval-type-backport" },
@@ -1751,9 +1751,9 @@ dependencies = [
     { name = "pydantic-graph" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/47/4c/4b98c41d5fee646f4eda863503a4a21ba04a9a2a4a0491a22f77569a39f3/pydantic_ai_slim-0.4.6.tar.gz", hash = "sha256:8d0d7e8a5b565e3d3287b1b1ed418b67dd2d7bdbcb55909c5d31098f7f12708e", size = 184311, upload-time = "2025-07-23T14:52:33.137Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/60/4d23ac61c5b12a8a78a6d46a4ea1cff3396e580967a8088ee9d4cba485e8/pydantic_ai_slim-0.4.7.tar.gz", hash = "sha256:64d9d2c62247eaabd323cc0c379fb9386a8e0919db5677082666743dfbaad96f", size = 186740, upload-time = "2025-07-24T21:47:53.192Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/db/46/ccee8354a1cdf8adaf5b9c8a75faeee410831d2f4de6b0e7f99c1dce8719/pydantic_ai_slim-0.4.6-py3-none-any.whl", hash = "sha256:c4408ea2660852b704a0b31295dfa218a2376dc1d8bd2fb72abfe711e20b5219", size = 247338, upload-time = "2025-07-23T14:52:22.713Z" },
+    { url = "https://files.pythonhosted.org/packages/81/42/08b464a8dddd96dd9556b78ff31ba886c4866c85f21d616d99f515e945c2/pydantic_ai_slim-0.4.7-py3-none-any.whl", hash = "sha256:3a91163fdec3c1465eaa9449ec1e9dc92029fd1ab933c650442b92f846be8a05", size = 251711, upload-time = "2025-07-24T21:47:43.032Z" },
 ]
 
 [package.optional-dependencies]
@@ -1845,7 +1845,7 @@ wheels = [
 
 [[package]]
 name = "pydantic-evals"
-version = "0.4.6"
+version = "0.4.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -1855,14 +1855,14 @@ dependencies = [
     { name = "pyyaml" },
     { name = "rich" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6e/e5/1766d7ce6163aa4ed40de0eab49268710f53d3ecc5938c1a64fecb079ec2/pydantic_evals-0.4.6.tar.gz", hash = "sha256:4d24c9d06d254fa6f2d0b97df2c6f16f756c73c470af4aadc12be9754faffa00", size = 43730, upload-time = "2025-07-23T14:52:34.172Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e6/1a/124c9a84e80135d7dd8b676a6559116046e07d0321b67ea40742f3630490/pydantic_evals-0.4.7.tar.gz", hash = "sha256:de9439ae2025bb08ae464af5dd22982e09c59373e29d73a7b619ad1b71732150", size = 43730, upload-time = "2025-07-24T21:47:54.482Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a5/f6/1c783bb47ee273d10cf0739049123097fd3c3e5ea70399a6fb9615567cd6/pydantic_evals-0.4.6-py3-none-any.whl", hash = "sha256:7b9b8dbe9bb6c2bece0dfdc4635462b60dd67152603e5c9ab5f26190f340f874", size = 52505, upload-time = "2025-07-23T14:52:24.407Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/3a/ef9eb87246d9f07062ab08e54afd041ffab58e442eaa1ecb81f981382bc3/pydantic_evals-0.4.7-py3-none-any.whl", hash = "sha256:5ea3b17f353d7a838408f52e4ffe924ce3805e1d260810bd2aa3bee9442792b0", size = 52506, upload-time = "2025-07-24T21:47:45.377Z" },
 ]
 
 [[package]]
 name = "pydantic-graph"
-version = "0.4.6"
+version = "0.4.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
@@ -1870,9 +1870,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/de/3369de515fe8df5dede79176087b85640703e62f8aa8fe2f88dae0ce7b01/pydantic_graph-0.4.6.tar.gz", hash = "sha256:45e41d9a5f87495c1f12a85a6cab243b4fc824a072da121ca93f633f954005a7", size = 21978, upload-time = "2025-07-23T14:52:35.067Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/be/bd4324083e3b5dbd4b46a45f003e04c38eca421a0c1bbfbba43e1e56837f/pydantic_graph-0.4.7.tar.gz", hash = "sha256:5c4125efa68e922946581b050d00defcf2ffd4a5ff61a03a3aa298dfd49d1503", size = 21980, upload-time = "2025-07-24T21:47:55.388Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/59/87/fb3e4cd834dc084d4caf2f38d4889ecc866ac41cd70628f2ce4fa8ecc5df/pydantic_graph-0.4.6-py3-none-any.whl", hash = "sha256:5ab17cab8e5289ea10e92dbfb9ae4ee0b59dc4ec885f414a8db164b79c6b8548", size = 27565, upload-time = "2025-07-23T14:52:25.978Z" },
+    { url = "https://files.pythonhosted.org/packages/36/a3/f900c4b7a60d78354bcf948a7941df27f086f661e6ffaa77c80908d50452/pydantic_graph-0.4.7-py3-none-any.whl", hash = "sha256:eb677d92e68222babb98fa99a08ead2611f3a2ec2f75262b403eb45617106dcb", size = 27565, upload-time = "2025-07-24T21:47:46.569Z" },
 ]
 
 [[package]]
@@ -2108,7 +2108,6 @@ dependencies = [
     { name = "urllib3" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ac/77/350f01040a8eadb3909bb98ef73b0edb9c3d2d046931898044fb1ad93336/qdrant_client-1.15.0.tar.gz", hash = "sha256:475433b0acec51b66a132e91b631abe922accc64744bbb3180a04fe1fe889843", size = 295245, upload-time = "2025-07-18T11:01:47.062Z" }
-
 wheels = [
     { url = "https://files.pythonhosted.org/packages/87/cd/ecd694b21b800f3b100d38a8e67078f62d0a24378bd2c03c4c91413ed6fc/qdrant_client-1.15.0-py3-none-any.whl", hash = "sha256:f18bb311543de7e256ffa831be0d8a9d0729aaf549db7bcf95a5d356b48143f2", size = 337269, upload-time = "2025-07-18T11:01:45.35Z" },
 ]
@@ -2125,7 +2124,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/2f/db/98b5c277be99dd18bfd91dd04e1b759cad18d1a338188c936e92f921c7e2/referencing-0.36.2.tar.gz", hash = "sha256:df2e89862cd09deabbdba16944cc3f10feb6b3e6f18e902f7cc25609a34775aa", size = 74744, upload-time = "2025-01-25T08:48:16.138Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c1/b1/3baf80dc6d2b7bc27a95a67752d0208e410351e3feb4eb78de5f77454d8d/referencing-0.36.2-py3-none-any.whl", hash = "sha256:e8699adbbf8b5c7de96d8ffa0eb5c158b3beafce084968e2ea8bb08c6794dcd0", size = 26775, upload-time = "2025-01-25T08:48:14.241Z" },
-
 ]
 
 [[package]]
@@ -2383,11 +2381,11 @@ wheels = [
 
 [[package]]
 name = "slack-sdk"
-version = "3.35.0"
+version = "3.36.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/32/a5/13077a5696ded22cc955ff6314028b7e6140b1c989b19ca27a6b26590e6e/slack_sdk-3.35.0.tar.gz", hash = "sha256:8183b6cbf26a0c1e2441478cd9c0dc4eef08d60c1394cfdc9a769e309a9b6459", size = 232887, upload-time = "2025-03-17T15:32:51.959Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/73/1e/bbf7fdd00306f097ddb839c23628b7e271128cc8f584b9cae8f704b3924e/slack_sdk-3.36.0.tar.gz", hash = "sha256:8586022bdbdf9f8f8d32f394540436c53b1e7c8da9d21e1eab4560ba70cfcffa", size = 233382, upload-time = "2025-07-09T20:58:22.838Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/32/8e/eed71dc79a187ba32681f12a104786ab89355bc474082211d92e1fba6bcf/slack_sdk-3.35.0-py2.py3-none-any.whl", hash = "sha256:00933d171fbd8a068b321ebb5f89612cc781d3183d8e3447c85499eca9d865be", size = 293272, upload-time = "2025-03-17T15:32:50.294Z" },
+    { url = "https://files.pythonhosted.org/packages/70/9a/380d20856d9ea39fbc4d3bb66f076b0d72035ebe873eb05fc88ebee4125f/slack_sdk-3.36.0-py2.py3-none-any.whl", hash = "sha256:6c96887d7175fc1b0b2777b73bb65f39b5b8bee9bd8acfec071d64014f9e2d10", size = 293949, upload-time = "2025-07-09T20:58:21.233Z" },
 ]
 
 [[package]]
