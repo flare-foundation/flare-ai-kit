@@ -23,6 +23,8 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "tlslite-ng @ git+https://github.com/simonjonsson87/tlslite-ng.git@master",
+    "aiohttp>=3.10.11",
     "google-genai>=1.8.0",
     "httpx>=0.28.1",
     "pydantic>=2.11.1",
@@ -110,6 +112,16 @@ pythonVersion = "3.12"
 include = ["src/"]
 typeCheckingMode = "strict"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/flare_ai_kit"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["src"]  # Add this to ensure pytest finds flare_ai_kit
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.uv.workspace]
+members = ["examples/python-client"]

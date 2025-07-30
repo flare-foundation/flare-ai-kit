@@ -1,0 +1,631 @@
+openapi: 3.0.3
+info:
+  title: FlareAIKit API
+  description: A REST API for blockchain operations on the Flare network (chain ID 14), supporting token swaps, bridging, wrapping, staking, and lending via Stargate, SparkDEX, FlarePortal, Sceptre, Kinetic, Cyclo, and OpenOcean protocols. All endpoints use POST requests with JSON payloads and return transaction hashes.
+  version: 1.0.0
+servers:
+  - url: https://0.0.0.0:4433
+    description: FlareAIKit server with TLS on port 4433
+paths:
+  /bridge:
+    post:
+      summary: Bridge WETH to another chain via Stargate
+      description: Initiates a cross-chain bridge of WETH to a specified chain using Stargate. Requires a valid chain ID and amount in wei.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [chain_id, amount_wei]
+              properties:
+                chain_id:
+                  type: integer
+                  description: Destination chain ID (e.g., 14 for Flare, 101 for Ethereum). See https://docs.stargate.finance/resources/contracts/mainnet-contracts.
+                  example: 14
+                amount_wei:
+                  type: integer
+                  description: Amount to bridge in wei (e.g., 100000000000000 for 0.0001 ETH).
+                  example: 100000000000000
+      responses:
+        '201':
+          description: Successful bridge transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tx_hash:
+                    type: string
+                    description: Transaction hash of the bridge operation
+                    example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        '400':
+          description: Invalid request parameters or JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server or transaction error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /swap:
+    post:
+      summary: Swap ERC-20 tokens via SparkDEX
+      description: Performs a token swap on SparkDEX, exchanging one ERC-20 token for another with a minimum output amount.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token_in_addr, token_out_addr, amount_in_WEI, amount_out_min_WEI]
+              properties:
+                token_in_addr:
+                  type: string
+                  description: Address of the input token (e.g., WFLR).
+                  example: "0x1D80c49BbBCd1C0911346656B529DF9E5c2F783d"
+                  pattern: '^0x[a-fA-F0-9]{40}$'
+                token_out_addr:
+                  type: string
+                  description: Address of the output token (e.g., WETH).
+                  example: "0x1502FA4be69d526124D453619276FacCab275d3D"
+                  pattern: '^0x[a-fA-F0-9]{40}$'
+                amount_in_WEI:
+                  type: integer
+                  description: Amount to swap in wei (e.g., 1000000000000000000 for 1 token).
+                  example: 1000000000000000000
+                amount_out_min_WEI:
+                  type: integer
+                  description: Minimum output amount in wei (0 for no minimum).
+                  example: 0
+      responses:
+        '201':
+          description: Successful swap transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tx_hash:
+                    type: string
+                    description: Transaction hash of the swap operation
+                    example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        '400':
+          description: Invalid request parameters or JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server or transaction error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /wrap:
+    post:
+      summary: Wrap FLR to WFLR via FlarePortal
+      description: Wraps native FLR to WFLR tokens using FlarePortal.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount_WEI]
+              properties:
+                amount_WEI:
+                  type: integer
+                  description: Amount to wrap in wei (e.g., 1000000000000000000 for 1 FLR).
+                  example: 1000000000000000000
+      responses:
+        '201':
+          description: Successful wrap transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tx_hash:
+                    type: string
+                    description: Transaction hash of the wrap operation
+                    example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        '400':
+          description: Invalid request parameters or JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server or transaction error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /unwrap:
+    post:
+      summary: Unwrap WFLR to FLR via FlarePortal
+      description: Unwraps WFLR tokens to native FLR using FlarePortal.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount_WEI]
+              properties:
+                amount_WEI:
+                  type: integer
+                  description: Amount to unwrap in wei (e.g., 1000000000000000000 for 1 WFLR).
+                  example: 1000000000000000000
+      responses:
+        '201':
+          description: Successful unwrap transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tx_hash:
+                    type: string
+                    description: Transaction hash of the unwrap operation
+                    example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        '400':
+          description: Invalid request parameters or JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server or transaction error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /stake:
+    post:
+      summary: Stake tokens via Sceptre
+      description: Stakes tokens using the Sceptre protocol.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount_WEI]
+              properties:
+                amount_WEI:
+                  type: integer
+                  description: Amount to stake in wei (e.g., 1000000000000000000 for 1 token).
+                  example: 1000000000000000000
+      responses:
+        '201':
+          description: Successful stake transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tx_hash:
+                    type: string
+                    description: Transaction hash of the stake operation
+                    example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        '400':
+          description: Invalid request parameters or JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server or transaction error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /unstake:
+    post:
+      summary: Unstake tokens via Sceptre
+      description: Unstakes tokens using the Sceptre protocol.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount_WEI]
+              properties:
+                amount_WEI:
+                  type: integer
+                  description: Amount to unstake in wei (e.g., 1000000000000000000 for 1 token).
+                  example: 1000000000000000000
+      responses:
+        '201':
+          description: Successful unstake transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tx_hash:
+                    type: string
+                    description: Transaction hash of the unstake operation
+                    example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        '400':
+          description: Invalid request parameters or JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server or transaction error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /kinetic_supply:
+    post:
+      summary: Supply tokens to Kinetic protocol
+      description: Supplies tokens to the Kinetic lending protocol.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token_symbol, amount_WEI]
+              properties:
+                token_symbol:
+                  type: string
+                  description: Symbol of the token to supply (e.g., 'sflr').
+                  example: "sflr"
+                amount_WEI:
+                  type: integer
+                  description: Amount to supply in wei (e.g., 1000000000000000000 for 1 token).
+                  example: 1000000000000000000
+      responses:
+        '201':
+          description: Successful supply transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tx_hash:
+                    type: string
+                    description: Transaction hash of the supply operation
+                    example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        '400':
+          description: Invalid request parameters or JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server or transaction error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /kinetic_withdraw:
+    post:
+      summary: Withdraw tokens from Kinetic protocol
+      description: Withdraws tokens from the Kinetic lending protocol.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token_symbol, amount_WEI]
+              properties:
+                token_symbol:
+                  type: string
+                  description: Symbol of the token to withdraw (e.g., 'sflr').
+                  example: "sflr"
+                amount_WEI:
+                  type: integer
+                  description: Amount to withdraw in wei (e.g., 1000000000000000000 for 1 token).
+                  example: 1000000000000000000
+      responses:
+        '201':
+          description: Successful withdraw transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tx_hash:
+                    type: string
+                    description: Transaction hash of the withdraw operation
+                    example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        '400':
+          description: Invalid request parameters or JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server or transaction error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /kinetic_enable_collateral:
+    post:
+      summary: Enable token as collateral in Kinetic
+      description: Enables a token as collateral in the Kinetic lending protocol.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token_symbol]
+              properties:
+                token_symbol:
+                  type: string
+                  description: Symbol of the token to enable as collateral (e.g., 'sflr').
+                  example: "sflr"
+      responses:
+        '201':
+          description: Successful enable collateral transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tx_hash:
+                    type: string
+                    description: Transaction hash of the enable collateral operation
+                    example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        '400':
+          description: Invalid request parameters or JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server or transaction error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /kinetic_disable_collateral:
+    post:
+      summary: Disable token as collateral in Kinetic
+      description: Disables a token as collateral in the Kinetic lending protocol.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token_symbol]
+              properties:
+                token_symbol:
+                  type: string
+                  description: Symbol of the token to disable as collateral (e.g., 'sflr').
+                  example: "sflr"
+      responses:
+        '201':
+          description: Successful disable collateral transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tx_hash:
+                    type: string
+                    description: Transaction hash of the disable collateral operation
+                    example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        '400':
+          description: Invalid request parameters or JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server or transaction error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cyclo_lock:
+    post:
+      summary: Lock tokens in Cyclo protocol
+      description: Locks tokens in the Cyclo protocol, returning a transaction hash and deposit ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token_symbol, amount_WEI]
+              properties:
+                token_symbol:
+                  type: string
+                  description: Symbol of the token to lock (e.g., 'sflr').
+                  example: "sflr"
+                amount_WEI:
+                  type: integer
+                  description: Amount to lock in wei (e.g., 1000000000000000000 for 1 token).
+                  example: 1000000000000000000
+      responses:
+        '201':
+          description: Successful lock transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tx_hash:
+                    type: string
+                    description: Transaction hash of the lock operation
+                    example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+                  deposit_id:
+                    type: integer
+                    description: Deposit ID for the locked tokens
+                    example: 123
+        '400':
+          description: Invalid request parameters or JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server or transaction error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cyclo_unlock:
+    post:
+      summary: Unlock tokens in Cyclo protocol
+      description: Unlocks a proportion of tokens in the Cyclo protocol using a deposit ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token_symbol, deposit_id, unlock_proportion]
+              properties:
+                token_symbol:
+                  type: string
+                  description: Symbol of the token to unlock (e.g., 'sflr').
+                  example: "sflr"
+                deposit_id:
+                  type: integer
+                  description: Deposit ID from a previous lock operation.
+                  example: 123
+                unlock_proportion:
+                  type: number
+                  description: Proportion of the deposit to unlock (between 0 and 1, e.g., 1.0 for full unlock).
+                  example: 1.0
+      responses:
+        '201':
+          description: Successful unlock transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tx_hash:
+                    type: string
+                    description: Transaction hash of the unlock operation
+                    example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        '400':
+          description: Invalid request parameters or JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server or transaction error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /openocean_swap:
+    post:
+      summary: Swap tokens via OpenOcean
+      description: Performs a token swap on the Flare network using the OpenOcean protocol.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token_in_str, token_out_str, amount, speed]
+              properties:
+                token_in_str:
+                  type: string
+                  description: Symbol of the input token (e.g., 'wflr').
+                  example: "wflr"
+                token_out_str:
+                  type: string
+                  description: Symbol of the output token (e.g., 'weth').
+                  example: "weth"
+                amount:
+                  type: number
+                  description: Amount to swap in token units (e.g., 1.0 for 1 token).
+                  example: 1.0
+                speed:
+                  type: string
+                  description: Swap speed preference (e.g., 'low', 'medium', 'high').
+                  example: "fast"
+      responses:
+        '201':
+          description: Successful swap transaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tx_hash:
+                    type: string
+                    description: Transaction hash of the swap operation
+                    example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        '400':
+          description: Invalid request parameters or JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server or transaction error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Description of the error
+          example: "Invalid or missing 'token_symbol'"
