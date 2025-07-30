@@ -1,12 +1,14 @@
 """Interactions with Flare blockchain."""
 
 import asyncio
+import statistics
 from collections.abc import Callable
 from functools import wraps
 from typing import Any, TypeVar, cast
 
 import structlog
 from eth_typing import ChecksumAddress
+from eth_utils import keccak
 from web3 import AsyncHTTPProvider, AsyncWeb3
 from web3.contract.async_contract import AsyncContractFunction
 from web3.exceptions import (
@@ -18,7 +20,7 @@ from web3.exceptions import (
 from web3.middleware import (
     ExtraDataToPOAMiddleware,  # pyright: ignore[reportUnknownVariableType]
 )
-from web3.types import TxParams
+from web3.types import TxParams, TxReceipt, Wei
 
 from flare_ai_kit.common import FlareTxError, FlareTxRevertedError, load_abi
 from flare_ai_kit.ecosystem.settings import EcosystemSettings
@@ -97,6 +99,9 @@ class Flare:
         self.max_retries = settings.max_retries
         self.retry_delay = settings.retry_delay
 
+        if not settings.account_address:
+            raise ValueError("account_address must be set and non-empty")
+
         try:
             # Handle injecting PoA middlewares for testnets
             self.w3 = AsyncWeb3(
@@ -106,6 +111,8 @@ class Flare:
                 ),
                 middleware=[ExtraDataToPOAMiddleware] if settings.is_testnet else [],
             )
+            # Inject geth_poa_middleware to handle Flare's oversized extraData
+            self.w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
             self.contract_registry = self.w3.eth.contract(
                 address=self.w3.to_checksum_address(CONTRACT_REGISTRY_ADDRESS),
                 abi=load_abi("FlareContractRegistry"),
@@ -176,40 +183,52 @@ class Flare:
 
         """
         try:
-            (
-                nonce,
-                gas_price,
-                max_priority_fee,
-                chain_id,
-            ) = await asyncio.gather(
+            nonce, max_fee_per_gas, chain_id = await asyncio.gather(
                 self.w3.eth.get_transaction_count(from_addr),
-                self.w3.eth.gas_price,  # Fetches current gas price
-                self.w3.eth.max_priority_fee,  # Fetches max priority fee
+                self.estimate_gas_price(
+                    gas_priority_multiple=1.2
+                ),  # Use estimate_gas_price
                 self.w3.eth.chain_id,
             )
+            max_priority_fee_per_gas = await self.w3.eth.max_priority_fee
+            # Add 20% buffer to maxFeePerGas to account for base fee fluctuations
+            max_fee_per_gas = Wei(int(max_fee_per_gas * 1.2))
+            # Ensure maxFeePerGas is at least baseFee + maxPriorityFeePerGas
+            latest_block = await self.w3.eth.get_block("latest")
+            base_fee_per_gas = latest_block.get("baseFeePerGas")
+            if base_fee_per_gas is None:
+                raise ValueError("baseFeePerGas not found in latest block")
+            max_fee_per_gas = max(max_fee_per_gas, base_fee_per_gas + max_priority_fee_per_gas)
             params: TxParams = {
                 "from": from_addr,
                 "nonce": nonce,
-                "maxFeePerGas": gas_price,  # Use fetched gas_price as maxFeePerGas
-                "maxPriorityFeePerGas": max_priority_fee,
+                "maxFeePerGas": max_fee_per_gas,
+                "maxPriorityFeePerGas": max_priority_fee_per_gas,
                 "chainId": chain_id,
-                "type": 2,  # Explicitly set EIP-1559 transaction type
+                "type": 2,
             }
             logger.debug("Prepared base transaction parameters", params=params)
         except Web3Exception as e:
             msg = f"Failed to fetch transaction parameters (nonce/gas/chainId): {e}"
             logger.exception(msg)
             raise FlareTxError(msg) from e
-        else:
-            return params
+        return params
 
     @with_web3_error_handling("Building transaction")
     async def build_transaction(
-        self, function_call: AsyncContractFunction, from_addr: ChecksumAddress
+        self,
+        function_call: AsyncContractFunction,
+        from_addr: ChecksumAddress,
+        custom_params: TxParams | None = None,
     ) -> TxParams | None:
         """Builds a transaction with dynamic gas and nonce parameters."""
         base_tx = await self._prepare_base_tx_params(from_addr)
+        # Merge custom parameters, if provided, overriding base_tx values
+        if custom_params is not None:
+            base_tx.update(custom_params)
+        # sys.exit()
         # Let web3.py handle gas estimation within build_transaction if not provided
+
         tx = await function_call.build_transaction(base_tx)
         logger.debug("Transaction built successfully", tx=tx)
         return tx
@@ -232,10 +251,9 @@ class Flare:
         if not self.private_key or not self.address:
             msg = "Account not initialized"
             raise ValueError(msg)
-
         try:
             signed_tx = self.w3.eth.account.sign_transaction(
-                tx, private_key=self.private_key
+                tx, private_key=self.private_key.get_secret_value()
             )
             logger.debug("Transaction signed.")
         except Web3Exception as e:
@@ -252,7 +270,10 @@ class Flare:
             # Wait for the transaction receipt
             receipt = await self.w3.eth.wait_for_transaction_receipt(tx_hash)
             logger.info(
-                "Transaction confirmed.", tx_hash=tx_hash.hex(), receipt=receipt
+                "Transaction confirmed.",
+                gas_cost_FLR=self.get_gas_cost_from_receipt(receipt),
+                tx_hash=tx_hash.hex(),
+                receipt=receipt,
             )
 
             # Check status for success (status == 1)
@@ -290,6 +311,28 @@ class Flare:
             balance_float=balance_float,
         )
         return balance_float
+
+    @with_web3_error_handling("Estimating transaction gas limit")
+    async def estimate_gas(self, tx: TxParams, gas_buffer: float = 0.2) -> int | None:
+        try:
+            gas_estimate = await self.w3.eth.estimate_gas(tx)
+            gas_limit = int(gas_estimate * (1 + gas_buffer))
+            return gas_limit
+        except Exception as e:
+            logger.warning(f"Gas estimation failed: {e}")
+            return None
+
+    @with_web3_error_handling("Estimating gas price")
+    async def estimate_gas_price(self, gas_priority_multiple: float = 1) -> int:
+        fee_history = await self.w3.eth.fee_history(
+            10, "latest", reward_percentiles=[50]
+        )  # Median reward for last 10 blocks
+        base_fee = fee_history["baseFeePerGas"][-1]  # Most recent base fee
+        priority_fee = (
+            int(statistics.median(fee_history["reward"][0])) * gas_priority_multiple
+        )  # Median priority fee
+        gas_price = base_fee + priority_fee  # EIP-1559 compatible gas price
+        return int(gas_price)
 
     @with_web3_error_handling("Creating FLR transfer transaction")
     async def create_send_flr_tx(
@@ -349,3 +392,150 @@ class Flare:
             address=address,
         )
         return address
+
+    async def erc20_balanceOf(self, wallet_address: str, token_address: str) -> int:
+        # Minimal ABI for balanceOf (you don't need the full ABI for just this call)
+        erc20_abi = [
+            {
+                "constant": True,
+                "inputs": [{"name": "account", "type": "address"}],
+                "name": "balanceOf",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "type": "function",
+            }
+        ]
+
+        # Create contract instance
+        token_contract = self.w3.eth.contract(
+            address=self.w3.to_checksum_address(token_address), abi=erc20_abi
+        )
+
+        # Call balanceOf
+        balance = await token_contract.functions.balanceOf(wallet_address).call()
+
+        return balance
+
+    async def erc20_allowance(
+        self,
+        owner_address: ChecksumAddress,
+        token_address: ChecksumAddress,
+        spender_address: ChecksumAddress,
+    ) -> int:
+        erc20_abi = [
+            {
+                "constant": True,
+                "inputs": [
+                    {"name": "owner", "type": "address"},
+                    {"name": "spender", "type": "address"},
+                ],
+                "name": "allowance",
+                "outputs": [{"name": "remaining", "type": "uint256"}],
+                "type": "function",
+            }
+        ]
+
+        # Create contract instance
+        token_contract = self.w3.eth.contract(
+            address=self.w3.to_checksum_address(token_address), abi=erc20_abi
+        )
+
+        # Query the allowance
+        allowance = await token_contract.functions.allowance(
+            owner_address, spender_address
+        ).call()
+
+        return allowance
+
+    async def erc20_approve(
+        self,
+        token_address: str,
+        spender_address: str,
+        amount: int,
+        approve_buffer: float = 0.2,
+    ) -> str:
+        erc20_abi = [
+            {
+                "constant": False,
+                "inputs": [
+                    {"name": "spender", "type": "address"},
+                    {"name": "value", "type": "uint256"},
+                ],
+                "name": "approve",
+                "outputs": [{"name": "success", "type": "bool"}],
+                "type": "function",
+            }
+        ]
+
+        token_contract = self.w3.eth.contract(
+            address=self.w3.to_checksum_address(token_address), abi=erc20_abi
+        )
+        approve_amount = int(amount * (1 + approve_buffer))
+        function_call = token_contract.functions.approve(
+            spender_address, approve_amount
+        )
+        tx_approval = await self.build_transaction(
+            function_call=function_call, from_addr=self.address
+        )
+        tx_approval_hash = await self.sign_and_send_transaction(tx_approval)
+        logger.debug(f"Approval tx hash: https://flarescan.com/tx/0x{tx_approval}")
+
+        logger.debug("Waiting for approval tx to be mined...")
+        approve_receipt = await self.w3.eth.wait_for_transaction_receipt(
+            tx_approval_hash
+        )
+        # logger.info("Approval tx mined", blockNumber=approve_receipt.blockNumber)
+        logger.debug(
+            f"Approve transaction mined in block {approve_receipt['blockNumber']}"
+        )
+
+        return tx_approval
+
+    async def eth_call(self, contract_abi, call_tx) -> bool:
+        try:
+            await self.w3.eth.call(call_tx)
+            logger.info("eth_call successful")
+            return True
+        except Exception as e:
+            # Check if the error has a revert reason or data
+            if hasattr(e, "args") and e.args:
+                signature = self.get_fn_from_signature(contract_abi, e.args[0])
+                logger.warning(
+                    "Call failed or reverted. Error: ",
+                    e,
+                    " - Contract function signature: ",
+                    signature,
+                )
+            else:
+                logger.warning(
+                    "Call failed or reverted. No revert data found. Error: ", e
+                )
+            return False
+
+    def get_fn_from_signature(self, abi, target_signature) -> str | None:
+        selectors = {}
+
+        for item in abi:
+            if item["type"] in ["function", "error"]:
+                name = item["name"]
+                types = ",".join([input["type"] for input in item.get("inputs", [])])
+                signature = f"{name}({types})"
+
+                # Compute the 4-byte selector
+                selector = "0x" + keccak(text=signature).hex()[:8]
+                selectors[selector] = signature
+
+        # Print the selector-to-signature mapping
+        for sel, sig in selectors.items():
+            # print(f"{sel} => {sig}")
+            if target_signature == sel:
+                return sig
+
+    def get_gas_cost_from_receipt(self, receipt: TxReceipt) -> float | None:
+        if receipt:
+            gas_used = receipt.get("gasUsed", 0)
+            effective_gas_price = receipt.get("effectiveGasPrice", 0)
+            gas_cost_wei = gas_used * effective_gas_price
+            gas_cost_flr = self.w3.from_wei(gas_cost_wei, "ether")
+            return float(gas_cost_flr)
+        logger.warning("No receipt found")
+        return None
