@@ -6,6 +6,12 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 
+[manifest]
+members = [
+    "flare-ai-kit",
+    "flare-ai-kit-python-client",
+]
+
 [[package]]
 name = "ag-ui-protocol"
 version = "0.1.8"
@@ -688,6 +694,7 @@ dependencies = [
     { name = "pytesseract" },
     { name = "structlog" },
     { name = "tenacity" },
+    { name = "tlslite-ng" },
     { name = "web3" },
 ]
 
@@ -744,7 +751,8 @@ requires-dist = [
     { name = "qdrant-client", marker = "extra == 'rag'", specifier = ">=1.13.3" },
     { name = "slack-sdk", marker = "extra == 'social'", specifier = ">=3.26.2" },
     { name = "structlog", specifier = ">=25.2.0" },
-    { name = "tenacity", specifier = ">=8.2.3,<9.0.0" },
+    { name = "tenacity", specifier = ">=9.1.2" },
+    { name = "tlslite-ng", git = "https://github.com/simonjonsson87/tlslite-ng.git?rev=master" },
     { name = "tweepy", marker = "extra == 'social'", specifier = ">=4.15.0" },
     { name = "web3", specifier = ">=7.10.0" },
 ]
@@ -759,6 +767,59 @@ dev = [
     { name = "reportlab", specifier = ">=4.2.0" },
     { name = "ruff", specifier = ">=0.11.2" },
     { name = "settings-doc", specifier = ">=4.3.2" },
+]
+
+[[package]]
+name = "flare-ai-kit-python-client"
+version = "0.1.0"
+source = { editable = "examples/python-client" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "cryptography" },
+    { name = "fastapi" },
+    { name = "google-genai" },
+    { name = "h11" },
+    { name = "httpx" },
+    { name = "pydantic-settings" },
+    { name = "pyjwt" },
+    { name = "pyopenssl" },
+    { name = "requests" },
+    { name = "structlog" },
+    { name = "tlslite-ng" },
+    { name = "uvicorn" },
+    { name = "web3" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pyright" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiohttp", specifier = ">=3.10.11" },
+    { name = "cryptography", specifier = ">=44.0.1" },
+    { name = "fastapi", specifier = ">=0.115.8" },
+    { name = "google-genai", specifier = ">=1.8.0" },
+    { name = "h11", specifier = ">=0.14.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "pydantic-settings", specifier = ">=2.7.1" },
+    { name = "pyjwt", specifier = ">=2.10.1" },
+    { name = "pyopenssl", specifier = ">=25.0.0" },
+    { name = "requests", specifier = ">=2.32.3" },
+    { name = "structlog", specifier = ">=25.1.0" },
+    { name = "tlslite-ng", git = "https://github.com/simonjonsson87/tlslite-ng.git?rev=master" },
+    { name = "uvicorn", specifier = ">=0.34.0" },
+    { name = "web3", specifier = ">=7.8.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pyright", specifier = ">=1.1.391" },
+    { name = "pytest", specifier = ">=8.3.4" },
+    { name = "ruff", specifier = ">=0.9.1" },
 ]
 
 [[package]]
