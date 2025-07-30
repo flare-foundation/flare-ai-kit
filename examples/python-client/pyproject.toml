@@ -1,0 +1,92 @@
+
+# pyproject.toml (flare-ai-kit-python-client)
+[project]
+name = "flare-ai-kit-python-client"
+version = "0.1.0"
+description = "Flare AI Kit example Python client"
+readme = "README.md"
+authors = [
+  {name = "Dinesh Pinto", email = "annual.fallout_0z@icloud.com"},
+  {name = "Simon Jonsson", email = "minter-log1y@icloud.com"},
+]
+requires-python = ">=3.12"
+dependencies = [
+    "tlslite-ng @ git+https://github.com/simonjonsson87/tlslite-ng.git@master",
+    "h11>=0.14.0",
+    "aiohttp>=3.10.11",
+    "pydantic-settings>=2.7.1",
+    "requests>=2.32.3",
+    "structlog>=25.1.0",
+    "google-genai>=1.8.0",
+    "httpx>=0.28.1",
+    "cryptography>=44.0.1",
+    "pyjwt>=2.10.1",
+    "pyopenssl>=25.0.0",
+    "fastapi>=0.115.8",
+    "uvicorn>=0.34.0",
+    "web3>=7.8.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.391",
+    "pytest>=8.3.4",
+    "ruff>=0.9.1",
+]
+
+[project.scripts]
+start-backend = "backend.ra_tls_main:start"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend"]
+
+[tool.ruff]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["D203", "D212", "COM812", "D", "S105", "ANN401", "T201", "ISC003"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.pyright]
+pythonVersion = "3.12"
+strictListInference = true
+strictDictionaryInference = true
+strictSetInference = true
+deprecateTypingAliases = true
+disableBytesTypePromotions = true
+reportUnusedClass = true
+reportUnusedFunction = true
+reportUntypedFunctionDecorator = true
+reportUntypedClassDecorator = true
+reportPrivateUsage = true
+reportTypeCommentUsage = true
+reportConstantRedefinition = true
+reportDeprecated = true
+reportInconsistentConstructor = true
+reportUninitializedInstanceVariable = true
+reportMissingParameterType = true
+reportCallInDefaultInitializer = true
+reportUnnecessaryIsInstance = true
+reportUnnecessaryCast = true
+reportUnnecessaryComparison = true
+reportUnnecessaryContains = true
+reportInvalidStubStatement = true
+reportUnusedExpression = true
+reportUnnecessaryTypeIgnoreComment = true
+reportMatchNotExhaustive = true
+reportImplicitOverride = true
+reportShadowedImports = true
+pythonPath = ".venv/bin/python"
+venvPath = "."
+venv = ".venv"
+
