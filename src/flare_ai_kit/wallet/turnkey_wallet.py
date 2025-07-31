@@ -39,7 +39,9 @@ class TurnkeySettings(BaseSettings):
     )
     organization_id: str = Field(default="", description="Turnkey organization ID")
     api_public_key: str = Field(default="", description="Turnkey API public key")
-    api_private_key: SecretStr = Field(default=SecretStr(""), description="Turnkey API private key")
+    api_private_key: SecretStr = Field(
+        default=SecretStr(""), description="Turnkey API private key"
+    )
     default_curve: str = Field(
         default="secp256k1",
         description="Default cryptographic curve for key generation",
