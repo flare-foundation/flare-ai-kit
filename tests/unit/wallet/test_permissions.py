@@ -267,7 +267,7 @@ class TestPolicyEvaluation:
         from unittest.mock import patch
 
         with patch("flare_ai_kit.wallet.permissions.datetime") as mock_datetime:
-            mock_datetime.now.return_value = datetime.datetime(
+            mock_datetime.now.return_value = datetime(
                 2024, 1, 1, 2, 0, 0, tzinfo=UTC
             )
             mock_datetime.timezone = timezone
@@ -281,7 +281,7 @@ class TestPolicyEvaluation:
 
         # Test during allowed hours (10 AM)
         with patch("flare_ai_kit.wallet.permissions.datetime") as mock_datetime:
-            mock_datetime.now.return_value = datetime.datetime(
+            mock_datetime.now.return_value = datetime(
                 2024, 1, 1, 10, 0, 0, tzinfo=UTC
             )
             mock_datetime.timezone = timezone

@@ -75,7 +75,8 @@ class TurnkeyWallet(WalletInterface):
         permission_engine: PermissionEngine | None = None,
         tee_validator: VtpmValidation | None = None,
     ) -> None:
-        """Initialize TurnkeyWallet.
+        """
+        Initialize TurnkeyWallet.
 
         Args:
             settings: Turnkey API settings
@@ -105,7 +106,8 @@ class TurnkeyWallet(WalletInterface):
         await self.client.aclose()
 
     async def create_wallet(self, wallet_name: str) -> str:
-        """Create a new wallet by creating a Turnkey sub-organization.
+        """
+        Create a new wallet by creating a Turnkey sub-organization.
 
         Args:
             wallet_name: Name for the new wallet
@@ -164,7 +166,8 @@ class TurnkeyWallet(WalletInterface):
         wallet_id: str,
         derivation_path: str = "m/44'/60'/0'/0/0",
     ) -> WalletAddress:
-        """Get wallet address for specified derivation path.
+        """
+        Get wallet address for specified derivation path.
 
         Args:
             wallet_id: Sub-organization ID
@@ -213,7 +216,8 @@ class TurnkeyWallet(WalletInterface):
         wallet_id: str,
         transaction: TransactionRequest,
     ) -> SignedTransaction:
-        """Sign a transaction with the specified wallet.
+        """
+        Sign a transaction with the specified wallet.
 
         Args:
             wallet_id: Sub-organization ID
@@ -319,7 +323,8 @@ class TurnkeyWallet(WalletInterface):
         )
 
     async def export_wallet(self, wallet_id: str, password: str) -> dict[str, Any]:  # noqa: ARG002
-        """Export wallet with encryption.
+        """
+        Export wallet with encryption.
 
         Args:
             wallet_id: Sub-organization ID
@@ -365,7 +370,8 @@ class TurnkeyWallet(WalletInterface):
         encrypted_wallet: dict[str, Any],  # noqa: ARG002
         password: str,  # noqa: ARG002
     ) -> str:
-        """Import an encrypted wallet and return its ID.
+        """
+        Import an encrypted wallet and return its ID.
 
         Args:
             encrypted_wallet: Encrypted wallet data
@@ -387,7 +393,8 @@ class TurnkeyWallet(WalletInterface):
         raise NotImplementedError(msg)
 
     async def list_wallets(self) -> list[str]:
-        """List all available wallet IDs (sub-organizations).
+        """
+        List all available wallet IDs (sub-organizations).
 
         Returns:
             List of wallet IDs
@@ -414,7 +421,8 @@ class TurnkeyWallet(WalletInterface):
         return [sub_org["subOrganizationId"] for sub_org in sub_orgs]
 
     async def delete_wallet(self, wallet_id: str) -> bool:
-        """Delete a wallet and return success status.
+        """
+        Delete a wallet and return success status.
 
         Args:
             wallet_id: Sub-organization ID to delete
@@ -437,7 +445,8 @@ class TurnkeyWallet(WalletInterface):
         path: str,
         body: dict[str, Any],
     ) -> httpx.Response:
-        """Make an authenticated request to the Turnkey API.
+        """
+        Make an authenticated request to the Turnkey API.
 
         Args:
             method: HTTP method
@@ -465,7 +474,8 @@ class TurnkeyWallet(WalletInterface):
         )
 
     def _sign_request(self, body: str) -> str:
-        """Sign a request body for Turnkey API authentication.
+        """
+        Sign a request body for Turnkey API authentication.
 
         Args:
             body: JSON request body
@@ -493,7 +503,8 @@ class TurnkeyWallet(WalletInterface):
         return base64.b64encode(signature).decode()
 
     async def validate_tee_attestation(self, attestation_token: str) -> bool:
-        """Validate TEE attestation token for secure operations.
+        """
+        Validate TEE attestation token for secure operations.
 
         Args:
             attestation_token: TEE attestation token
