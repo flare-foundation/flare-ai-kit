@@ -13,7 +13,6 @@ Features demonstrated:
 """
 
 import asyncio
-import json
 import os
 from decimal import Decimal
 
@@ -192,7 +191,7 @@ async def execute_ai_transaction(
         risk_assessment="Low risk - established DeFi protocol with 99.9% uptime",
     )
 
-    print(f"📝 Transaction details:")
+    print("📝 Transaction details:")
     print(f"   To: {transaction_request.to}")
     print(f"   Value: {float(transaction_request.value) / 10**18} ETH")
     print(f"   Agent confidence: {agent_transaction.confidence_score}")
@@ -205,7 +204,7 @@ async def execute_ai_transaction(
         )
 
         if result["success"]:
-            print(f"✅ Transaction executed successfully!")
+            print("✅ Transaction executed successfully!")
             print(f"   📋 Transaction hash: {result['transaction_hash']}")
             print(f"   📋 Signed transaction: {result['signed_transaction'][:50]}...")
         else:
@@ -321,7 +320,7 @@ async def show_agent_status_and_history(
     history = await agent_connector.get_transaction_history(agent_id=agent_id, limit=10)
 
     if history:
-        print(f"\n📜 Recent Transaction History:")
+        print("\n📜 Recent Transaction History:")
         for i, tx in enumerate(history[:5], 1):
             print(f"   {i}. Hash: {tx['transaction_hash']}")
             print(f"      Value: {float(tx['value']):.6f} ETH")

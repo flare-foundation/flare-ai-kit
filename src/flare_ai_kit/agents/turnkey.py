@@ -1,15 +1,16 @@
 """Turnkey agent connector for AI-driven wallet operations."""
 
 import asyncio
-from typing import Any, Dict, List, Optional
+import time
+from typing import Any
 
 import structlog
 from pydantic import BaseModel, Field
 
-from ..tee.validation import VtpmValidation
-from ..wallet import PermissionEngine, TransactionPolicy, TurnkeyWallet
-from ..wallet.base import TransactionRequest
-from ..wallet.permissions import PolicyAction, TimeWindow
+from flare_ai_kit.tee.validation import VtpmValidation
+from flare_ai_kit.wallet import TransactionPolicy, TurnkeyWallet
+from flare_ai_kit.wallet.base import TransactionRequest
+from flare_ai_kit.wallet.permissions import TimeWindow
 
 logger = structlog.get_logger(__name__)
 
@@ -25,7 +26,7 @@ class AgentWalletConfig(BaseModel):
     max_transaction_value: float = Field(
         default=0.01, description="Maximum per-transaction value in ETH"
     )
-    allowed_hours: List[int] = Field(
+    allowed_hours: list[int] = Field(
         default_factory=lambda: list(range(24)),
         description="Allowed operation hours (UTC)",
     )
@@ -54,12 +55,12 @@ class TurnkeyAgentConnector:
     def __init__(
         self,
         turnkey_wallet: TurnkeyWallet,
-        tee_validator: Optional[VtpmValidation] = None,
-    ):
+        tee_validator: VtpmValidation | None = None,
+    ) -> None:
         self.wallet = turnkey_wallet
         self.tee_validator = tee_validator or VtpmValidation()
-        self.agent_configs: Dict[str, AgentWalletConfig] = {}
-        self.transaction_log: List[Dict[str, Any]] = []
+        self.agent_configs: dict[str, AgentWalletConfig] = {}
+        self.transaction_log: list[dict[str, Any]] = []
 
     async def register_agent(self, config: AgentWalletConfig) -> bool:
         """
@@ -70,6 +71,7 @@ class TurnkeyAgentConnector:
 
         Returns:
             True if registration successful
+
         """
         logger.info(
             "Registering AI agent", agent_id=config.agent_id, wallet_id=config.wallet_id
@@ -114,6 +116,7 @@ class TurnkeyAgentConnector:
 
         Returns:
             True if unregistration successful
+
         """
         logger.info("Unregistering AI agent", agent_id=agent_id)
 
@@ -134,8 +137,8 @@ class TurnkeyAgentConnector:
     async def execute_agent_transaction(
         self,
         agent_transaction: AgentTransaction,
-        attestation_token: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        attestation_token: str | None = None,
+    ) -> dict[str, Any]:
         """
         Execute a transaction initiated by an AI agent.
 
@@ -145,6 +148,7 @@ class TurnkeyAgentConnector:
 
         Returns:
             Transaction result with status and details
+
         """
         agent_id = agent_transaction.agent_id
         logger.info(
@@ -219,16 +223,16 @@ class TurnkeyAgentConnector:
             }
 
         except PermissionError as e:
-            logger.error("agent_transaction_denied", agent_id=agent_id, error=str(e))
+            logger.exception("agent_transaction_denied", agent_id=agent_id, error=str(e))
             return {"success": False, "error": f"Transaction denied: {e}"}
 
         except Exception as e:
-            logger.error("agent_transaction_failed", agent_id=agent_id, error=str(e))
+            logger.exception("agent_transaction_failed", agent_id=agent_id, error=str(e))
             return {"success": False, "error": f"Transaction failed: {e}"}
 
     async def _validate_agent_transaction(
         self, agent_transaction: AgentTransaction, config: AgentWalletConfig
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Perform agent-specific transaction validation.
 
@@ -238,6 +242,7 @@ class TurnkeyAgentConnector:
 
         Returns:
             Validation result
+
         """
         # Check confidence threshold
         min_confidence = 0.7  # Configurable threshold
@@ -266,7 +271,7 @@ class TurnkeyAgentConnector:
 
         return {"valid": True, "reason": ""}
 
-    async def get_agent_status(self, agent_id: str) -> Optional[Dict[str, Any]]:
+    async def get_agent_status(self, agent_id: str) -> dict[str, Any] | None:
         """
         Get status and statistics for an AI agent.
 
@@ -275,6 +280,7 @@ class TurnkeyAgentConnector:
 
         Returns:
             Agent status information or None if not found
+
         """
         if agent_id not in self.agent_configs:
             return None
@@ -289,8 +295,6 @@ class TurnkeyAgentConnector:
         total_value = sum(float(tx["value"]) / 10**18 for tx in agent_transactions)
 
         # Get recent transaction activity (last 24 hours)
-        import time
-
         recent_cutoff = time.time() - 86400  # 24 hours ago
         recent_transactions = [
             tx for tx in agent_transactions if tx["timestamp"] > recent_cutoff
@@ -312,18 +316,19 @@ class TurnkeyAgentConnector:
             },
         }
 
-    async def list_registered_agents(self) -> List[str]:
+    async def list_registered_agents(self) -> list[str]:
         """
         List all registered agent IDs.
 
         Returns:
             List of registered agent IDs
+
         """
         return list(self.agent_configs.keys())
 
     async def get_transaction_history(
-        self, agent_id: Optional[str] = None, limit: int = 100
-    ) -> List[Dict[str, Any]]:
+        self, agent_id: str | None = None, limit: int = 100
+    ) -> list[dict[str, Any]]:
         """
         Get transaction history for agents.
 
@@ -333,6 +338,7 @@ class TurnkeyAgentConnector:
 
         Returns:
             List of transaction log entries
+
         """
         transactions = self.transaction_log
 
@@ -355,6 +361,7 @@ class TurnkeyAgentConnector:
 
         Returns:
             True if update successful
+
         """
         if agent_id not in self.agent_configs:
             logger.error(

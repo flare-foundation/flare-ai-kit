@@ -1,12 +1,13 @@
 """Tests for Turnkey agent connector."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
 from flare_ai_kit.agents.turnkey import (
-    TurnkeyAgentConnector,
-    AgentWalletConfig,
     AgentTransaction,
+    AgentWalletConfig,
+    TurnkeyAgentConnector,
 )
 from flare_ai_kit.wallet.base import TransactionRequest
 from flare_ai_kit.wallet.turnkey_wallet import TurnkeyWallet

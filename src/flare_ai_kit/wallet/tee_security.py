@@ -1,13 +1,15 @@
 """TEE security integration for wallet operations."""
 
+import base64
 import hashlib
+import hmac
 import json
+import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import structlog
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from pydantic import BaseModel
@@ -24,21 +26,21 @@ class SecureOperation(BaseModel):
     operation_type: str
     timestamp: float
     attestation_token: str
-    operation_data: Dict[str, Any]
+    operation_data: dict[str, Any]
     integrity_hash: str
 
 
 class TEESecurityManager:
     """Manages security operations within Trusted Execution Environment."""
 
-    def __init__(self, vtpm_validator: Optional[VtpmValidation] = None):
+    def __init__(self, vtpm_validator: VtpmValidation | None = None):
         self.vtpm_validator = vtpm_validator or VtpmValidation()
-        self.secure_operations: List[SecureOperation] = []
+        self.secure_operations: list[SecureOperation] = []
 
     async def create_secure_operation(
         self,
         operation_type: str,
-        operation_data: Dict[str, Any],
+        operation_data: dict[str, Any],
         attestation_token: str,
     ) -> SecureOperation:
         """
@@ -51,6 +53,7 @@ class TEESecurityManager:
 
         Returns:
             SecureOperation object
+
         """
         logger.info("Creating secure operation", operation_type=operation_type)
 
@@ -84,14 +87,14 @@ class TEESecurityManager:
         return secure_op
 
     def _generate_operation_id(
-        self, operation_type: str, operation_data: Dict[str, Any]
+        self, operation_type: str, operation_data: dict[str, Any]
     ) -> str:
         """Generate unique operation ID."""
         data_str = json.dumps(operation_data, sort_keys=True, separators=(",", ":"))
         combined = f"{operation_type}:{data_str}:{time.time()}"
         return hashlib.sha256(combined.encode()).hexdigest()[:16]
 
-    def _calculate_integrity_hash(self, operation_data: Dict[str, Any]) -> str:
+    def _calculate_integrity_hash(self, operation_data: dict[str, Any]) -> str:
         """Calculate integrity hash for operation data."""
         data_str = json.dumps(operation_data, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(data_str.encode()).hexdigest()
@@ -105,6 +108,7 @@ class TEESecurityManager:
 
         Returns:
             True if operation integrity is valid
+
         """
         # Recalculate integrity hash
         current_hash = self._calculate_integrity_hash(operation.operation_data)
@@ -134,8 +138,8 @@ class TEESecurityManager:
         self,
         data: bytes,
         attestation_token: str,
-        additional_data: Optional[bytes] = None,
-    ) -> Dict[str, str]:
+        additional_data: bytes | None = None,
+    ) -> dict[str, str]:
         """
         Encrypt sensitive data within TEE context.
 
@@ -146,6 +150,7 @@ class TEESecurityManager:
 
         Returns:
             Dictionary with encrypted data and metadata
+
         """
         # Validate TEE context
         try:
@@ -157,8 +162,6 @@ class TEESecurityManager:
         key_material = self._derive_tee_key(claims, additional_data)
 
         # Encrypt data using AES-GCM
-        import os
-
         nonce = os.urandom(12)  # 96-bit nonce for GCM
         cipher = Cipher(algorithms.AES(key_material), modes.GCM(nonce))
         encryptor = cipher.encryptor()
@@ -178,9 +181,9 @@ class TEESecurityManager:
 
     async def decrypt_sensitive_data(
         self,
-        encrypted_data: Dict[str, str],
+        encrypted_data: dict[str, str],
         attestation_token: str,
-        additional_data: Optional[bytes] = None,
+        additional_data: bytes | None = None,
     ) -> bytes:
         """
         Decrypt sensitive data within TEE context.
@@ -192,12 +195,14 @@ class TEESecurityManager:
 
         Returns:
             Decrypted data
+
         """
         # Validate TEE context
         try:
             claims = self.vtpm_validator.validate_token(attestation_token)
         except Exception as e:
-            raise ValueError(f"Invalid TEE context: {e}")
+            msg = f"Invalid TEE context: {e}"
+            raise ValueError(msg) from e
 
         # Derive decryption key
         key_material = self._derive_tee_key(claims, additional_data)
@@ -215,14 +220,14 @@ class TEESecurityManager:
             decryptor.authenticate_additional_data(additional_data)
 
         try:
-            plaintext = decryptor.update(ciphertext) + decryptor.finalize()
-            return plaintext
+            return decryptor.update(ciphertext) + decryptor.finalize()
         except Exception as e:
-            logger.error("Decryption failed", error=str(e))
-            raise ValueError("Decryption failed - invalid key or corrupted data")
+            logger.exception("Decryption failed", error=str(e))
+            msg = "Decryption failed - invalid key or corrupted data"
+            raise ValueError(msg) from e
 
     def _derive_tee_key(
-        self, tee_claims: Dict[str, Any], additional_data: Optional[bytes] = None
+        self, tee_claims: dict[str, Any], additional_data: bytes | None = None
     ) -> bytes:
         """
         Derive encryption key from TEE-specific claims.
@@ -233,6 +238,7 @@ class TEESecurityManager:
 
         Returns:
             32-byte encryption key
+
         """
         # Use TEE-specific identifiers for key derivation
         salt_components = [
@@ -260,8 +266,8 @@ class TEESecurityManager:
         return kdf.derive(password)
 
     async def create_secure_audit_log(
-        self, operation: SecureOperation, result: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, operation: SecureOperation, result: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Create secure audit log entry for an operation.
 
@@ -271,6 +277,7 @@ class TEESecurityManager:
 
         Returns:
             Audit log entry
+
         """
         audit_entry = {
             "timestamp": time.time(),
@@ -291,7 +298,7 @@ class TEESecurityManager:
         logger.info("Secure audit log created", operation_id=operation.operation_id)
         return audit_entry
 
-    def _sign_audit_entry(self, audit_entry: Dict[str, Any]) -> str:
+    def _sign_audit_entry(self, audit_entry: dict[str, Any]) -> str:
         """
         Sign audit entry for integrity and non-repudiation.
 
@@ -300,23 +307,20 @@ class TEESecurityManager:
 
         Returns:
             Base64-encoded signature
+
         """
         # Create deterministic representation
         audit_data = json.dumps(audit_entry, sort_keys=True, separators=(",", ":"))
 
         # For demo purposes, use HMAC. In production, use asymmetric signing
-        import hmac
-
         secret_key = b"audit_signing_key_should_be_in_hsm"
         signature = hmac.new(secret_key, audit_data.encode(), hashlib.sha256).digest()
-
-        import base64
 
         return base64.b64encode(signature).decode()
 
     async def get_operation_history(
-        self, operation_type: Optional[str] = None, limit: int = 100
-    ) -> List[SecureOperation]:
+        self, operation_type: str | None = None, limit: int = 100
+    ) -> list[SecureOperation]:
         """
         Get history of secure operations.
 
@@ -326,6 +330,7 @@ class TEESecurityManager:
 
         Returns:
             List of secure operations
+
         """
         operations = self.secure_operations
 
@@ -348,6 +353,7 @@ class TEESecurityManager:
 
         Returns:
             Number of operations cleaned up
+
         """
         cutoff_time = time.time() - (max_age_hours * 3600)
         initial_count = len(self.secure_operations)
