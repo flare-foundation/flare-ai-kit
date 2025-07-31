@@ -1,16 +1,16 @@
 """Tests for wallet permissions and policy engine."""
 
-import pytest
+from datetime import UTC, datetime
 from decimal import Decimal
-from datetime import datetime
+
+import pytest
 
 from flare_ai_kit.wallet.base import TransactionRequest
 from flare_ai_kit.wallet.permissions import (
     PermissionEngine,
-    TransactionPolicy,
-    TimeWindow,
     PolicyAction,
-    PolicyViolation,
+    TimeWindow,
+    TransactionPolicy,
 )
 
 
@@ -263,12 +263,12 @@ class TestPolicyEvaluation:
         )
 
         # Use proper mocking with patch
-        from unittest.mock import patch
         from datetime import timezone
+        from unittest.mock import patch
 
         with patch("flare_ai_kit.wallet.permissions.datetime") as mock_datetime:
             mock_datetime.now.return_value = datetime.datetime(
-                2024, 1, 1, 2, 0, 0, tzinfo=timezone.utc
+                2024, 1, 1, 2, 0, 0, tzinfo=UTC
             )
             mock_datetime.timezone = timezone
 
@@ -282,7 +282,7 @@ class TestPolicyEvaluation:
         # Test during allowed hours (10 AM)
         with patch("flare_ai_kit.wallet.permissions.datetime") as mock_datetime:
             mock_datetime.now.return_value = datetime.datetime(
-                2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc
+                2024, 1, 1, 10, 0, 0, tzinfo=UTC
             )
             mock_datetime.timezone = timezone
 

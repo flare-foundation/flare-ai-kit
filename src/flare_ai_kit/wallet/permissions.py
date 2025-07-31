@@ -1,9 +1,8 @@
 """Permission and policy enforcement system for wallet operations."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -23,7 +22,7 @@ class TimeWindow(BaseModel):
 
     duration_minutes: int = Field(gt=0, description="Duration in minutes")
     max_transactions: int = Field(gt=0, description="Maximum transactions allowed")
-    max_value: Optional[Decimal] = Field(None, description="Maximum total value in ETH")
+    max_value: Decimal | None = Field(None, description="Maximum total value in ETH")
 
 
 class TransactionPolicy(BaseModel):
@@ -34,38 +33,38 @@ class TransactionPolicy(BaseModel):
     enabled: bool = True
 
     # Value limits
-    max_transaction_value: Optional[Decimal] = Field(
+    max_transaction_value: Decimal | None = Field(
         None, description="Max value per transaction in ETH"
     )
-    daily_spending_limit: Optional[Decimal] = Field(
+    daily_spending_limit: Decimal | None = Field(
         None, description="Daily spending limit in ETH"
     )
 
     # Rate limiting
-    time_windows: List[TimeWindow] = Field(default_factory=list)
+    time_windows: list[TimeWindow] = Field(default_factory=list)
 
     # Destination restrictions
-    allowed_destinations: Optional[List[str]] = Field(
+    allowed_destinations: list[str] | None = Field(
         None, description="Allowed destination addresses"
     )
-    blocked_destinations: List[str] = Field(
+    blocked_destinations: list[str] = Field(
         default_factory=list, description="Blocked destination addresses"
     )
 
     # Contract interaction restrictions
     allow_contract_interactions: bool = True
-    allowed_contracts: Optional[List[str]] = Field(
+    allowed_contracts: list[str] | None = Field(
         None, description="Allowed contract addresses"
     )
 
     # Time-based restrictions
-    allowed_hours_utc: Optional[List[int]] = Field(
+    allowed_hours_utc: list[int] | None = Field(
         None, description="Allowed hours (0-23 UTC)"
     )
 
     # Gas restrictions
-    max_gas_price: Optional[str] = Field(None, description="Maximum gas price in wei")
-    max_gas_limit: Optional[str] = Field(None, description="Maximum gas limit")
+    max_gas_price: str | None = Field(None, description="Maximum gas price in wei")
+    max_gas_limit: str | None = Field(None, description="Maximum gas limit")
 
 
 class PolicyViolation(BaseModel):
@@ -84,15 +83,15 @@ class TransactionHistory(BaseModel):
     timestamp: datetime
     value: Decimal
     destination: str
-    gas_used: Optional[str] = None
+    gas_used: str | None = None
 
 
 class PermissionEngine:
     """Engine for evaluating transaction permissions and policies."""
 
     def __init__(self):
-        self.policies: List[TransactionPolicy] = []
-        self.transaction_history: List[TransactionHistory] = []
+        self.policies: list[TransactionPolicy] = []
+        self.transaction_history: list[TransactionHistory] = []
 
     def add_policy(self, policy: TransactionPolicy) -> None:
         """Add a new policy to the engine."""
@@ -104,23 +103,24 @@ class PermissionEngine:
         self.policies = [p for p in self.policies if p.name != policy_name]
         return len(self.policies) < initial_count
 
-    def get_policy(self, policy_name: str) -> Optional[TransactionPolicy]:
+    def get_policy(self, policy_name: str) -> TransactionPolicy | None:
         """Get a policy by name."""
         return next((p for p in self.policies if p.name == policy_name), None)
 
-    def list_policies(self) -> List[str]:
+    def list_policies(self) -> list[str]:
         """List all policy names."""
         return [p.name for p in self.policies]
 
     async def evaluate_transaction(
         self, transaction: TransactionRequest, wallet_id: str
-    ) -> tuple[PolicyAction, List[PolicyViolation]]:
+    ) -> tuple[PolicyAction, list[PolicyViolation]]:
         """
         Evaluate a transaction against all policies.
 
         Returns:
             Tuple of (action, violations) where action is the most restrictive
             action required and violations is a list of all policy violations.
+
         """
         violations = []
         most_restrictive_action = PolicyAction.ALLOW
@@ -150,7 +150,7 @@ class PermissionEngine:
 
     async def _evaluate_policy(
         self, transaction: TransactionRequest, policy: TransactionPolicy, wallet_id: str
-    ) -> List[PolicyViolation]:
+    ) -> list[PolicyViolation]:
         """Evaluate a transaction against a single policy."""
         violations = []
 
@@ -221,7 +221,7 @@ class PermissionEngine:
 
         # Check time-based restrictions
         if policy.allowed_hours_utc is not None:
-            current_hour = datetime.now(timezone.utc).hour
+            current_hour = datetime.now(UTC).hour
             if current_hour not in policy.allowed_hours_utc:
                 violations.append(
                     PolicyViolation(
@@ -265,7 +265,7 @@ class PermissionEngine:
 
     def _calculate_daily_spending(self, wallet_id: str) -> Decimal:
         """Calculate total spending in the last 24 hours."""
-        cutoff = datetime.now(timezone.utc) - timedelta(days=1)
+        cutoff = datetime.now(UTC) - timedelta(days=1)
         daily_transactions = [
             tx for tx in self.transaction_history if tx.timestamp > cutoff
         ]
@@ -277,10 +277,10 @@ class PermissionEngine:
         policy: TransactionPolicy,
         window: TimeWindow,
         wallet_id: str,
-    ) -> List[PolicyViolation]:
+    ) -> list[PolicyViolation]:
         """Check if transaction violates rate limiting rules."""
         violations = []
-        cutoff = datetime.now(timezone.utc) - timedelta(minutes=window.duration_minutes)
+        cutoff = datetime.now(UTC) - timedelta(minutes=window.duration_minutes)
 
         recent_transactions = [
             tx for tx in self.transaction_history if tx.timestamp > cutoff
@@ -319,7 +319,7 @@ class PermissionEngine:
         """Record a completed transaction for future policy evaluation."""
         history_entry = TransactionHistory(
             transaction_hash=transaction_hash,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             value=Decimal(transaction.value) / Decimal(10**18),  # Convert to ETH
             destination=transaction.to,
             gas_used=transaction.gas_limit,
@@ -327,7 +327,7 @@ class PermissionEngine:
         self.transaction_history.append(history_entry)
 
         # Keep only last 30 days of history
-        cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+        cutoff = datetime.now(UTC) - timedelta(days=30)
         self.transaction_history = [
             tx for tx in self.transaction_history if tx.timestamp > cutoff
         ]

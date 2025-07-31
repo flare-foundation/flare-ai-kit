@@ -1,11 +1,12 @@
 """Tests for Turnkey wallet implementation."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from flare_ai_kit.wallet.base import TransactionRequest, WalletAddress
 from flare_ai_kit.wallet.permissions import PermissionEngine, PolicyViolation
-from flare_ai_kit.wallet.turnkey_wallet import TurnkeyWallet, TurnkeySettings
+from flare_ai_kit.wallet.turnkey_wallet import TurnkeySettings, TurnkeyWallet
 
 
 @pytest.fixture
@@ -184,7 +185,6 @@ class TestTurnkeyWallet:
     async def test_sign_transaction_denied_by_policy(self, turnkey_wallet):
         """Test transaction signing denied by policy."""
         # Mock permission engine to deny transaction
-        from flare_ai_kit.wallet.permissions import PolicyViolation
 
         violation = PolicyViolation(
             policy_name="test_policy",
