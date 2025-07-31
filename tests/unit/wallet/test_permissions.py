@@ -2,6 +2,7 @@
 
 from datetime import UTC, datetime
 from decimal import Decimal
+from unittest.mock import patch
 
 import pytest
 
@@ -263,8 +264,6 @@ class TestPolicyEvaluation:
         )
 
         # Use proper mocking with patch
-        from datetime import timezone
-        from unittest.mock import patch
 
         with patch("flare_ai_kit.wallet.permissions.datetime") as mock_datetime:
             # Make the mock datetime.now() return our test datetime
