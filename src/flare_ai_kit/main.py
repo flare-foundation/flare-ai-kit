@@ -1,5 +1,6 @@
 """Entry point for Flare AI Kit SDK."""
 
+from .a2a import A2AClient
 from .config import AppSettings
 from .ecosystem import BlockExplorer, FAssets, Flare, FtsoV2
 from .ingestion import GithubIngestor
@@ -37,6 +38,7 @@ class FlareAIKit:
         self._github_ingestor = None
         self._x_client = None
         self._pdf_processor = None
+        self._a2a_client = None
 
     # Ecosystem Interaction Methods
     @property
@@ -117,3 +119,10 @@ class FlareAIKit:
                 contract_poster=contract_poster,
             )
         return self._pdf_processor
+
+    # A2A methods
+    def a2a_client(self, sqlite_db_path: str) -> A2AClient:
+        """Access the A2A client with optional db path."""
+        if self._a2a_client is None:
+            self._a2a_client = A2AClient(sqlite_db_path)
+        return self._a2a_client
