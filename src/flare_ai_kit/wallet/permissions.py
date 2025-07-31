@@ -269,7 +269,8 @@ class PermissionEngine:
         daily_transactions = [
             tx for tx in self.transaction_history if tx.timestamp > cutoff
         ]
-        return sum(tx.value for tx in daily_transactions)
+        total = sum(tx.value for tx in daily_transactions)
+        return total if isinstance(total, Decimal) else Decimal(str(total))
 
     def _check_rate_limit(
         self,

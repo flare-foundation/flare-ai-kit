@@ -124,7 +124,7 @@ class TEESecurityManager:
 
         # Re-validate TEE attestation
         try:
-            self.vtmp_validator.validate_token(operation.attestation_token)
+            self.vtpm_validator.validate_token(operation.attestation_token)
             return True
         except Exception as e:
             logger.error(

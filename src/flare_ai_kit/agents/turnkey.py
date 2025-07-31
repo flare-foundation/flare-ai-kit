@@ -2,6 +2,7 @@
 
 import asyncio
 import time
+from decimal import Decimal
 from typing import Any
 
 import structlog
@@ -81,19 +82,23 @@ class TurnkeyAgentConnector:
         agent_policy = TransactionPolicy(
             name=f"agent_{config.agent_id}_policy",
             description=f"Automated policy for AI agent {config.agent_id}",
-            max_transaction_value=config.max_transaction_value,
-            daily_spending_limit=config.max_daily_spend,
+            max_transaction_value=Decimal(str(config.max_transaction_value)),
+            daily_spending_limit=Decimal(str(config.max_daily_spend)),
             allowed_hours_utc=config.allowed_hours,
+            allowed_destinations=None,
+            allowed_contracts=None,
+            max_gas_price=None,
+            max_gas_limit=None,
             time_windows=[
                 TimeWindow(
                     duration_minutes=60,
                     max_transactions=10,
-                    max_value=config.max_transaction_value * 5,
+                    max_value=Decimal(str(config.max_transaction_value * 5)),
                 ),
                 TimeWindow(
                     duration_minutes=1440,
                     max_transactions=100,
-                    max_value=config.max_daily_spend,
+                    max_value=Decimal(str(config.max_daily_spend)),
                 ),
             ],
         )
@@ -381,19 +386,23 @@ class TurnkeyAgentConnector:
         new_policy = TransactionPolicy(
             name=f"agent_{agent_id}_policy",
             description=f"Updated policy for AI agent {agent_id}",
-            max_transaction_value=new_config.max_transaction_value,
-            daily_spending_limit=new_config.max_daily_spend,
+            max_transaction_value=Decimal(str(new_config.max_transaction_value)),
+            daily_spending_limit=Decimal(str(new_config.max_daily_spend)),
             allowed_hours_utc=new_config.allowed_hours,
+            allowed_destinations=None,
+            allowed_contracts=None,
+            max_gas_price=None,
+            max_gas_limit=None,
             time_windows=[
                 TimeWindow(
                     duration_minutes=60,
                     max_transactions=10,
-                    max_value=new_config.max_transaction_value * 5,
+                    max_value=Decimal(str(new_config.max_transaction_value * 5)),
                 ),
                 TimeWindow(
                     duration_minutes=1440,
                     max_transactions=100,
-                    max_value=new_config.max_daily_spend,
+                    max_value=Decimal(str(new_config.max_daily_spend)),
                 ),
             ],
         )

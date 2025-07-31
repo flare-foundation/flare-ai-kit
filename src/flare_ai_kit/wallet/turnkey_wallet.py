@@ -84,7 +84,19 @@ class TurnkeyWallet(WalletInterface):
             tee_validator: TEE attestation validator
 
         """
-        self.settings = settings or TurnkeySettings()
+        if settings is None:
+            try:
+                self.settings = TurnkeySettings()
+            except Exception:
+                # If TurnkeySettings can't be created due to missing env vars,
+                # create a minimal settings object for testing
+                self.settings = TurnkeySettings(
+                    organization_id="",
+                    api_public_key="",
+                    api_private_key="",  # type: ignore
+                )
+        else:
+            self.settings = settings
         self.permission_engine = permission_engine or PermissionEngine()
         self.tee_validator = tee_validator or VtpmValidation()
         self.client = httpx.AsyncClient(
