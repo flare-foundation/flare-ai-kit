@@ -108,7 +108,8 @@ class FlareAIKit:
         """Access the PDF ingestion and on-chain posting service."""
         if self._pdf_processor is None:
             if not self.settings.ingestion or not self.settings.ingestion.pdf_ingestion:
-                raise ValueError("PDF ingestion settings are not configured.")
+                msg = "PDF ingestion settings are not configured."
+                raise ValueError(msg)
 
             contract_poster = ContractPoster(
                 contract_settings=self.settings.ingestion.pdf_ingestion.contract_settings,
