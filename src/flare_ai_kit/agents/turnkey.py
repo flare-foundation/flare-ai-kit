@@ -223,11 +223,15 @@ class TurnkeyAgentConnector:
             }
 
         except PermissionError as e:
-            logger.exception("agent_transaction_denied", agent_id=agent_id, error=str(e))
+            logger.exception(
+                "agent_transaction_denied", agent_id=agent_id, error=str(e)
+            )
             return {"success": False, "error": f"Transaction denied: {e}"}
 
         except Exception as e:
-            logger.exception("agent_transaction_failed", agent_id=agent_id, error=str(e))
+            logger.exception(
+                "agent_transaction_failed", agent_id=agent_id, error=str(e)
+            )
             return {"success": False, "error": f"Transaction failed: {e}"}
 
     async def _validate_agent_transaction(

@@ -1,5 +1,5 @@
 """AI agents for interacting with Flare blockchain via secure wallets."""
 
-from .turnkey import AgentConnector, AgentTransaction
+from .turnkey import TurnkeyAgentConnector, AgentTransaction
 
-__all__ = ["AgentConnector", "AgentTransaction"]
+__all__ = ["TurnkeyAgentConnector", "AgentTransaction"]
