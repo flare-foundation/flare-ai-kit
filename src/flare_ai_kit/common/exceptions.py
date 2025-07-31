@@ -128,3 +128,13 @@ class AttestationNotFoundError(DALayerError):
 
 class MerkleProofError(DALayerError):
     """Raised for errors related to Merkle proof validation or processing."""
+
+
+# --- A2A Errors ---
+class A2AClientError(FlareAIKitError):
+    """Error class concerned with unrecoverable A2A errors."""
+
+
+# --- PDF Processing Errors ---
+class PdfPostingError(FlareAIKitError):
+    """Error class concerned with onchain PDF data posting errors."""

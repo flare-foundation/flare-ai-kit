@@ -1,15 +1,17 @@
 """Handles posting data to a smart contract on the Flare blockchain."""
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
-from web3.types import TxParams
 
 from flare_ai_kit.common import FlareTxError
 from flare_ai_kit.ecosystem.flare import Flare
 from flare_ai_kit.ecosystem.settings import EcosystemSettings
 from flare_ai_kit.ingestion.settings import OnchainContractSettings
+
+if TYPE_CHECKING:
+    from web3.types import TxParams
 
 logger = structlog.get_logger(__name__)
 
@@ -21,7 +23,7 @@ class ContractPoster(Flare):
         self,
         contract_settings: OnchainContractSettings,
         ecosystem_settings: EcosystemSettings,
-    ):
+    ) -> None:
         """
         Initializes the ContractPoster.
 
@@ -34,7 +36,7 @@ class ContractPoster(Flare):
         super().__init__(ecosystem_settings)
 
         self.contract_settings = contract_settings
-        with open(self.contract_settings.abi_path) as f:
+        with self.contract_settings.abi_path.open() as f:
             abi = json.load(f)
         self.contract = self.w3.eth.contract(
             address=self.w3.to_checksum_address(
@@ -71,12 +73,13 @@ class ContractPoster(Flare):
 
             tx_params: TxParams = await self.build_transaction(
                 function_call,
-                self.w3.to_checksum_address(self.address),  # type: ignore
+                self.w3.to_checksum_address(self.address),  # type: ignore[reportArgumentType]
             )
             tx_hash = await self.sign_and_send_transaction(tx_params)
-
-            logger.info("Data posted to contract successfully", tx_hash=tx_hash)
-            return tx_hash
         except Exception as e:
             logger.exception("Failed to post data to contract", error=e)
-            raise FlareTxError("Failed to post data to contract") from e
+            msg = "Failed to post data to contract"
+            raise FlareTxError(msg) from e
+        else:
+            logger.info("Data posted to contract successfully", tx_hash=tx_hash)
+            return tx_hash

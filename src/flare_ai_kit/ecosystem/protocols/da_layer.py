@@ -1,6 +1,5 @@
 """Interactions with Flare Data Availability (DA) Layer."""
 
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from types import TracebackType
 from typing import Any, Self, TypeVar
@@ -8,6 +7,7 @@ from urllib.parse import urljoin
 
 import aiohttp
 import structlog
+from pydantic import BaseModel
 
 from flare_ai_kit.common.exceptions import (
     AttestationNotFoundError,
@@ -26,8 +26,7 @@ logger = structlog.get_logger(__name__)
 T = TypeVar("T", bound="DataAvailabilityLayer")
 
 
-@dataclass(frozen=True)
-class AttestationRequest:
+class AttestationRequest(BaseModel):
     """Represents an attestation request structure."""
 
     attestation_type: str
@@ -36,8 +35,7 @@ class AttestationRequest:
     request_body: dict[str, Any]
 
 
-@dataclass(frozen=True)
-class AttestationResponse:
+class AttestationResponse(BaseModel):
     """Represents an attestation response structure."""
 
     attestation_type: str
@@ -48,8 +46,7 @@ class AttestationResponse:
     response_body: dict[str, Any]
 
 
-@dataclass(frozen=True)
-class MerkleProof:
+class MerkleProof(BaseModel):
     """Represents a Merkle proof for attestation verification."""
 
     merkle_proof: list[str]
@@ -57,16 +54,14 @@ class MerkleProof:
     total_leaves: int
 
 
-@dataclass(frozen=True)
-class AttestationData:
+class AttestationData(BaseModel):
     """Complete attestation data including response and proof."""
 
     response: AttestationResponse
     proof: MerkleProof
 
 
-@dataclass(frozen=True)
-class VotingRoundData:
+class VotingRoundData(BaseModel):
     """Data for a specific voting round."""
 
     voting_round: int
@@ -76,8 +71,7 @@ class VotingRoundData:
     finalized: bool
 
 
-@dataclass(frozen=True)
-class FTSOAnchorFeed:
+class FTSOAnchorFeed(BaseModel):
     """FTSO anchor feed data structure."""
 
     id: str
@@ -87,8 +81,7 @@ class FTSOAnchorFeed:
     description: str
 
 
-@dataclass(frozen=True)
-class FTSOAnchorFeedValue:
+class FTSOAnchorFeedValue(BaseModel):
     """FTSO anchor feed value with proof."""
 
     id: str
@@ -98,8 +91,7 @@ class FTSOAnchorFeedValue:
     proof: MerkleProof
 
 
-@dataclass(frozen=True)
-class FTSOAnchorFeedsWithProof:
+class FTSOAnchorFeedsWithProof(BaseModel):
     """FTSO anchor feeds with proof for a specific voting round."""
 
     voting_round: int

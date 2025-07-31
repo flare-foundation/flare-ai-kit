@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import override
+from typing import Literal, override
 
 
 # --- Schemas for Text Chunking and Embeddings ---
@@ -180,3 +180,6 @@ class RedemptionRequest:
     max_executor_fee_nat: int
     executor_address: str
     recipient_underlying_address: str
+
+
+AgentRole = Literal["user", "system", "assistant", "summarizer", "critic", "filter"]

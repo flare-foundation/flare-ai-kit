@@ -9,7 +9,7 @@ import asyncio
 from pathlib import Path
 from unittest.mock import AsyncMock, mock_open, patch
 
-from data.create_sample_invoice import create_invoice_and_get_coords  # type: ignore
+from data.create_sample_invoice import create_invoice_and_get_coords
 
 from flare_ai_kit import FlareAIKit
 from flare_ai_kit.config import AppSettings
@@ -17,19 +17,17 @@ from flare_ai_kit.config import AppSettings
 MOCK_TX_HASH = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
 
 
-async def main():
-    """
-    Main function to run the PDF ingestion example with a real PDF.
-    """
+async def main() -> None:
+    """Main function to run the PDF ingestion example with a real PDF."""
     # Step 1: Generate the sample PDF and get the exact coordinates
     print("📄 Generating sample_invoice.pdf and finding coordinates...")
-    coords = create_invoice_and_get_coords()  # type: ignore
+    coords = create_invoice_and_get_coords()
     print("-" * 30)
 
     print("🚀 Starting PDF ingestion example...")
 
     # --- Configuration with programmatically found and CASTED coordinates ---
-    settings = AppSettings(  # type: ignore
+    settings = AppSettings(
         log_level="INFO",
         ingestion={
             "pdf_ingestion": {
@@ -39,24 +37,24 @@ async def main():
                         "fields": [
                             {
                                 "field_name": "invoice_id",
-                                "x0": int(coords["invoice_id"].x0),  # type: ignore
-                                "y0": int(coords["invoice_id"].y0),  # type: ignore
-                                "x1": int(coords["invoice_id"].x1),  # type: ignore
-                                "y1": int(coords["invoice_id"].y1),  # type: ignore
+                                "x0": int(coords["invoice_id"].x0),  # type: ignore[reportArgumentType]
+                                "y0": int(coords["invoice_id"].y0),  # type: ignore[reportArgumentType]
+                                "x1": int(coords["invoice_id"].x1),  # type: ignore[reportArgumentType]
+                                "y1": int(coords["invoice_id"].y1),  # type: ignore[reportArgumentType]
                             },
                             {
                                 "field_name": "issue_date",
-                                "x0": int(coords["issue_date"].x0),  # type: ignore
-                                "y0": int(coords["issue_date"].y0),  # type: ignore
-                                "x1": int(coords["issue_date"].x1),  # type: ignore
-                                "y1": int(coords["issue_date"].y1),  # type: ignore
+                                "x0": int(coords["issue_date"].x0),  # type: ignore[reportArgumentType]
+                                "y0": int(coords["issue_date"].y0),  # type: ignore[reportArgumentType]
+                                "x1": int(coords["issue_date"].x1),  # type: ignore[reportArgumentType]
+                                "y1": int(coords["issue_date"].y1),  # type: ignore[reportArgumentType]
                             },
                             {
                                 "field_name": "amount_due",
-                                "x0": int(coords["amount_due"].x0),  # type: ignore
-                                "y0": int(coords["amount_due"].y0),  # type: ignore
-                                "x1": int(coords["amount_due"].x1),  # type: ignore
-                                "y1": int(coords["amount_due"].y1),  # type: ignore
+                                "x0": int(coords["amount_due"].x0),  # type: ignore[reportArgumentType]
+                                "y0": int(coords["amount_due"].y0),  # type: ignore[reportArgumentType]
+                                "x1": int(coords["amount_due"].x1),  # type: ignore[reportArgumentType]
+                                "y1": int(coords["amount_due"].y1),  # type: ignore[reportArgumentType]
                             },
                         ],
                     }

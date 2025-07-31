@@ -2,14 +2,12 @@
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import Any, Literal, cast
+from typing import Any
 
 from pydantic_ai import Agent
 
-from flare_ai_kit.common import Prediction
+from flare_ai_kit.common import AgentRole, Prediction
 from flare_ai_kit.consensus.coordinator.base import BaseCoordinator
-
-AgentRole = Literal["user", "system", "assistant", "summarizer", "critic"]
 
 
 @dataclass
@@ -36,7 +34,7 @@ class SimpleCoordinator(BaseCoordinator):
     def add_agent(
         self,
         agent: Agent[Any, Any],
-        role: str,  # Changed to str to match base class
+        role: AgentRole,
         config: dict[str, Any] | None = None,
     ) -> None:
         """
@@ -48,16 +46,11 @@ class SimpleCoordinator(BaseCoordinator):
             config: Optional agent-specific configuration.
 
         """
-        # Validate the role matches our expected types
-        if role not in {"user", "system", "assistant", "summarizer", "critic"}:
-            msg = f"Invalid role: {role}"
-            raise ValueError(msg)
-
         agent_id = f"{type(agent).__name__}_{len(self.agents)}"
         self.agents[agent_id] = CoordinatorAgent(
             agent_id=agent_id,
             agent=agent,
-            role=cast("AgentRole", role),  # Safe cast after validation
+            role=role,
             config=config or {},
         )
 

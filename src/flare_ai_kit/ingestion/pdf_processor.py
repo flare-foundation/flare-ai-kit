@@ -2,12 +2,13 @@
 
 from typing import Any
 
-import fitz  # type: ignore # PyMuPDF
-import pytesseract  # type: ignore
+import fitz  # type: ignore[reportMissingTypeStubs]
+import pytesseract  # type: ignore[reportMissingTypeStubs]
 import structlog
 from PIL import Image
 from pydantic import BaseModel, ValidationError, create_model
 
+from flare_ai_kit.common import PdfPostingError
 from flare_ai_kit.ingestion.settings import (
     PDFIngestionSettings,
     PDFTemplateSettings,
@@ -29,22 +30,22 @@ def _create_dynamic_model(template: PDFTemplateSettings) -> type[BaseModel]:
         for field in template.fields
     }
     # Use Pydantic's create_model function to build the class
-    return create_model(f"{template.template_name}Model", **fields)  # type: ignore
+    return create_model(f"{template.template_name}Model", **fields)  # type: ignore[reportCallIssue]
 
 
 class PDFProcessor:
-    """
-    A class to process PDF files, extract data based on templates,
-    and post it to a smart contract.
-    """
+    """Extract data from PDFs and post onchain."""
 
-    def __init__(self, settings: PDFIngestionSettings, contract_poster: ContractPoster):
+    def __init__(
+        self, settings: PDFIngestionSettings, contract_poster: ContractPoster
+    ) -> None:
         """
         Initializes the PDFProcessor.
 
         Args:
             settings: The settings for PDF ingestion.
-            contract_poster: An instance of the ContractPoster to handle on-chain transactions.
+            contract_poster: An instance of the ContractPoster to
+                handle on-chain transactions.
 
         """
         self.settings = settings
@@ -69,10 +70,10 @@ class PDFProcessor:
 
         """
         if use_ocr:
-            pix = page.get_pixmap(clip=rect)  # type: ignore
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # type: ignore
-            return str(pytesseract.image_to_string(img).strip())  # type: ignore
-        return str(page.get_text("text", clip=rect).strip())  # type: ignore
+            pix = page.get_pixmap(clip=rect)  # type: ignore[reportArgumentType]
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # type: ignore[reportArgumentType]
+            return str(pytesseract.image_to_string(img).strip())  # type: ignore[reportArgumentType]
+        return str(page.get_text("text", clip=rect).strip())  # type: ignore[reportArgumentType]
 
     def process_pdf(self, file_path: str, template_name: str) -> dict[str, Any]:
         """
@@ -90,7 +91,8 @@ class PDFProcessor:
 
         """
         if template_name not in self.templates:
-            raise ValueError(f"Template '{template_name}' not found.")
+            msg = f"Template '{template_name}' not found."
+            raise ValueError(msg)
 
         template: PDFTemplateSettings = self.templates[template_name]
         extracted_data = {}
@@ -112,22 +114,24 @@ class PDFProcessor:
             doc.close()
 
             # Validate and normalize data
-            DynamicPDFModel = _create_dynamic_model(template)
-            pdf_data = DynamicPDFModel(**extracted_data)  # type: ignore
+            dynamic_pdf_model = _create_dynamic_model(template)
+            pdf_data = dynamic_pdf_model(**extracted_data)
             return pdf_data.model_dump()
 
         except (OSError, fitz.FileDataError) as e:
-            logger.error(
+            logger.exception(
                 "Failed to open or process PDF", file_path=file_path, error=str(e)
             )
-            raise ValueError(f"Could not process PDF file: {file_path}") from e
+            msg = f"Could not process PDF file: {file_path}"
+            raise ValueError(msg) from e
         except ValidationError as e:
-            logger.error(
+            logger.exception(
                 "Extracted data failed validation",
                 extracted_data=extracted_data,
                 error=str(e),
             )
-            raise ValueError("Extracted data is invalid") from e
+            msg = "Extracted data is invalid"
+            raise ValueError(msg) from e
 
     async def ingest_and_post(self, file_path: str, template_name: str) -> str:
         """
@@ -146,13 +150,18 @@ class PDFProcessor:
             file_path=file_path,
             template=template_name,
         )
-        try:
-            extracted_data = self.process_pdf(file_path, template_name)
-            tx_hash = await self.contract_poster.post_data(extracted_data)
-            logger.info("Successfully ingested and posted PDF data", tx_hash=tx_hash)
-            if not tx_hash:
-                raise ValueError("Transaction failed to return a hash.")
-            return tx_hash
-        except (ValueError, Exception) as e:
-            logger.exception("PDF ingestion and posting failed", error=str(e))
-            raise
+        extracted_data = self.process_pdf(file_path, template_name)
+        tx_hash = await self.contract_poster.post_data(extracted_data)
+
+        if not tx_hash:
+            msg = "Posting failed"
+            logger.error(msg, file_path=file_path, template=template_name)
+            raise PdfPostingError(msg)
+
+        logger.info(
+            "Successfully ingested and posted PDF data",
+            tx_hash=tx_hash,
+            file_path=file_path,
+            template=template_name,
+        )
+        return tx_hash

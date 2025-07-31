@@ -13,6 +13,6 @@ class TeeSettings(BaseSettings):
         extra="ignore",
     )
     simulate_attestation_token: bool = Field(
-        True,  # noqa: FBT003
+        True,
         description="Use a pregenerated attestation token for testing.",
     )

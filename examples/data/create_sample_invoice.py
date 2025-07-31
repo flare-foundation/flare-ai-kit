@@ -1,9 +1,6 @@
-"""
-A helper script that generates a realistic PDF invoice and programmatically
-finds the exact coordinates of the data for reliable testing.
-"""
+"""Generate a sample invoice PDF and find coordinates for testing."""
 
-import fitz  # type: ignore
+import fitz  # type: ignore[reportMissingTypeStubs]
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
@@ -14,10 +11,8 @@ ISSUE_DATE = "July 10, 2025"
 AMOUNT_DUE = "1,250,000"
 
 
-def create_invoice_and_get_coords() -> dict:  # type: ignore
-    """
-    Generates the sample PDF and returns the exact coordinates of the data fields.
-    """
+def create_invoice_and_get_coords() -> dict[str, fitz.Rect]:
+    """Generates the sample PDF and returns the exact coordinates of the data fields."""
     c = canvas.Canvas(FILE_PATH, pagesize=letter)
     width, _ = letter
 
@@ -59,30 +54,39 @@ def create_invoice_and_get_coords() -> dict:  # type: ignore
     doc = fitz.open(FILE_PATH)
     page = doc[0]
 
-    coords = {}
+    coords: dict[str, fitz.Rect] = {}
     # Find the bounding box for each data VALUE by first finding its LABEL
 
     # For Invoice ID
-    label_rect = page.search_for("Invoice ID:")[0]  # type: ignore
+    label_rect = page.search_for("Invoice ID:")[0]  # type: ignore[reportUnknownMemberType]
     coords["invoice_id"] = fitz.Rect(
-        label_rect.x1 + 5, label_rect.y0 - 2, width, label_rect.y1 + 2
-    )  # type: ignore
+        label_rect.x1 + 5,  # type: ignore[reportArgumentType]
+        label_rect.y0 - 2,  # type: ignore[reportArgumentType]
+        width,
+        label_rect.y1 + 2,  # type: ignore[reportArgumentType]
+    )
 
     # For Issue Date
-    label_rect = page.search_for("Issue Date:")[0]  # type: ignore
+    label_rect = page.search_for("Issue Date:")[0]  # type: ignore[reportUnknownMemberType]
     coords["issue_date"] = fitz.Rect(
-        label_rect.x1 + 5, label_rect.y0 - 2, width, label_rect.y1 + 2
-    )  # type: ignore
+        label_rect.x1 + 5,  # type: ignore[reportArgumentType]
+        label_rect.y0 - 2,  # type: ignore[reportArgumentType]
+        width,
+        label_rect.y1 + 2,  # type: ignore[reportArgumentType]
+    )
 
     # For Amount Due
-    label_rect = page.search_for("Total Due:")[0]  # type: ignore
+    label_rect = page.search_for("Total Due:")[0]  # type: ignore[reportUnknownMemberType]
     coords["amount_due"] = fitz.Rect(
-        label_rect.x1 + 5, label_rect.y0 - 2, width - 0.7 * inch, label_rect.y1 + 2
-    )  # type: ignore
+        label_rect.x1 + 5,  # type: ignore[reportArgumentType]
+        label_rect.y0 - 2,  # type: ignore[reportArgumentType]
+        width - 0.7 * inch,
+        label_rect.y1 + 2,  # type: ignore[reportArgumentType]
+    )
 
     doc.close()
     print(f"✅ Found precise coordinates: {coords}")
-    return coords  # type: ignore
+    return coords
 
 
 if __name__ == "__main__":

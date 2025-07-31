@@ -1,5 +1,5 @@
 # tests/unit/social/connector/test_github.py
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from httpx import HTTPError
@@ -20,7 +20,7 @@ async def test_fetch_mentions_success():
             }
         ]
     )
-    mock_response.raise_for_status = AsyncMock(return_value=None)
+    mock_response.raise_for_status = Mock(return_value=None)
 
     with patch.object(connector.client, "get", return_value=mock_response):
         results = await connector.fetch_mentions("AI")

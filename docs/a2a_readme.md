@@ -1,6 +1,6 @@
 # Flare AI Kit A2A Package
 
-This package builds A2A (Agent-to-Agent) functionality into the Flare AI Kit. It consists of two main modules, a client and a server, that enable agents to communicate with each other over HTTP JSON-RPC 2.0. The package exposes A2A schemas following the v0.2.3 protocol spec. 
+This package builds A2A (Agent-to-Agent) functionality into the Flare AI Kit. It consists of two main modules, a client and a server, that enable agents to communicate with each other over HTTP JSON-RPC 2.0. The package exposes A2A schemas following the v0.2.3 protocol spec.
 
 ## Using the client
 
@@ -63,24 +63,24 @@ Below is an example response body from the agent:
 
 ```json
 {
-    "jsonrpc": "2.0",
-    "id": "0dacbeeed6a842d0ad6d2d31ce3150f4",
-    "result": {
-        "kind": "message",
-        "role": "agent",
-        "parts": [
-            {
-                "kind": "text",
-                "text": "The price of BTC/USD is 111184.22.",
-                "metadata": null
-            }
-        ],
-        "metadata": null,
-        "messageId": "98698e9607444cd0a4d26f52c11feec5",
-        "contextId": null,
-        "taskId": null
-    },
-    "error": null
+  "jsonrpc": "2.0",
+  "id": "0dacbeeed6a842d0ad6d2d31ce3150f4",
+  "result": {
+    "kind": "message",
+    "role": "agent",
+    "parts": [
+      {
+        "kind": "text",
+        "text": "The price of BTC/USD is 111184.22.",
+        "metadata": null
+      }
+    ],
+    "metadata": null,
+    "messageId": "98698e9607444cd0a4d26f52c11feec5",
+    "contextId": null,
+    "taskId": null
+  },
+  "error": null
 }
 ```
 
@@ -182,10 +182,10 @@ server = A2AServer(card, host="localhost", port=4500)
 async def handle_message(request: SendMessageRequest):
     # Process the message
     user_text = "".join(
-        part.text for part in request.params.message.parts 
+        part.text for part in request.params.message.parts
         if part.kind == "text"
     )
-    
+
     # Generate response
     return SendMessageResponse(
         result=Message(
@@ -231,6 +231,7 @@ The A2A package includes robust task management with SQLite-based persistence th
 ### Task States
 
 Tasks can be in one of several states:
+
 - `submitted`: Task has been submitted
 - `working`: Task is being processed
 - `input_required`: Task needs additional input
@@ -284,6 +285,7 @@ Streaming support is planned for future releases. The infrastructure is in place
 - Agent capabilities can declare `streaming: true`
 
 When implemented, streaming will allow:
+
 - Real-time message streaming
 - Progressive task updates
 - Artifact streaming for large responses
@@ -298,6 +300,7 @@ Push notification support is planned for future releases. The foundation include
 - Authentication schemes for secure webhook delivery
 
 When implemented, push notifications will enable:
+
 - Webhook-based task status updates
 - Asynchronous result delivery
 - Real-time event notifications
@@ -324,4 +327,3 @@ See the examples in the `examples/a2a/a2a_collaboration/` directory for a comple
 ### Simple Ping-Pong Example
 
 See `examples/a2a/messaging/ping_pong.py` for a basic client-server interaction example.
-

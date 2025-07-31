@@ -54,9 +54,10 @@ async def test_distribute_task_all_agents():
     coordinator.add_agent(DummyAgent("a2"), role="summarizer")
 
     results = await coordinator.distribute_task("analyze data")
+    print(results)
 
     assert len(results) == 2
-    assert all("analyze data" in r for r in results)
+    assert all("analyze data" in r[1] for r in results)
 
 
 @pytest.mark.asyncio
@@ -66,9 +67,10 @@ async def test_distribute_task_by_role():
     coordinator.add_agent(DummyAgent("a2"), role="filter")
 
     results = await coordinator.distribute_task("summarize this", role="summarizer")
+    print(results)
 
     assert len(results) == 1
-    assert "summarize this" in results[0]
+    assert "summarize this" in results[0][1]
 
 
 @pytest.mark.asyncio
