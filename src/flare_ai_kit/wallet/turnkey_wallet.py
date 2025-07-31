@@ -37,9 +37,9 @@ class TurnkeySettings(BaseSettings):
         default="https://api.turnkey.com",
         description="Turnkey API base URL",
     )
-    organization_id: str = Field(description="Turnkey organization ID")
-    api_public_key: str = Field(description="Turnkey API public key")
-    api_private_key: SecretStr = Field(description="Turnkey API private key")
+    organization_id: str = Field(default="", description="Turnkey organization ID")
+    api_public_key: str = Field(default="", description="Turnkey API public key")
+    api_private_key: SecretStr = Field(default=SecretStr(""), description="Turnkey API private key")
     default_curve: str = Field(
         default="secp256k1",
         description="Default cryptographic curve for key generation",
@@ -84,19 +84,7 @@ class TurnkeyWallet(WalletInterface):
             tee_validator: TEE attestation validator
 
         """
-        if settings is None:
-            try:
-                self.settings = TurnkeySettings()
-            except Exception:
-                # If TurnkeySettings can't be created due to missing env vars,
-                # create a minimal settings object for testing
-                self.settings = TurnkeySettings(
-                    organization_id="",
-                    api_public_key="",
-                    api_private_key="",  # type: ignore
-                )
-        else:
-            self.settings = settings
+        self.settings = settings or TurnkeySettings()
         self.permission_engine = permission_engine or PermissionEngine()
         self.tee_validator = tee_validator or VtpmValidation()
         self.client = httpx.AsyncClient(
@@ -131,7 +119,7 @@ class TurnkeyWallet(WalletInterface):
         logger.info("Creating new wallet", wallet_name=wallet_name)
 
         # Create sub-organization request
-        request_body = {
+        request_body: dict[str, Any] = {
             "type": "ACTIVITY_TYPE_CREATE_SUB_ORGANIZATION_V3",
             "organizationId": self.settings.organization_id,
             "parameters": {
