@@ -64,6 +64,9 @@ tee = [
     "pyopenssl>=25.0.0",
     "python-dotenv >=1.0.1" 
 ]
+a2a = [
+    "fastapi[standard]>=0.116.1",
+]
 
 [build-system]
 requires = ["hatchling"]
