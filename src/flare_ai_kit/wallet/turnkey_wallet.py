@@ -14,9 +14,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from web3 import Web3
 
 from flare_ai_kit.tee.validation import VtpmValidation
+from flare_ai_kit.wallet.permissions import PermissionEngine, PolicyAction
 
 from .base import SignedTransaction, TransactionRequest, WalletAddress, WalletInterface
-from .permissions import PermissionEngine, PolicyAction
 
 logger = structlog.get_logger(__name__)
 
