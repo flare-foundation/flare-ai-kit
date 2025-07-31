@@ -818,9 +818,16 @@ tee = [
     { name = "pyjwt" },
     { name = "pyopenssl" },
 ]
+wallet = [
+    { name = "cryptography" },
+    { name = "eth-account" },
+    { name = "httpx" },
+    { name = "pyjwt" },
+]
 
 [package.dev-dependencies]
 dev = [
+    { name = "gitpython" },
     { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -834,7 +841,9 @@ dev = [
 requires-dist = [
     { name = "async-lru", marker = "extra == 'social'", specifier = ">=2.0.5" },
     { name = "cryptography", marker = "extra == 'tee'", specifier = ">=44.0.2" },
+    { name = "cryptography", marker = "extra == 'wallet'", specifier = ">=44.0.2" },
     { name = "discord-py", marker = "extra == 'social'", specifier = ">=2.3.2" },
+<<<<<<< HEAD
     { name = "dulwich", marker = "extra == 'rag'", specifier = ">=0.23.2" },
     { name = "fastapi", extras = ["standard"], marker = "extra == 'a2a'", specifier = ">=0.116.1" },
     { name = "google-genai", specifier = ">=1.8.0" },
@@ -846,6 +855,27 @@ requires-dist = [
     { name = "pymupdf", marker = "extra == 'ingestion'", specifier = ">=1.26.1" },
     { name = "pyopenssl", marker = "extra == 'tee'", specifier = ">=25.0.0" },
     { name = "pytesseract", marker = "extra == 'ingestion'", specifier = ">=0.3.13" },
+=======
+<<<<<<< Updated upstream
+    { name = "fastapi", extras = ["standard"], marker = "extra == 'a2a'", specifier = ">=0.116.1" },
+=======
+    { name = "eth-account", marker = "extra == 'wallet'", specifier = ">=0.13.0" },
+>>>>>>> Stashed changes
+    { name = "gitpython", marker = "extra == 'rag'", specifier = ">=3.1.44" },
+    { name = "google-genai", specifier = ">=1.8.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "httpx", marker = "extra == 'social'", specifier = ">=0.27.0" },
+    { name = "httpx", marker = "extra == 'wallet'", specifier = ">=0.28.1" },
+    { name = "pillow", specifier = ">=11.3.0" },
+    { name = "pydantic", specifier = ">=2.11.1" },
+    { name = "pydantic-ai", specifier = ">=0.0.46" },
+    { name = "pyjwt", marker = "extra == 'tee'", specifier = ">=2.10.1" },
+    { name = "pyjwt", marker = "extra == 'wallet'", specifier = ">=2.10.1" },
+    { name = "pymupdf", specifier = ">=1.26.1" },
+    { name = "pyopenssl", marker = "extra == 'tee'", specifier = ">=25.0.0" },
+    { name = "pytesseract", specifier = ">=0.3.13" },
+    { name = "python-dotenv", marker = "extra == 'tee'", specifier = ">=1.0.1" },
+>>>>>>> b2022d6 (feat: add turnkey wallet integration with examples and tests)
     { name = "python-telegram-bot", marker = "extra == 'social'", specifier = ">=22.0" },
     { name = "qdrant-client", marker = "extra == 'rag'", specifier = ">=1.13.3" },
     { name = "slack-sdk", marker = "extra == 'social'", specifier = ">=3.26.2" },
@@ -854,10 +884,19 @@ requires-dist = [
     { name = "tweepy", marker = "extra == 'social'", specifier = ">=4.15.0" },
     { name = "web3", specifier = ">=7.10.0" },
 ]
+<<<<<<< HEAD
 provides-extras = ["rag", "social", "tee", "a2a", "ingestion"]
+=======
+<<<<<<< Updated upstream
+provides-extras = ["rag", "social", "tee", "a2a"]
+=======
+provides-extras = ["rag", "social", "tee", "wallet"]
+>>>>>>> Stashed changes
+>>>>>>> b2022d6 (feat: add turnkey wallet integration with examples and tests)
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "gitpython", specifier = ">=3.1.45" },
     { name = "pyright", specifier = ">=1.1.398" },
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytest-asyncio", specifier = ">=0.26.0" },
@@ -2241,7 +2280,15 @@ dependencies = [
     { name = "pydantic" },
     { name = "urllib3" },
 ]
+<<<<<<< HEAD
 sdist = { url = "https://files.pythonhosted.org/packages/79/8b/76c7d325e11d97cb8eb5e261c3759e9ed6664735afbf32fdded5b580690c/qdrant_client-1.15.1.tar.gz", hash = "sha256:631f1f3caebfad0fd0c1fba98f41be81d9962b7bf3ca653bed3b727c0e0cbe0e", size = 295297, upload-time = "2025-07-31T19:35:19.627Z" }
+=======
+<<<<<<< Updated upstream
+sdist = { url = "https://files.pythonhosted.org/packages/ac/77/350f01040a8eadb3909bb98ef73b0edb9c3d2d046931898044fb1ad93336/qdrant_client-1.15.0.tar.gz", hash = "sha256:475433b0acec51b66a132e91b631abe922accc64744bbb3180a04fe1fe889843", size = 295245 }
+=======
+sdist = { url = "https://files.pythonhosted.org/packages/ac/77/350f01040a8eadb3909bb98ef73b0edb9c3d2d046931898044fb1ad93336/qdrant_client-1.15.0.tar.gz", hash = "sha256:475433b0acec51b66a132e91b631abe922accc64744bbb3180a04fe1fe889843", size = 295245, upload-time = "2025-07-18T11:01:47.062Z" }
+>>>>>>> Stashed changes
+>>>>>>> b2022d6 (feat: add turnkey wallet integration with examples and tests)
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ef/33/d8df6a2b214ffbe4138db9a1efe3248f67dc3c671f82308bea1582ecbbb7/qdrant_client-1.15.1-py3-none-any.whl", hash = "sha256:2b975099b378382f6ca1cfb43f0d59e541be6e16a5892f282a4b8de7eff5cb63", size = 337331, upload-time = "2025-07-31T19:35:17.539Z" },
 ]
@@ -2257,7 +2304,15 @@ dependencies = [
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/2f/db/98b5c277be99dd18bfd91dd04e1b759cad18d1a338188c936e92f921c7e2/referencing-0.36.2.tar.gz", hash = "sha256:df2e89862cd09deabbdba16944cc3f10feb6b3e6f18e902f7cc25609a34775aa", size = 74744, upload-time = "2025-01-25T08:48:16.138Z" }
 wheels = [
+<<<<<<< HEAD
     { url = "https://files.pythonhosted.org/packages/c1/b1/3baf80dc6d2b7bc27a95a67752d0208e410351e3feb4eb78de5f77454d8d/referencing-0.36.2-py3-none-any.whl", hash = "sha256:e8699adbbf8b5c7de96d8ffa0eb5c158b3beafce084968e2ea8bb08c6794dcd0", size = 26775, upload-time = "2025-01-25T08:48:14.241Z" },
+=======
+<<<<<<< Updated upstream
+    { url = "https://files.pythonhosted.org/packages/c1/b1/3baf80dc6d2b7bc27a95a67752d0208e410351e3feb4eb78de5f77454d8d/referencing-0.36.2-py3-none-any.whl", hash = "sha256:e8699adbbf8b5c7de96d8ffa0eb5c158b3beafce084968e2ea8bb08c6794dcd0", size = 26775 },
+=======
+    { url = "https://files.pythonhosted.org/packages/c1/b1/3baf80dc6d2b7bc27a95a67752d0208e410351e3feb4eb78de5f77454d8d/referencing-0.36.2-py3-none-any.whl", hash = "sha256:e8699adbbf8b5c7de96d8ffa0eb5c158b3beafce084968e2ea8bb08c6794dcd0", size = 26775, upload-time = "2025-01-25T08:48:14.241Z" },
+>>>>>>> Stashed changes
+>>>>>>> b2022d6 (feat: add turnkey wallet integration with examples and tests)
 ]
 
 [[package]]
