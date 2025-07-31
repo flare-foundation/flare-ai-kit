@@ -797,9 +797,16 @@ tee = [
     { name = "pyopenssl" },
     { name = "python-dotenv" },
 ]
+wallet = [
+    { name = "cryptography" },
+    { name = "eth-account" },
+    { name = "httpx" },
+    { name = "pyjwt" },
+]
 
 [package.dev-dependencies]
 dev = [
+    { name = "gitpython" },
     { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -814,16 +821,20 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.14" },
     { name = "async-lru", marker = "extra == 'social'", specifier = ">=2.0.5" },
     { name = "cryptography", marker = "extra == 'tee'", specifier = ">=44.0.2" },
+    { name = "cryptography", marker = "extra == 'wallet'", specifier = ">=44.0.2" },
     { name = "discord-py", marker = "extra == 'social'", specifier = ">=2.3.2" },
     { name = "fastapi", extras = ["standard"], marker = "extra == 'a2a'", specifier = ">=0.116.1" },
+    { name = "eth-account", marker = "extra == 'wallet'", specifier = ">=0.13.0" },
     { name = "gitpython", marker = "extra == 'rag'", specifier = ">=3.1.44" },
     { name = "google-genai", specifier = ">=1.8.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "httpx", marker = "extra == 'social'", specifier = ">=0.27.0" },
+    { name = "httpx", marker = "extra == 'wallet'", specifier = ">=0.28.1" },
     { name = "pillow", specifier = ">=11.3.0" },
     { name = "pydantic", specifier = ">=2.11.1" },
     { name = "pydantic-ai", specifier = ">=0.0.46" },
     { name = "pyjwt", marker = "extra == 'tee'", specifier = ">=2.10.1" },
+    { name = "pyjwt", marker = "extra == 'wallet'", specifier = ">=2.10.1" },
     { name = "pymupdf", specifier = ">=1.26.1" },
     { name = "pyopenssl", marker = "extra == 'tee'", specifier = ">=25.0.0" },
     { name = "pytesseract", specifier = ">=0.3.13" },
@@ -836,10 +847,11 @@ requires-dist = [
     { name = "tweepy", marker = "extra == 'social'", specifier = ">=4.15.0" },
     { name = "web3", specifier = ">=7.10.0" },
 ]
-provides-extras = ["rag", "social", "tee", "a2a"]
+provides-extras = ["rag", "social", "tee", "a2a", "wallet"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "gitpython", specifier = ">=3.1.45" },
     { name = "pyright", specifier = ">=1.1.398" },
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytest-asyncio", specifier = ">=0.26.0" },
@@ -2247,7 +2259,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/79/8b/76c7d325e11d97cb8eb5e261c3759e9ed6664735afbf32fdded5b580690c/qdrant_client-1.15.1.tar.gz", hash = "sha256:631f1f3caebfad0fd0c1fba98f41be81d9962b7bf3ca653bed3b727c0e0cbe0e", size = 295297, upload-time = "2025-07-31T19:35:19.627Z" }
+
+sdist = { url = "https://files.pythonhosted.org/packages/ac/77/350f01040a8eadb3909bb98ef73b0edb9c3d2d046931898044fb1ad93336/qdrant_client-1.15.0.tar.gz", hash = "sha256:475433b0acec51b66a132e91b631abe922accc64744bbb3180a04fe1fe889843", size = 295245, upload-time = "2025-07-18T11:01:47.062Z" }
+
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ef/33/d8df6a2b214ffbe4138db9a1efe3248f67dc3c671f82308bea1582ecbbb7/qdrant_client-1.15.1-py3-none-any.whl", hash = "sha256:2b975099b378382f6ca1cfb43f0d59e541be6e16a5892f282a4b8de7eff5cb63", size = 337331, upload-time = "2025-07-31T19:35:17.539Z" },
 ]
