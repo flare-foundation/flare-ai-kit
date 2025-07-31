@@ -1,5 +1,7 @@
 """Permission and policy enforcement system for wallet operations."""
 
+from __future__ import annotations
+
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
@@ -122,7 +124,7 @@ class PermissionEngine:
             action required and violations is a list of all policy violations.
 
         """
-        violations = []
+        violations: list[PolicyViolation] = []
         most_restrictive_action = PolicyAction.ALLOW
 
         for policy in self.policies:
@@ -152,7 +154,7 @@ class PermissionEngine:
         self, transaction: TransactionRequest, policy: TransactionPolicy, wallet_id: str
     ) -> list[PolicyViolation]:
         """Evaluate a transaction against a single policy."""
-        violations = []
+        violations: list[PolicyViolation] = []
 
         # Check transaction value limits
         if policy.max_transaction_value is not None:
@@ -280,7 +282,7 @@ class PermissionEngine:
         wallet_id: str,
     ) -> list[PolicyViolation]:
         """Check if transaction violates rate limiting rules."""
-        violations = []
+        violations: list[PolicyViolation] = []
         cutoff = datetime.now(UTC) - timedelta(minutes=window.duration_minutes)
 
         recent_transactions = [
