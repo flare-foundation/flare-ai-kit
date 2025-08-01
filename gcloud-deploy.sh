@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit immediately if a command exits with a non-zero status.
+# Exit immediately on non-zero status.
 set -e
 
 # --- Argument Parsing ---
@@ -92,22 +92,22 @@ if [ "$PRINT_COMMAND" = true ]; then
   echo
   echo "The following command will be executed:"
   echo "----------------------------------------"
-  printf "%s" "${COMMAND[0]}" # Print 'gcloud'
+  printf "%s" "${COMMAND[0]}"
   for (( i=1; i<${#COMMAND[@]}; i++ )); do
       PART="${COMMAND[$i]}"
       if [[ "$PART" == --* ]]; then
-          printf ' \\\n'       # Print continuation and a literal newline.
-          printf '  %s' "$PART" # Print indentation and the flag.
+          printf ' \\\n'
+          printf '  %s' "$PART"
       else
           printf ' %s' "$PART"
       fi
   done
-  printf '\n' # Print the final newline.
+  printf '\n'
   echo "----------------------------------------"
 fi
 
 read -p "Do you want to continue? (y/N) " -n 1 -r
-echo # Move to a new line
+echo
 
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     echo "Deployment cancelled by user."
