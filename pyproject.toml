@@ -42,12 +42,12 @@ Releases = "https://github.com/flare-foundation/flare-ai-kit/releases"
 Issues = "https://github.com/flare-foundation/flare-ai-kit/issues"
 
 [project.scripts]
-flare-ai-kit = "flare_ai_kit:main"
+flare-ai-kit = "flare_ai_kit.main:start"
 
 [project.optional-dependencies]
 rag = [
     "qdrant-client>=1.13.3",
-    "gitpython>=3.1.44",
+    "dulwich>=0.23.2",
 ]
 social = [
     "python-telegram-bot>=22.0",

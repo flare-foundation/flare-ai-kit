@@ -1,4 +1,5 @@
 import asyncio
+from pathlib import Path
 
 from flare_ai_kit.a2a import A2AClient
 from flare_ai_kit.a2a.schemas import (
@@ -7,6 +8,7 @@ from flare_ai_kit.a2a.schemas import (
     SendMessageRequest,
     TextPart,
 )
+from flare_ai_kit.a2a.settings import A2ASettings
 
 
 async def main() -> None:
@@ -15,7 +17,8 @@ async def main() -> None:
         "https://system-integration.telex.im/ping_pong_agent/.well-known/agent.json"
     )
     agent_base_url = agent_card_url.split(".well-known")[0]
-    client = A2AClient(db_path="tasks.db")
+    settings = A2ASettings(sqlite_db_path=Path("tasks.db"))
+    client = A2AClient(settings=settings)
 
     message = SendMessageRequest(
         params=MessageSendParams(

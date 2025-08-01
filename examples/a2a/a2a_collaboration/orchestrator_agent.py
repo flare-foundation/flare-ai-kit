@@ -1,5 +1,6 @@
 import asyncio
 import os
+from pathlib import Path
 from uuid import uuid4
 
 import structlog
@@ -16,6 +17,7 @@ from flare_ai_kit.a2a.schemas import (
     SendMessageRequest,
     TextPart,
 )
+from flare_ai_kit.a2a.settings import A2ASettings
 
 load_dotenv()
 
@@ -184,7 +186,8 @@ if __name__ == "__main__":
 
     async def main() -> None:
         """Async entrypoint for orchestrator agent."""
-        client = A2AClient(db_path="orchestrator-agent-client.db")
+        settings = A2ASettings(sqlite_db_path=Path("orchestrator-agent.db"))
+        client = A2AClient(settings=settings)
 
         await client.discover(
             [
