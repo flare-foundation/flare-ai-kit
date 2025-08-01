@@ -17,6 +17,8 @@ from flare_ai_kit.a2a.schemas import (
 from flare_ai_kit.a2a.task_management import TaskManager
 from flare_ai_kit.common import A2AClientError
 
+from .settings import A2ASettings
+
 if TYPE_CHECKING:
     from collections.abc import Coroutine
 
@@ -31,16 +33,17 @@ class A2AClient:
     3. performing task management,
     """
 
-    def __init__(self, db_path: str = ".", http_client_timeout: float = 30.0) -> None:
+    def __init__(self, settings: A2ASettings) -> None:
         """Initialize the A2A client with SQLite database for task tracking."""
-        self.db_path = db_path
-        self.task_manager = TaskManager(db_path)
+        self.sqlite_db_path = settings.sqlite_db_path
+        self.client_timeout = settings.client_timeout
+        self.task_manager = TaskManager(self.sqlite_db_path)
         self.agent_cards: dict[str, AgentCard] = {}
         self.available_skills: list[AgentSkill] = []
         self.skill_to_agents: dict[
             str, list[str]
         ] = {}  # skill name -> list of agent URLs
-        self.http_client = httpx.AsyncClient(timeout=http_client_timeout)
+        self.http_client = httpx.AsyncClient(timeout=self.client_timeout)
 
     async def send_message(
         self,

@@ -147,7 +147,7 @@ async def handle_send_message(request_body: SendMessageRequest) -> SendMessageRe
             if part.kind == "text":
                 user_message += part.text
 
-        kit = FlareAIKit()
+        kit = FlareAIKit(config=None)  # Use default settings
         deps = AgentDependencies(flare_kit=kit)
 
         result = await price_agent.run(user_message, deps=deps)

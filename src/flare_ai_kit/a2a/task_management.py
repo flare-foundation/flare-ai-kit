@@ -7,6 +7,7 @@ CRUD operations on tasks.
 
 import sqlite3
 import uuid
+from pathlib import Path
 from typing import ClassVar
 
 from flare_ai_kit.a2a.schemas import Task, TaskState, TaskStatus
@@ -23,7 +24,7 @@ class TaskManager:
         TaskState.unknown,
     ]
 
-    def __init__(self, db_path: str = "tasks.db") -> None:
+    def __init__(self, db_path: Path = Path("flare_a2a.db")) -> None:
         """Init method for the task manager."""
         self.db_path = db_path
         self.connection = sqlite3.connect(db_path)
