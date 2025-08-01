@@ -11,6 +11,7 @@ from pydantic import (
     SecretStr,
     model_validator,
 )
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ContractAddresses(BaseModel):
@@ -53,49 +54,62 @@ class Contracts(BaseModel):
         return self
 
 
-class EcosystemSettingsModel(BaseModel):
+class EcosystemSettings(BaseSettings):
     """Configuration specific to the Flare ecosystem interactions."""
 
+    model_config = SettingsConfigDict(
+        env_prefix="ECOSYSTEM__",
+        env_file=".env",
+        extra="ignore",
+    )
     is_testnet: bool = Field(
-        False,  # noqa: FBT003
+        default=False,
         description="Set True if interacting with Flare Testnet Coston2.",
         examples=["env var: ECOSYSTEM__IS_TESTNET"],
     )
     web3_provider_url: HttpUrl = Field(
-        HttpUrl(
+        default=HttpUrl(
             "https://stylish-light-theorem.flare-mainnet.quiknode.pro/ext/bc/C/rpc"
         ),
         description="Flare RPC endpoint URL.",
     )
     web3_provider_timeout: PositiveInt = Field(
-        5,
+        default=5,
         description="Timeout when interacting with web3 provider (in s).",
     )
     block_explorer_url: HttpUrl = Field(
-        HttpUrl("https://flare-explorer.flare.network/api"),
+        default=HttpUrl("https://flare-explorer.flare.network/api"),
         description="Flare Block Explorer URL.",
     )
     block_explorer_timeout: PositiveInt = Field(
-        10,
+        default=10,
         description="Flare Block Explorer query timeout (in seconds).",
     )
     max_retries: PositiveInt = Field(
-        3,
+        default=3,
         description="Max retries for Flare transactions.",
     )
     retry_delay: PositiveInt = Field(
-        5,
+        default=5,
         description="Delay between retries for Flare transactions (in seconds).",
     )
     account_address: ChecksumAddress | None = Field(
-        None,
+        default=None,
         description="Account address to use when interacting onchain.",
     )
     account_private_key: SecretStr | None = Field(
-        None,
+        default=None,
         description="Account private key to use when interacting onchain.",
     )
     contracts: Contracts = Field(
         default_factory=Contracts,
         description="dApp contract addresses on each supported network.",
+    )
+    da_layer_base_url: HttpUrl = Field(
+        HttpUrl("https://flr-data-availability.flare.network/api/v1/"),
+        description="Flare Data Availability Layer API base URL.",
+    )
+    da_layer_api_key: SecretStr | None = Field(
+        None,
+        description="Optional API key for Flare Data Availability Layer.",
     )

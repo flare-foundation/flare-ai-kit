@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: ["main"]
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: "ubuntu-latest"
@@ -27,6 +30,7 @@ jobs:
       SOCIAL__X_ACCESS_TOKEN_SECRET: "your_secret_twitter_key"
       SOCIAL__TELEGRAM_API_TOKEN: "your_secret_telegram_token"
       TEE__SIMULATE_ATTESTATION_TOKEN: true
+      INGESTION__CHUNK_SIZE: 5000
 
     steps:
       - name: Checkout repository
@@ -34,7 +38,7 @@ jobs:
 
       # Set up Python environment
       - name: Set up uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v6
         with:
           version: "latest"
 

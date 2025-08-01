@@ -7,7 +7,7 @@ import structlog
 from httpx import HTTPStatusError, RequestError, TimeoutException
 
 from flare_ai_kit.common import AbiError, ExplorerError
-from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
+from flare_ai_kit.ecosystem.settings import EcosystemSettings
 
 logger = structlog.get_logger(__name__)
 
@@ -15,12 +15,12 @@ logger = structlog.get_logger(__name__)
 class BlockExplorer:
     """Asynchronous interactions with Flare Block Explorer APIs."""
 
-    def __init__(self, settings: EcosystemSettingsModel) -> None:
+    def __init__(self, settings: EcosystemSettings) -> None:
         """
         Initializes the BlockExplorer.
 
         Args:
-            settings: Instance of EcosystemSettingsModel.
+            settings: Instance of EcosystemSettings.
 
         """
         self.url = str(settings.block_explorer_url)

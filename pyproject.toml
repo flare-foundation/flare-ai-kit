@@ -28,8 +28,11 @@ dependencies = [
     "pydantic>=2.11.1",
     "pydantic-ai>=0.0.46",
     "structlog>=25.2.0",
-    "tenacity>=9.1.2",
+    "tenacity>=8.2.3,<9.0.0",
     "web3>=7.10.0",
+    "pillow>=11.3.0",
+    "pymupdf>=1.26.1",
+    "pytesseract>=0.3.13",
 ]
 
 [project.urls]
@@ -39,22 +42,29 @@ Releases = "https://github.com/flare-foundation/flare-ai-kit/releases"
 Issues = "https://github.com/flare-foundation/flare-ai-kit/issues"
 
 [project.scripts]
-flare-ai-kit = "flare_ai_kit:main"
+flare-ai-kit = "flare_ai_kit.main:start"
 
 [project.optional-dependencies]
 rag = [
     "qdrant-client>=1.13.3",
-    "gitpython>=3.1.44",
+    "dulwich>=0.23.2",
 ]
 social = [
     "python-telegram-bot>=22.0",
     "tweepy>=4.15.0",
     "async_lru>=2.0.5",
+    "slack-sdk>=3.26.2",
+    "discord.py >=2.3.2",
+    "httpx >=0.27.0"
 ]
 tee = [
     "cryptography>=44.0.2",
     "pyjwt>=2.10.1",
     "pyopenssl>=25.0.0",
+    "python-dotenv >=1.0.1" 
+]
+a2a = [
+    "fastapi[standard]>=0.116.1",
 ]
 
 [build-system]
@@ -69,6 +79,7 @@ dev = [
     "pytest-mock>=3.14.0",
     "ruff>=0.11.2",
     "settings-doc>=4.3.2",
+    "reportlab>=4.2.0",
 ]
 
 [tool.ruff]
@@ -76,7 +87,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["D203", "D212", "COM812", "S105", "D401", "D104", "ANN401", "ISC003", "D107", "FBT001", "FBT002"]
+ignore = ["D203", "D212", "COM812", "S105", "D401", "D104", "ANN401", "ISC003", "D107", "FBT001", "FBT002", "FBT003"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "tests/**/*.py" = ["S101", "ARG", "PLR2004", "SLF001", "BLE001", "E501", "T201", "D", "ANN001", "ANN201", "F821"]
