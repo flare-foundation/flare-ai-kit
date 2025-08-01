@@ -21,6 +21,7 @@ class ContractAddresses(BaseModel):
     sparkdex_swap_router: ChecksumAddress | None = None
     kinetic_comptroller: ChecksumAddress | None = None
     kinetic_ksflr: ChecksumAddress | None = None
+    sceptre_contract_address: ChecksumAddress | None = None
 
 
 class Contracts(BaseModel):
@@ -39,6 +40,9 @@ class Contracts(BaseModel):
         ),
         kinetic_ksflr=cast(
             "ChecksumAddress", "0x291487beC339c2fE5D83DD45F0a15EFC9Ac45656"
+        ),
+        sceptre_contract_address=cast(
+            "ChecksumAddress", "0xD1002F3820ad32145b868aD889eC7753E3944c8D"
         ),
     )
     coston2: ContractAddresses = ContractAddresses()
