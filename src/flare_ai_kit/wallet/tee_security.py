@@ -14,7 +14,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from pydantic import BaseModel
 
-from ..tee.validation import VtpmValidation
+from flare_ai_kit.tee.validation import VtpmValidation
 
 logger = structlog.get_logger(__name__)
 
@@ -33,7 +33,7 @@ class SecureOperation(BaseModel):
 class TEESecurityManager:
     """Manages security operations within Trusted Execution Environment."""
 
-    def __init__(self, vtpm_validator: VtpmValidation | None = None):
+    def __init__(self, vtpm_validator: VtpmValidation | None = None) -> None:
         self.vtpm_validator = vtpm_validator or VtpmValidation()
         self.secure_operations: list[SecureOperation] = []
 
@@ -62,8 +62,9 @@ class TEESecurityManager:
             claims = self.vtpm_validator.validate_token(attestation_token)
             logger.info("TEE attestation validated for secure operation", claims=claims)
         except Exception as e:
-            logger.error("TEE attestation validation failed", error=str(e))
-            raise ValueError(f"Invalid TEE attestation: {e}")
+            logger.exception("TEE attestation validation failed", error=str(e))
+            msg = f"Invalid TEE attestation: {e}"
+            raise ValueError(msg)
 
         # Generate operation ID
         operation_id = self._generate_operation_id(operation_type, operation_data)
@@ -127,7 +128,7 @@ class TEESecurityManager:
             self.vtpm_validator.validate_token(operation.attestation_token)
             return True
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "TEE attestation re-validation failed",
                 operation_id=operation.operation_id,
                 error=str(e),
@@ -156,7 +157,8 @@ class TEESecurityManager:
         try:
             claims = self.vtpm_validator.validate_token(attestation_token)
         except Exception as e:
-            raise ValueError(f"Invalid TEE context: {e}")
+            msg = f"Invalid TEE context: {e}"
+            raise ValueError(msg)
 
         # Derive encryption key from TEE-specific data
         key_material = self._derive_tee_key(claims, additional_data)

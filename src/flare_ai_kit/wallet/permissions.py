@@ -89,7 +89,7 @@ class TransactionHistory(BaseModel):
 class PermissionEngine:
     """Engine for evaluating transaction permissions and policies."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.policies: list[TransactionPolicy] = []
         self.transaction_history: list[TransactionHistory] = []
 

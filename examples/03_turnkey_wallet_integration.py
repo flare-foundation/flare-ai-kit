@@ -1,5 +1,5 @@
 """
-Turnkey Wallet Integration Example
+Turnkey Wallet Integration Example.
 
 This example demonstrates how to use the Turnkey wallet integration
 for AI agents to securely manage blockchain transactions on Flare.
@@ -138,12 +138,6 @@ async def simulate_tee_operation(tee_manager: TEESecurityManager):
         "mock_signature"
     )
 
-    operation_data = {
-        "operation": "ai_agent_transaction",
-        "agent_id": "yield_optimizer_v1",
-        "transaction_value": "0.005",
-        "destination": "0x742d35Cc6634C0532925a3b8D8C8EE7c9e92bb1b",
-    }
 
     try:
         # This would normally validate against real TEE attestation
@@ -221,7 +215,7 @@ async def demonstrate_policy_enforcement(
     agent_connector: TurnkeyAgentConnector,
     agent_config: AgentWalletConfig,
     attestation_token: str,
-):
+) -> None:
     """Demonstrate policy enforcement by attempting violating transactions."""
     print("\n🚫 Demonstrating policy enforcement...")
 
@@ -298,7 +292,7 @@ async def demonstrate_policy_enforcement(
 
 async def show_agent_status_and_history(
     agent_connector: TurnkeyAgentConnector, agent_id: str
-):
+) -> None:
     """Display agent status and transaction history."""
     print("\n📊 Agent Status and Transaction History")
 
@@ -330,7 +324,7 @@ async def show_agent_status_and_history(
         print("   No transaction history found")
 
 
-async def main():
+async def main() -> None:
     """Main demonstration function."""
     print("🚀 Turnkey Wallet Integration Demo")
     print("=" * 50)
