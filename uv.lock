@@ -784,14 +784,10 @@ name = "flare-ai-kit"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "aiohttp" },
     { name = "google-genai" },
     { name = "httpx" },
-    { name = "pillow" },
     { name = "pydantic" },
     { name = "pydantic-ai" },
-    { name = "pymupdf" },
-    { name = "pytesseract" },
     { name = "structlog" },
     { name = "tenacity" },
     { name = "web3" },
@@ -801,6 +797,11 @@ dependencies = [
 a2a = [
     { name = "fastapi", extra = ["standard"] },
 ]
+ingestion = [
+    { name = "pillow" },
+    { name = "pymupdf" },
+    { name = "pytesseract" },
+]
 rag = [
     { name = "dulwich" },
     { name = "qdrant-client" },
@@ -808,7 +809,6 @@ rag = [
 social = [
     { name = "async-lru" },
     { name = "discord-py" },
-    { name = "httpx" },
     { name = "python-telegram-bot" },
     { name = "slack-sdk" },
     { name = "tweepy" },
@@ -817,7 +817,6 @@ tee = [
     { name = "cryptography" },
     { name = "pyjwt" },
     { name = "pyopenssl" },
-    { name = "python-dotenv" },
 ]
 
 [package.dev-dependencies]
@@ -833,7 +832,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiohttp", specifier = ">=3.11.14" },
     { name = "async-lru", marker = "extra == 'social'", specifier = ">=2.0.5" },
     { name = "cryptography", marker = "extra == 'tee'", specifier = ">=44.0.2" },
     { name = "discord-py", marker = "extra == 'social'", specifier = ">=2.3.2" },
@@ -841,15 +839,13 @@ requires-dist = [
     { name = "fastapi", extras = ["standard"], marker = "extra == 'a2a'", specifier = ">=0.116.1" },
     { name = "google-genai", specifier = ">=1.8.0" },
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "httpx", marker = "extra == 'social'", specifier = ">=0.27.0" },
-    { name = "pillow", specifier = ">=11.3.0" },
+    { name = "pillow", marker = "extra == 'ingestion'", specifier = ">=11.3.0" },
     { name = "pydantic", specifier = ">=2.11.1" },
     { name = "pydantic-ai", specifier = ">=0.0.46" },
     { name = "pyjwt", marker = "extra == 'tee'", specifier = ">=2.10.1" },
-    { name = "pymupdf", specifier = ">=1.26.1" },
+    { name = "pymupdf", marker = "extra == 'ingestion'", specifier = ">=1.26.1" },
     { name = "pyopenssl", marker = "extra == 'tee'", specifier = ">=25.0.0" },
-    { name = "pytesseract", specifier = ">=0.3.13" },
-    { name = "python-dotenv", marker = "extra == 'tee'", specifier = ">=1.0.1" },
+    { name = "pytesseract", marker = "extra == 'ingestion'", specifier = ">=0.3.13" },
     { name = "python-telegram-bot", marker = "extra == 'social'", specifier = ">=22.0" },
     { name = "qdrant-client", marker = "extra == 'rag'", specifier = ">=1.13.3" },
     { name = "slack-sdk", marker = "extra == 'social'", specifier = ">=3.26.2" },
@@ -858,7 +854,7 @@ requires-dist = [
     { name = "tweepy", marker = "extra == 'social'", specifier = ">=4.15.0" },
     { name = "web3", specifier = ">=7.10.0" },
 ]
-provides-extras = ["rag", "social", "tee", "a2a"]
+provides-extras = ["rag", "social", "tee", "a2a", "ingestion"]
 
 [package.metadata.requires-dev]
 dev = [

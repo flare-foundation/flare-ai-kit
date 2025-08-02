@@ -2,7 +2,9 @@
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Literal, override
+from typing import Any, Literal, override
+
+from pydantic import BaseModel
 
 
 # --- Schemas for Text Chunking and Embeddings ---
@@ -182,4 +184,82 @@ class RedemptionRequest:
     recipient_underlying_address: str
 
 
+# --- Agents ---
+
 AgentRole = Literal["user", "system", "assistant", "summarizer", "critic", "filter"]
+
+# --- DA Layer ---
+# This uses Pydantic for stricter validation.
+
+
+class AttestationRequest(BaseModel):
+    """Represents an attestation request structure."""
+
+    attestation_type: str
+    source_id: str
+    message_integrity_code: str
+    request_body: dict[str, Any]
+
+
+class AttestationResponse(BaseModel):
+    """Represents an attestation response structure."""
+
+    attestation_type: str
+    source_id: str
+    voting_round: int
+    lowest_used_timestamp: int
+    request_body: dict[str, Any]
+    response_body: dict[str, Any]
+
+
+class MerkleProof(BaseModel):
+    """Represents a Merkle proof for attestation verification."""
+
+    merkle_proof: list[str]
+    leaf_index: int
+    total_leaves: int
+
+
+class AttestationData(BaseModel):
+    """Complete attestation data including response and proof."""
+
+    response: AttestationResponse
+    proof: MerkleProof
+
+
+class VotingRoundData(BaseModel):
+    """Data for a specific voting round."""
+
+    voting_round: int
+    merkle_root: str
+    timestamp: int
+    total_attestations: int
+    finalized: bool
+
+
+class FTSOAnchorFeed(BaseModel):
+    """FTSO anchor feed data structure."""
+
+    id: str
+    name: str
+    decimals: int
+    category: str
+    description: str
+
+
+class FTSOAnchorFeedValue(BaseModel):
+    """FTSO anchor feed value with proof."""
+
+    id: str
+    value: int
+    timestamp: int
+    decimals: int
+    proof: MerkleProof
+
+
+class FTSOAnchorFeedsWithProof(BaseModel):
+    """FTSO anchor feeds with proof for a specific voting round."""
+
+    voting_round: int
+    merkle_root: str
+    feeds: list[FTSOAnchorFeedValue]
