@@ -522,6 +522,28 @@ wheels = [
 ]
 
 [[package]]
+name = "dulwich"
+version = "0.24.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2b/f3/13a3425ddf04bd31f1caf3f4fa8de2352700c454cb0536ce3f4dbdc57a81/dulwich-0.24.1.tar.gz", hash = "sha256:e19fd864f10f02bb834bb86167d92dcca1c228451b04458761fc13dabd447758", size = 806136, upload-time = "2025-08-01T10:26:46.887Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/90/83/ccefebfc92ab682364ca247ba0e364f2826085ce75a314822d117a1dda49/dulwich-0.24.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:6d227cebcb2082801ab429e196d973315dbe3818904b5c13a22d80a16f5692c9", size = 1080906, upload-time = "2025-08-01T10:26:19.664Z" },
+    { url = "https://files.pythonhosted.org/packages/a0/18/6abaf1973fd71cee2e9cf1e611944936481d7fc63a63c2974f01cc4cd9ca/dulwich-0.24.1-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:5e3c01b8109169aa361842af4987bca672087e3faf38d528ff9f631d1071f523", size = 1159961, upload-time = "2025-08-01T10:26:21.077Z" },
+    { url = "https://files.pythonhosted.org/packages/b9/c7/09dc31cf769ca1e67445f530e58df4af9379842b8740b88efcf44448627b/dulwich-0.24.1-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:ee80d8e9199124974b486d2c83a7e2d4db17ae59682909fa198111d8bb416f50", size = 1164723, upload-time = "2025-08-01T10:26:22.594Z" },
+    { url = "https://files.pythonhosted.org/packages/8e/62/528e4be601948be340fbd61bed99ccd1dcade38254aae804412d8e016246/dulwich-0.24.1-cp312-cp312-win32.whl", hash = "sha256:bef4dccba44edd6d18015f67c9e0d6216f978840cdbe703930e1679e2872c595", size = 762743, upload-time = "2025-08-01T10:26:24.013Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/e8/c50cb473325d91435be9af61e14d240e67632ff24b83eb2c04e6cd76af33/dulwich-0.24.1-cp312-cp312-win_amd64.whl", hash = "sha256:83b2fb17bac190cfc6c91e7a94a1d806aa8ce8903aca0e3e54cecb2c3f547a55", size = 780044, upload-time = "2025-08-01T10:26:25.498Z" },
+    { url = "https://files.pythonhosted.org/packages/5e/a5/3f4760169fea1b90df7aea88172699807af6f4f667c878de6a9ee554170f/dulwich-0.24.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:1a11ec69fc6604228804ddfc32c85b22bc627eca4cf4ff3f27dbe822e6f29477", size = 1080923, upload-time = "2025-08-01T10:26:28.011Z" },
+    { url = "https://files.pythonhosted.org/packages/71/d9/7aadd6318aed6f0e1242fa63bd61d80142716d13ea4e307c8b19fc61c9ae/dulwich-0.24.1-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:a9800df7238b586b4c38c00432776781bc889cf02d756dcfb8dc0ecb8fc47a33", size = 1159246, upload-time = "2025-08-01T10:26:29.487Z" },
+    { url = "https://files.pythonhosted.org/packages/90/5d/df4256fe009c714e0392817df4fdc1748a901523504f58796d675fce755f/dulwich-0.24.1-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:3baab4a01aff890e2e6551ccbd33eb2a44173c897f0f027ad3aeab0fb057ec44", size = 1163646, upload-time = "2025-08-01T10:26:31.279Z" },
+    { url = "https://files.pythonhosted.org/packages/8d/fe/850115d6fa7ad03756e20466ad5b72be54d1b59c1ff7d2b3c13bc4de965f/dulwich-0.24.1-cp313-cp313-win32.whl", hash = "sha256:b39689aa4d143ba1fb0a687a4eb93d2e630d2c8f940aaa6c6911e9c8dca16e6a", size = 762612, upload-time = "2025-08-01T10:26:33.223Z" },
+    { url = "https://files.pythonhosted.org/packages/47/7f/f79940e0773efda2ed0e666a0ca0ae7c734fdce4f04b5b60bc5ed268b7cb/dulwich-0.24.1-cp313-cp313-win_amd64.whl", hash = "sha256:8fca9b863b939b52c5f759d292499f0d21a7bf7f8cbb9fdeb8cdd9511c5bc973", size = 779168, upload-time = "2025-08-01T10:26:35.303Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/bc/a2557d1b0afa5bf1e140f42f8cbca1783e43d7fa17665859c63060957952/dulwich-0.24.1-py3-none-any.whl", hash = "sha256:57cc0dc5a21059698ffa4ed9a7272f1040ec48535193df84b0ee6b16bf615676", size = 440765, upload-time = "2025-08-01T10:26:45.415Z" },
+]
+
+[[package]]
 name = "email-validator"
 version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -762,14 +784,10 @@ name = "flare-ai-kit"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "aiohttp" },
     { name = "google-genai" },
     { name = "httpx" },
-    { name = "pillow" },
     { name = "pydantic" },
     { name = "pydantic-ai" },
-    { name = "pymupdf" },
-    { name = "pytesseract" },
     { name = "structlog" },
     { name = "tenacity" },
     { name = "web3" },
@@ -779,14 +797,18 @@ dependencies = [
 a2a = [
     { name = "fastapi", extra = ["standard"] },
 ]
+ingestion = [
+    { name = "pillow" },
+    { name = "pymupdf" },
+    { name = "pytesseract" },
+]
 rag = [
-    { name = "gitpython" },
+    { name = "dulwich" },
     { name = "qdrant-client" },
 ]
 social = [
     { name = "async-lru" },
     { name = "discord-py" },
-    { name = "httpx" },
     { name = "python-telegram-bot" },
     { name = "slack-sdk" },
     { name = "tweepy" },
@@ -795,7 +817,6 @@ tee = [
     { name = "cryptography" },
     { name = "pyjwt" },
     { name = "pyopenssl" },
-    { name = "python-dotenv" },
 ]
 wallet = [
     { name = "cryptography" },
@@ -818,27 +839,24 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiohttp", specifier = ">=3.11.14" },
     { name = "async-lru", marker = "extra == 'social'", specifier = ">=2.0.5" },
     { name = "cryptography", marker = "extra == 'tee'", specifier = ">=44.0.2" },
     { name = "cryptography", marker = "extra == 'wallet'", specifier = ">=44.0.2" },
     { name = "discord-py", marker = "extra == 'social'", specifier = ">=2.3.2" },
+    { name = "dulwich", marker = "extra == 'rag'", specifier = ">=0.23.2" },
     { name = "eth-account", marker = "extra == 'wallet'", specifier = ">=0.13.0" },
     { name = "fastapi", extras = ["standard"], marker = "extra == 'a2a'", specifier = ">=0.116.1" },
-    { name = "gitpython", marker = "extra == 'rag'", specifier = ">=3.1.44" },
     { name = "google-genai", specifier = ">=1.8.0" },
     { name = "httpx", specifier = ">=0.28.1" },
-    { name = "httpx", marker = "extra == 'social'", specifier = ">=0.27.0" },
     { name = "httpx", marker = "extra == 'wallet'", specifier = ">=0.28.1" },
-    { name = "pillow", specifier = ">=11.3.0" },
+    { name = "pillow", marker = "extra == 'ingestion'", specifier = ">=11.3.0" },
     { name = "pydantic", specifier = ">=2.11.1" },
     { name = "pydantic-ai", specifier = ">=0.0.46" },
     { name = "pyjwt", marker = "extra == 'tee'", specifier = ">=2.10.1" },
     { name = "pyjwt", marker = "extra == 'wallet'", specifier = ">=2.10.1" },
-    { name = "pymupdf", specifier = ">=1.26.1" },
+    { name = "pymupdf", marker = "extra == 'ingestion'", specifier = ">=1.26.1" },
     { name = "pyopenssl", marker = "extra == 'tee'", specifier = ">=25.0.0" },
-    { name = "pytesseract", specifier = ">=0.3.13" },
-    { name = "python-dotenv", marker = "extra == 'tee'", specifier = ">=1.0.1" },
+    { name = "pytesseract", marker = "extra == 'ingestion'", specifier = ">=0.3.13" },
     { name = "python-telegram-bot", marker = "extra == 'social'", specifier = ">=22.0" },
     { name = "qdrant-client", marker = "extra == 'rag'", specifier = ">=1.13.3" },
     { name = "slack-sdk", marker = "extra == 'social'", specifier = ">=3.26.2" },
@@ -847,7 +865,7 @@ requires-dist = [
     { name = "tweepy", marker = "extra == 'social'", specifier = ">=4.15.0" },
     { name = "web3", specifier = ">=7.10.0" },
 ]
-provides-extras = ["rag", "social", "tee", "a2a", "wallet"]
+provides-extras = ["rag", "social", "tee", "a2a", "wallet", "ingestion"]
 
 [package.metadata.requires-dev]
 dev = [

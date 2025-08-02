@@ -138,7 +138,6 @@ async def simulate_tee_operation(tee_manager: TEESecurityManager):
         "mock_signature"
     )
 
-
     try:
         # This would normally validate against real TEE attestation
         print("⚠️  Note: Using mock TEE attestation for demo purposes")

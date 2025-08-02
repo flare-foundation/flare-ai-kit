@@ -68,9 +68,14 @@ class TestTurnkeyWallet:
         mock_response.status_code = 400
         mock_response.text = "Bad request"
 
-        with patch.object(
-            turnkey_wallet, "_make_authenticated_request", return_value=mock_response
-        ), pytest.raises(RuntimeError, match="Failed to create wallet"):
+        with (
+            patch.object(
+                turnkey_wallet,
+                "_make_authenticated_request",
+                return_value=mock_response,
+            ),
+            pytest.raises(RuntimeError, match="Failed to create wallet"),
+        ):
             await turnkey_wallet.create_wallet("test_wallet")
 
     @pytest.mark.asyncio
@@ -113,10 +118,13 @@ class TestTurnkeyWallet:
             ]
         }
 
-        with patch.object(
-            turnkey_wallet, "_make_authenticated_request", return_value=mock_response
-        ), pytest.raises(
-            RuntimeError, match="No account found for derivation path"
+        with (
+            patch.object(
+                turnkey_wallet,
+                "_make_authenticated_request",
+                return_value=mock_response,
+            ),
+            pytest.raises(RuntimeError, match="No account found for derivation path"),
         ):
             await turnkey_wallet.get_address("test_wallet_id", "m/44'/60'/0'/0/0")
 
