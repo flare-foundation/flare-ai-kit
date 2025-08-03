@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 
 
 class OpenOceanQuoteRequest(BaseModel):
+    BASE_URL: str = "https://openocean.finance/api/v4"
     chain: str = Field(
         default="flare", description="Target chain (e.g., 'flare', 'bsc')"
     )

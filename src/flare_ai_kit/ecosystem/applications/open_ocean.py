@@ -28,9 +28,9 @@ class OpenOceanConnector:
         - Decode input data and track transactions
         """
 
-    async def get_swap_quote(self, params: OpenOceanQuoteRequest) -> SwapQuoteResponse:
+    async def swap(self, params: OpenOceanQuoteRequest) -> SwapQuoteResponse:
         """
-        Get a DEX swap quote for a given token pair and amount.
+        Swap method to get a quote for swapping tokens on OpenOcean.
         """
         logger.info("Requesting OpenOcean quote", params=params.model_dump())
         try:
