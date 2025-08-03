@@ -104,7 +104,7 @@ uv run pytest
 
    ```bash
    chmod +x gcloud-deploy.sh
-   ./gcloud-deploy.sh
+   ./gcloud-deploy.sh # For verbose mode: ./gcloud-deploy.sh -v
    ```
 
 ## 🤝 Contributing

@@ -14,3 +14,7 @@ wheels/
 .pytest_cache
 .vscode
 .DS_Store
+
+
+# sqlite
+*.db

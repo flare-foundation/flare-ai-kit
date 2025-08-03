@@ -20,21 +20,22 @@ We strive for high-quality, maintainable code. Please adhere to the following pr
     - Use descriptive names for variables, functions, and classes.
     - Keep code focused and avoid unnecessary complexity.
 
-2.  **Strict Type Safety:**
+2.  **Formatting, Linting & Type-Checking:**
 
-    - This project uses **strict type hinting**, enforced by **`pyright`**.
-    - **All new code MUST include accurate type hints.**
+    - Use [ruff](https://docs.astral.sh/ruff/) for formatting and linting, both settings are defined in `pyproject.toml`.
+    - Use [pyright](https://github.com/microsoft/pyright) for type checking, all new code MUST include accurate type hints.
     - Avoid using `typing.Any` unless absolutely necessary and clearly justified in comments.
-    - Ensure your code passes `pyright` checks without errors. (`uv run pyright`).
-
-3.  **Linting & Formatting:**
-    - We use **`ruff`** for comprehensive linting and code formatting.
-    - Your code must be free of `ruff` linting errors and warnings.
-    - Run the linter and formatter before committing:
+    - You can also install [Pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance) into VSCode for an easier experience.
+    - Ensure your code passes all checks locally without errors:
       ```bash
-      uv run lint
-      uv run format
+      uv run ruff format
+      uv run ruff check --fix
+      uv run pyright
       ```
+
+3.  **Use dependencies sparingly:**
+    - Every dependency added is a potential security risk.
+    - If the dependency is required, it should live in under `[project.optional-dependencies]` with a key marking the high level function, e.g. `rag`, `consensus`.
 
 ## 🧪 Test Extensively
 

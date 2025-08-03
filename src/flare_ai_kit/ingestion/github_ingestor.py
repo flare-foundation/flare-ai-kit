@@ -7,7 +7,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import structlog
-from git import GitCommandError, Repo
+from dulwich import porcelain
 
 from flare_ai_kit.common import Chunk, ChunkMetadata
 from flare_ai_kit.ingestion.settings import IngestionSettings
@@ -139,24 +139,20 @@ class GithubIngestor:
         temp_dir_path = Path(tempfile.mkdtemp())
 
         try:
-            logger.info(
-                "Attempting to clone repository",
-                repo_url=repo_url,
-                branch=branch or "default",
-                dest_dir=str(temp_dir_path),
+            logger.info("Cloning with Dulwich", url=repo_url, branch=branch)
+            porcelain.clone(  # type: ignore[reportUnknownMemberType]
+                source=repo_url.encode(),
+                target=temp_dir_path,
+                checkout=True,
+                depth=1,
+                branch=(branch or b"refs/heads/main"),
             )
-            Repo.clone_from(url=repo_url, to_path=temp_dir_path, branch=branch)
-
-        except (GitCommandError, Exception) as e:
-            logger.exception(
-                "Failed to clone repository. Check URL, branch, and permissions.",
-                repo_url=repo_url,
-                error=str(e),
-            )
-            shutil.rmtree(temp_dir_path)  # Clean up on failure
+        except Exception as e:
+            logger.exception("Dulwich clone failed", error=str(e))
+            shutil.rmtree(temp_dir_path)
             return None
         else:
-            logger.info("Successfully cloned repository.", repo_url=repo_url)
+            logger.info("Repository cloned successfully", path=str(temp_dir_path))
             return temp_dir_path
 
     def _extract_text_from_repo(

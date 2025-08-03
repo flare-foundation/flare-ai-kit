@@ -5,12 +5,14 @@ from typing import Any
 
 from pydantic_ai import Agent
 
+from flare_ai_kit.common import AgentRole
+
 
 class BaseCoordinator(ABC):
     """Base coordinator class."""
 
     @abstractmethod
-    def add_agent(self, agent: Agent, role: str) -> None:
+    def add_agent(self, agent: Agent, role: AgentRole) -> None:
         """Add an agent and its role to the pool."""
 
     @abstractmethod

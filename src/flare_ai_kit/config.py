@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from flare_ai_kit.a2a.settings import A2ASettings
 from flare_ai_kit.agent.settings import AgentSettings
 from flare_ai_kit.ecosystem.settings import EcosystemSettings
 from flare_ai_kit.ingestion.settings import IngestionSettings
@@ -36,3 +37,4 @@ class AppSettings(BaseSettings):
     social: SocialSettings = Field(default_factory=SocialSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
     tee: TeeSettings = Field(default_factory=TeeSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
     ingestion: IngestionSettings = Field(default_factory=IngestionSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
+    a2a: A2ASettings = Field(default_factory=A2ASettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
