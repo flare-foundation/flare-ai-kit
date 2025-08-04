@@ -20,8 +20,6 @@ except ImportError:
 from flare_ai_kit.common import AgentRole
 
 
-
-
 class BaseCoordinator(ABC):
     """Base coordinator class."""
 
