@@ -12,8 +12,8 @@ class AgentSettings(BaseSettings):
         env_file=".env",
         extra="ignore",
     )
-    gemini_api_key: SecretStr = Field(
-        ...,
+    gemini_api_key: SecretStr | None = Field(
+        default=None,
         description="API key for using Google Gemini (https://aistudio.google.com/app/apikey).",
     )
     gemini_model: str = Field(

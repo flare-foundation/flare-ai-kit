@@ -29,7 +29,11 @@ dependencies = [
     "pydantic-ai>=0.0.46",
     "structlog>=25.2.0",
     "tenacity>=8.2.3,<9.0.0",
-    "web3>=7.10.0"
+    "web3>=7.10.0",
+    "pillow>=11.3.0",
+    "pymupdf>=1.26.1",
+    "pytesseract>=0.3.13",
+    "google-adk>=1.8.0"
 ]
 
 [project.urls]
