@@ -17,6 +17,7 @@ wheels/
 *.egg-info
 
 # Other folders
+.github
 docs/
 examples/
 tests/

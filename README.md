@@ -22,41 +22,64 @@ SDK for building **verifiable AI Agents** on Flare using Confidential Space.
 The kit is composed of modular engines for agents, social feeds, onchain data, and consensus.
 
 ```mermaid
-graph TD
-    A(Flare AI Kit)
-    A --> B{Agent Framework - PydanticAI}
-    A --> C{VectorRAG Engine - PostgreSQL + pgvector}
-    A --> D{GraphRAG Engine - Neo4j}
-    A --> E{Secure Enclave - Confidential Space + TDX}
-    A --> F{Ecosystem Engine}
-    A --> G{Social Engine}
-    A --> H{Consensus Engine}
+flowchart TD
+    A["Flare AI Kit"]
 
-    B --> I(Gemini, GPT, Grok +200 models)
+    %% Agent Framework subgraph
+    subgraph AgentFramework["Agent Framework"]
+        B["Google ADK"]
+        B --o LLM["Gemini<br>GPT<br>Grok<br>+200 models"]
+    end
 
-    C --o DevHub/News/Governance
+    %% VectorRAG Engine subgraph
+    subgraph VectorRAG["VectorRAG Engine"]
+        C["Qdrant"]
+        C --o SOURCE[DevHub<br>Flare News<br>Flare Governance]
+    end
 
-    D --o MainnetTxData
+    %% Secure Enclave subgraph
+    subgraph SecureEnclave["Secure Enclave"]
+        E["Confidential Space"]
+        E --> HW[Intel TDX]
+        HW --o RA[RA-verify<br>RA-TLS]
+    end
 
-    E --> vTPM
-    vTPM --o RA-TLS
+    %% Ecosystem Engine subgraph
+    subgraph EcosystemEngine["Ecosystem Engine"]
+        F[Ecosystem Engine]
+        F --> PR[Protocols]
+        PR --o PROTOS["FTSO<br>FDC<br>FAssets"]
+        F --> AP[Applications]
+        AP --o APPS[SparkDEX<br>OpenOcean<br>Kinetic<br>Cyclo]
+    end
 
-    F --o M(Protocols)
-    M --o FTSO
-    M --o FDC
-    M --o FAssets
+    %% Social Engine subgraph
+    subgraph SocialEngine["Social Engine"]
+        G["Social"]
+        G --o SOC["X<br>Telegram<br>Farcaster<br>Slack"]
+    end
 
-    F --o L(Applications)
-    L --o OpenOcean
-    L --o Kinetic
-    L --o SparkDEX
-    L --o Cyclo
-    L --o ...
+    %% Consensus Engine subgraph
+    subgraph ConsensusEngine["Consensus Engine"]
+        H["Consensus"]
+        H --o ALGOS[Majority<br>Tournament<br>Clustering]
+    end
+
+    %% Connections to Flare AI Kit central node
+    A --> B
+    A --> C
+    A --> E
+    A --> F
+    A --> G
+    A --> H
 ```
 
 ## 📦 Getting Started
 
-**Prerequisites** Python >= 3.12 and [uv](https://github.com/astral-sh/uv).
+**Prerequisites**
+
+- [uv](https://github.com/astral-sh/uv) with Python >= 3.12
+- [Docker](https://www.docker.com).
 
 1. **Clone the repo:**
 
@@ -92,6 +115,13 @@ uv run pyright
 
 # Run tests
 uv run pytest
+```
+
+## 🚧 Build with Docker
+
+```bash
+docker build -t flare-ai-kit .
+docker run -rm --env-file .env flare-ai-kit
 ```
 
 ## ☁️ Deploy to Confidential Space
