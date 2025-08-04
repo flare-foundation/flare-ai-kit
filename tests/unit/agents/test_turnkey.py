@@ -3,6 +3,7 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from pydantic import ValidationError
 
 from flare_ai_kit.agents.turnkey import (
     AgentTransaction,
@@ -124,7 +125,7 @@ class TestAgentTransaction:
         assert transaction.confidence_score == 0.75
 
         # Invalid confidence scores should raise validation error
-        with pytest.raises(ValueError, match="Confidence score must be"):
+        with pytest.raises(ValidationError, match="less than or equal to 1"):
             AgentTransaction(
                 agent_id="test_agent",
                 transaction_request=TransactionRequest(
