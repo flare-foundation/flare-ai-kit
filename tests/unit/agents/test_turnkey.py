@@ -9,7 +9,7 @@ from flare_ai_kit.agents.turnkey import (
     AgentWalletConfig,
     TurnkeyAgentConnector,
 )
-from flare_ai_kit.wallet.base import TransactionRequest
+from flare_ai_kit.wallet.base import SignedTransaction, TransactionRequest
 from flare_ai_kit.wallet.turnkey_wallet import TurnkeyWallet
 
 
@@ -124,7 +124,7 @@ class TestAgentTransaction:
         assert transaction.confidence_score == 0.75
 
         # Invalid confidence scores should raise validation error
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Confidence score must be"):
             AgentTransaction(
                 agent_id="test_agent",
                 transaction_request=TransactionRequest(
@@ -183,7 +183,6 @@ class TestTurnkeyAgentConnector:
         await agent_connector.register_agent(agent_config)
 
         # Mock successful transaction signing
-        from flare_ai_kit.wallet.base import SignedTransaction
 
         signed_tx = SignedTransaction(
             transaction_hash="0x123abc...",
@@ -382,7 +381,6 @@ class TestTurnkeyAgentConnector:
         await agent_connector.register_agent(agent_config)
 
         # Mock successful transaction
-        from flare_ai_kit.wallet.base import SignedTransaction
 
         signed_tx = SignedTransaction(
             transaction_hash="0x123abc...",

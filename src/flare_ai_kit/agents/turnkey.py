@@ -221,12 +221,6 @@ class TurnkeyAgentConnector:
                 tx_hash=signed_tx.transaction_hash,
             )
 
-            return {
-                "success": True,
-                "transaction_hash": signed_tx.transaction_hash,
-                "signed_transaction": signed_tx.signed_transaction,
-            }
-
         except PermissionError as e:
             logger.exception(
                 "agent_transaction_denied", agent_id=agent_id, error=str(e)
@@ -238,6 +232,12 @@ class TurnkeyAgentConnector:
                 "agent_transaction_failed", agent_id=agent_id, error=str(e)
             )
             return {"success": False, "error": f"Transaction failed: {e}"}
+        else:
+            return {
+                "success": True,
+                "transaction_hash": signed_tx.transaction_hash,
+                "signed_transaction": signed_tx.signed_transaction,
+            }
 
     async def _validate_agent_transaction(
         self, agent_transaction: AgentTransaction, config: AgentWalletConfig
@@ -258,7 +258,10 @@ class TurnkeyAgentConnector:
         if agent_transaction.confidence_score < min_confidence:
             return {
                 "valid": False,
-                "reason": f"Agent confidence {agent_transaction.confidence_score} below threshold {min_confidence}",
+                "reason": (
+                    f"Agent confidence {agent_transaction.confidence_score} "
+                    f"below threshold {min_confidence}"
+                ),
             }
 
         # Validate justification is provided
@@ -272,7 +275,10 @@ class TurnkeyAgentConnector:
         if tx_value > config.max_transaction_value:
             return {
                 "valid": False,
-                "reason": f"Transaction value {tx_value} ETH exceeds agent limit {config.max_transaction_value} ETH",
+                "reason": (
+                    f"Transaction value {tx_value} ETH exceeds agent limit "
+                    f"{config.max_transaction_value} ETH"
+                ),
             }
 
         # Additional risk-based validations could be added here

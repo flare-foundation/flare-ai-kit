@@ -15,6 +15,7 @@ Features demonstrated:
 import asyncio
 import os
 from decimal import Decimal
+from typing import Any
 
 from flare_ai_kit.agents.turnkey import (
     AgentTransaction,
@@ -29,7 +30,7 @@ from flare_ai_kit.wallet.tee_security import TEESecurityManager
 from flare_ai_kit.wallet.turnkey_wallet import TurnkeySettings
 
 
-async def setup_turnkey_wallet():
+async def setup_turnkey_wallet() -> TurnkeyWallet:
     """Set up Turnkey wallet with proper configuration."""
     print("🔧 Setting up Turnkey wallet...")
 
@@ -78,7 +79,7 @@ async def setup_turnkey_wallet():
     return wallet
 
 
-async def create_demo_wallet(wallet: TurnkeyWallet):
+async def create_demo_wallet(wallet: TurnkeyWallet) -> tuple[str, str]:
     """Create a demo wallet for the AI agent."""
     print("\n💼 Creating demo wallet...")
 
@@ -99,7 +100,9 @@ async def create_demo_wallet(wallet: TurnkeyWallet):
         return "demo_wallet_id", "0x742d35Cc6634C0532925a3b8D8C8EE7c9e92bb1b"
 
 
-async def register_ai_agent(agent_connector: TurnkeyAgentConnector, wallet_id: str):
+async def register_ai_agent(
+    agent_connector: TurnkeyAgentConnector, wallet_id: str
+) -> AgentWalletConfig:
     """Register an AI agent with specific permissions."""
     print("\n🤖 Registering AI agent...")
 
@@ -127,7 +130,7 @@ async def register_ai_agent(agent_connector: TurnkeyAgentConnector, wallet_id: s
     return agent_config if success else None
 
 
-async def simulate_tee_operation(tee_manager: TEESecurityManager):
+async def simulate_tee_operation(_tee_manager: TEESecurityManager) -> str:
     """Simulate a TEE secure operation."""
     print("\n🔐 Simulating TEE secure operation...")
 
@@ -142,18 +145,13 @@ async def simulate_tee_operation(tee_manager: TEESecurityManager):
         # This would normally validate against real TEE attestation
         print("⚠️  Note: Using mock TEE attestation for demo purposes")
 
-        # Create secure operation (this will fail in demo without real TEE)
-        # secure_op = await tee_manager.create_secure_operation(
-        #     "ai_transaction",
-        #     operation_data,
-        #     mock_attestation_token
-        # )
+        # In production, this would create a secure operation
 
         print("✅ TEE operation simulated (would validate in production)")
         return mock_attestation_token
 
     except Exception as e:
-        print(f"⚠️  TEE validation would fail in production: {e}")
+        print(f"❌ TEE operation failed: {e}")
         print("   Using mock attestation for demo purposes")
         return mock_attestation_token
 
@@ -162,7 +160,7 @@ async def execute_ai_transaction(
     agent_connector: TurnkeyAgentConnector,
     agent_config: AgentWalletConfig,
     attestation_token: str,
-):
+) -> dict[str, Any]:
     """Execute a transaction initiated by the AI agent."""
     print("\n💸 Executing AI agent transaction...")
 
@@ -179,7 +177,9 @@ async def execute_ai_transaction(
     agent_transaction = AgentTransaction(
         agent_id=agent_config.agent_id,
         transaction_request=transaction_request,
-        justification="Automated yield optimization - moving funds to higher yield protocol",
+        justification=(
+            "Automated yield optimization - moving funds to higher yield protocol"
+        ),
         confidence_score=0.85,
         risk_assessment="Low risk - established DeFi protocol with 99.9% uptime",
     )
@@ -283,7 +283,8 @@ async def demonstrate_policy_enforcement(
     )
     if not result["success"]:
         print(
-            f"✅ Policy correctly blocked transaction without justification: {result['error']}"
+            "✅ Policy correctly blocked transaction without justification: "
+            f"{result['error']}"
         )
     else:
         print("❌ Policy should have blocked this transaction")
@@ -302,12 +303,10 @@ async def show_agent_status_and_history(
         print(f"   💼 Wallet ID: {status['wallet_id']}")
         print(f"   📊 Total transactions: {status['statistics']['total_transactions']}")
         print(f"   💰 Total value: {status['statistics']['total_value_eth']:.6f} ETH")
-        print(
-            f"   📈 Average confidence: {status['statistics']['avg_confidence_score']:.2f}"
-        )
-        print(
-            f"   🕒 Recent transactions (24h): {status['statistics']['recent_transactions_24h']}"
-        )
+        avg_confidence = status["statistics"]["avg_confidence_score"]
+        print(f"   📈 Average confidence: {avg_confidence:.2f}")
+        recent_24h = status["statistics"]["recent_transactions_24h"]
+        print(f"   🕒 Recent transactions (24h): {recent_24h}")
 
     # Get transaction history
     history = await agent_connector.get_transaction_history(agent_id=agent_id, limit=10)

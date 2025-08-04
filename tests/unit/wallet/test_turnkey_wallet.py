@@ -3,6 +3,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from cryptography.hazmat.primitives.asymmetric import ec
 
 from flare_ai_kit.wallet.base import TransactionRequest, WalletAddress
 from flare_ai_kit.wallet.permissions import PermissionEngine, PolicyViolation
@@ -269,7 +270,6 @@ class TestTurnkeyWallet:
         test_body = '{"test": "data"}'
 
         # Mock private key operations
-        from cryptography.hazmat.primitives.asymmetric import ec
 
         with patch(
             "cryptography.hazmat.primitives.serialization.load_pem_private_key"

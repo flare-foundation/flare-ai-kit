@@ -47,7 +47,8 @@ class TEESecurityManager:
         Create a secure operation with TEE attestation.
 
         Args:
-            operation_type: Type of operation (e.g., "wallet_creation", "transaction_signing")
+            operation_type: Type of operation (e.g., "wallet_creation",
+                "transaction_signing")
             operation_data: Operation-specific data
             attestation_token: TEE attestation token
 
@@ -126,7 +127,6 @@ class TEESecurityManager:
         # Re-validate TEE attestation
         try:
             self.vtpm_validator.validate_token(operation.attestation_token)
-            return True
         except Exception as e:
             logger.exception(
                 "TEE attestation re-validation failed",
@@ -134,6 +134,8 @@ class TEESecurityManager:
                 error=str(e),
             )
             return False
+        else:
+            return True
 
     async def encrypt_sensitive_data(
         self,
@@ -158,7 +160,7 @@ class TEESecurityManager:
             claims = self.vtpm_validator.validate_token(attestation_token)
         except Exception as e:
             msg = f"Invalid TEE context: {e}"
-            raise ValueError(msg)
+            raise ValueError(msg) from e
 
         # Derive encryption key from TEE-specific data
         key_material = self._derive_tee_key(claims, additional_data)

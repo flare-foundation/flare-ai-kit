@@ -293,7 +293,10 @@ class PermissionEngine:
                 PolicyViolation(
                     policy_name=policy.name,
                     violation_type="rate_limit_transactions",
-                    description=f"Too many transactions in {window.duration_minutes} minutes. Limit: {window.max_transactions}",
+                    description=(
+                        f"Too many transactions in {window.duration_minutes} "
+                        f"minutes. Limit: {window.max_transactions}"
+                    ),
                     suggested_action=PolicyAction.DENY,
                 )
             )
@@ -307,7 +310,10 @@ class PermissionEngine:
                     PolicyViolation(
                         policy_name=policy.name,
                         violation_type="rate_limit_value",
-                        description=f"Total value in {window.duration_minutes} minutes would exceed limit {window.max_value} ETH",
+                        description=(
+                            f"Total value in {window.duration_minutes} minutes "
+                            f"would exceed limit {window.max_value} ETH"
+                        ),
                         suggested_action=PolicyAction.DENY,
                     )
                 )
