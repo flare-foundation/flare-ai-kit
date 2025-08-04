@@ -16,12 +16,16 @@ except ImportError:
             for key, value in kwargs.items():
                 setattr(self, key, value)
 
+from flare_ai_kit.common import AgentRole
+
 
 class BaseCoordinator(ABC):
     """Base coordinator class."""
 
     @abstractmethod
+
     def add_agent(self, agent: Any, role: str) -> None:
+
         """Add an agent and its role to the pool."""
 
     @abstractmethod

@@ -1,11 +1,4 @@
-"""
-A2A client for handling send messages to A2A servers.
-
-Contains methods for:
-1. sending message.
-2. disovering A2A servers via their agent card.
-3. performing task management,
-"""
+"""A2A client for handling send messages to A2A servers."""
 
 import asyncio
 import uuid
@@ -22,28 +15,35 @@ from flare_ai_kit.a2a.schemas import (
     Task,
 )
 from flare_ai_kit.a2a.task_management import TaskManager
+from flare_ai_kit.common import A2AClientError
+
+from .settings import A2ASettings
 
 if TYPE_CHECKING:
     from collections.abc import Coroutine
 
 
-class A2AClientError(Exception):
-    """Error class concerned with unrecoverable A2A errors."""
-
-
 class A2AClient:
-    """A2AClient responsible for interfacing with A2A servers."""
+    """
+    A2AClient responsible for interfacing with A2A servers.
 
-    def __init__(self, db_path: str = ".", http_client_timeout: float = 30.0) -> None:
+    Contains methods for:
+    1. sending message.
+    2. discovering A2A servers via their agent card.
+    3. performing task management,
+    """
+
+    def __init__(self, settings: A2ASettings) -> None:
         """Initialize the A2A client with SQLite database for task tracking."""
-        self.db_path = db_path
-        self.task_manager = TaskManager(db_path)
+        self.sqlite_db_path = settings.sqlite_db_path
+        self.client_timeout = settings.client_timeout
+        self.task_manager = TaskManager(self.sqlite_db_path)
         self.agent_cards: dict[str, AgentCard] = {}
         self.available_skills: list[AgentSkill] = []
         self.skill_to_agents: dict[
             str, list[str]
         ] = {}  # skill name -> list of agent URLs
-        self.http_client = httpx.AsyncClient(timeout=http_client_timeout)
+        self.http_client = httpx.AsyncClient(timeout=self.client_timeout)
 
     async def send_message(
         self,
@@ -70,7 +70,7 @@ class A2AClient:
         error_message = f"Error: {response.status_code}"
         raise A2AClientError(error_message)
 
-    def update_skill_knowledgebase(self) -> None:
+    def update_skill_knowledge_base(self) -> None:
         """Update the available skills and skill_to_agent index."""
         self.available_skills.clear()
         self.skill_to_agents.clear()
@@ -86,7 +86,7 @@ class A2AClient:
         """
         Accepts a list of agent *base* URLs and fetches their agent card.
 
-        This combines the base url and a well-knonw route.
+        This combines the base url and a well-known route.
         For example: '<base_url>/.well-known/agent.json'.
         It automatically handles missing or extra slashes.
         """
@@ -118,7 +118,7 @@ class A2AClient:
                 error_msg = f"Failed to parse agent card from {full_url}: {e}"
                 raise ValueError(error_msg) from e
 
-        self.update_skill_knowledgebase()
+        self.update_skill_knowledge_base()
 
     def _generate_message_id(self) -> str:
         """Generate a unique message ID."""

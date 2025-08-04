@@ -7,6 +7,7 @@ CRUD operations on tasks.
 
 import sqlite3
 import uuid
+from pathlib import Path
 from typing import ClassVar
 
 from flare_ai_kit.a2a.schemas import Task, TaskState, TaskStatus
@@ -15,7 +16,15 @@ from flare_ai_kit.a2a.schemas import Task, TaskState, TaskStatus
 class TaskManager:
     """class responsible for task CRUD operations (SQLite supported)."""
 
-    def __init__(self, db_path: str = "tasks.db") -> None:
+    terminal_task_state: ClassVar[list[TaskState]] = [
+        TaskState.canceled,
+        TaskState.completed,
+        TaskState.failed,
+        TaskState.rejected,
+        TaskState.unknown,
+    ]
+
+    def __init__(self, db_path: Path = Path("flare_a2a.db")) -> None:
         """Init method for the task manager."""
         self.db_path = db_path
         self.connection = sqlite3.connect(db_path)
@@ -99,14 +108,6 @@ class TaskManager:
         if task_id in self.tasks:
             self.tasks[task_id].status = status
             self.update_task(task_id, status.state)
-
-    terminal_task_state: ClassVar[list[TaskState]] = [
-        TaskState.canceled,
-        TaskState.completed,
-        TaskState.failed,
-        TaskState.rejected,
-        TaskState.unknown,
-    ]
 
     def cancel_task(self, task_id: str) -> bool:
         """Cancel a task and update status in both memory and database."""

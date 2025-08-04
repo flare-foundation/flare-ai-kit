@@ -9,7 +9,7 @@ This implementation provides a comprehensive connector for interacting with the 
 ### ✅ Core Requirements Fulfilled
 
 1. **Data Retrieval from FSP**: Retrieve data that has been submitted to the Flare DA Layer via the Flare State Protocol
-2. **Merkle Proof Support**: Fetch and verify Merkle proofs associated with data on the DA Layer  
+2. **Merkle Proof Support**: Fetch and verify Merkle proofs associated with data on the DA Layer
 3. **Historical Data Access**: Support for historical data retrieval as permitted by the layer's design
 4. **Data Integrity Verification**: Confirm integrity and provenance of attestation data
 
@@ -104,7 +104,7 @@ async with await DataAvailabilityLayer.create(settings) as da_layer:
         end_timestamp=end_time,
         attestation_types=["Payment", "EVMTransaction"]
     )
-    
+
     # Process attestations...
     for attestation in historical_data:
         # Verify each attestation
@@ -216,7 +216,7 @@ evm_attestations = await da_layer.get_attestations_by_type(
 for attestation in evm_attestations:
     response = attestation.response
     proof = attestation.proof
-    
+
     # Submit to smart contract for verification
     # contract.verify_attestation(response_data, proof_data)
 ```
@@ -302,10 +302,10 @@ async def process_attestations_batch(da_layer, attestations):
         da_layer.verify_merkle_proof(attestation)
         for attestation in attestations
     ]
-    
+
     # Verify all proofs concurrently
     verification_results = await asyncio.gather(*verification_tasks)
-    
+
     # Process verified attestations
     for attestation, is_valid in zip(attestations, verification_results):
         if is_valid:
