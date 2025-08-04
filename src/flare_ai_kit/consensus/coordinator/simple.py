@@ -45,10 +45,8 @@ class SimpleCoordinator(BaseCoordinator):
 
     def add_agent(
         self,
-
         agent: Any,
-        role: str,  # Changed to str to match base class
-
+        role: AgentRole,  # Use AgentRole type
         config: dict[str, Any] | None = None,
     ) -> None:
         """
