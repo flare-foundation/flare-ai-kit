@@ -26,7 +26,7 @@ fi
 : "${GCP__MACHINE_TYPE:?Please set GCP__MACHINE_TYPE}"
 : "${GCP__TEE_IMAGE_REFERENCE:?Please set GCP__TEE_IMAGE_REFERENCE}"
 : "${GCP__SERVICE_ACCOUNT:?Please set GCP__SERVICE_ACCOUNT}"
-: "${GCP__IMAGE:?Please set GCP__IMAGE}"
+: "${GCP__CONFIDENTIAL_IMAGE:?Please set GCP__CONFIDENTIAL_IMAGE}"
 : "${GCP__CONFIDENTIAL_COMPUTE_TYPE:?Please set GCP__CONFIDENTIAL_COMPUTE_TYPE}"
 : "${GCP__SCOPES:?Please set GCP__SCOPES}"
 : "${GCP__TAGS:?Please set GCP__TAGS}"
@@ -36,7 +36,7 @@ echo "--> Creating instance '$GCP__INSTANCE_NAME' in project '$GCP__PROJECT' wit
 echo "      - Zone: $GCP__ZONE"
 echo "      - Machine Type: $GCP__MACHINE_TYPE"
 echo "      - Service Account: $GCP__SERVICE_ACCOUNT"
-echo "      - Image: $GCP__IMAGE"
+echo "      - Image: $GCP__CONFIDENTIAL_IMAGE"
 echo "      - TEE Image Reference: $GCP__TEE_IMAGE_REFERENCE"
 echo "      - Confidential Compute Type: $GCP__CONFIDENTIAL_COMPUTE_TYPE"
 echo "      - Scopes: $GCP__SCOPES"
@@ -77,7 +77,7 @@ COMMAND=(
   --service-account="$GCP__SERVICE_ACCOUNT"
   --scopes="$GCP__SCOPES"
   --tags="$GCP__TAGS"
-  --create-disk=auto-delete=yes,boot=yes,device-name="$GCP__INSTANCE_NAME",image=projects/confidential-space-images/global/images/"$GCP__IMAGE",mode=rw,size=11,type=pd-balanced
+  --create-disk=auto-delete=yes,boot=yes,device-name="$GCP__INSTANCE_NAME",image=projects/confidential-space-images/global/images/"$GCP__CONFIDENTIAL_IMAGE",mode=rw,size=11,type=pd-balanced
   --shielded-secure-boot
   --shielded-vtpm
   --shielded-integrity-monitoring
