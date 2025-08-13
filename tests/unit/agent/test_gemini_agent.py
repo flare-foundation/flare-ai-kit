@@ -1,6 +1,6 @@
 """Unit tests for the GeminiAgent class."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
 
@@ -118,10 +118,36 @@ class TestGeminiAgent:
         # Setup mocks
         mock_result = MagicMock()
         mock_result.data = "Hello! How can I help you?"
-        mock_result.usage = MagicMock()
-        mock_result.usage.input_tokens = 10
-        mock_result.usage.output_tokens = 8
-        mock_result.usage.total_tokens = 18
+        mock_result.usage = None  # Simplified - no usage info for this test
+
+        mock_pydantic_agent = AsyncMock()
+        mock_pydantic_agent.run.return_value = mock_result
+
+        gemini_agent._pydantic_agent = mock_pydantic_agent
+        gemini_agent._initialized = True
+
+        response = await gemini_agent._generate_response("Hello", include_history=False)
+
+        assert isinstance(response, AgentResponse)
+        assert response.content == "Hello! How can I help you?"
+        assert response.agent_id == "gemini-test"
+        # Since we set usage to None, usage_info should also be None
+        assert response.usage_info is None
+
+    @pytest.mark.asyncio
+    async def test_generate_response_with_usage_info(self, gemini_agent):
+        """Test generating response with usage information."""
+
+        # Create a simple object instead of MagicMock for usage
+        class MockUsage:
+            def __init__(self):
+                self.input_tokens = 10
+                self.output_tokens = 8
+                self.total_tokens = 18
+
+        mock_result = MagicMock()
+        mock_result.data = "Hello! How can I help you?"
+        mock_result.usage = MockUsage()
 
         mock_pydantic_agent = AsyncMock()
         mock_pydantic_agent.run.return_value = mock_result

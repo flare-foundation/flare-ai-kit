@@ -120,7 +120,8 @@ async def simple_multi_agent_test():
     }
 
 
-async def test_conversation_history():
+# This is an example function, not a pytest test; rename to avoid pytest discovery
+async def example_conversation_history():
     """Test conversation history management."""
     print("\n📚 Testing Conversation History Management")
     print("=" * 50)
@@ -165,7 +166,7 @@ async def main():
         result = await simple_multi_agent_test()
 
         # Test conversation history
-        await test_conversation_history()
+        await example_conversation_history()
 
         print("\n🎉 All multi-agent communication tests passed!")
 
