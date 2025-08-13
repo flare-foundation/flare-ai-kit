@@ -107,7 +107,8 @@ class GeminiAgent(BaseAgent):
             raise AgentError(f"Failed to setup Gemini agent: {e}") from e
 
     def _extract_result_text(self, result: Any) -> str:
-        """Extract a response string from a PydanticAI result or fallback mocks.
+        """
+        Extract a response string from a PydanticAI result or fallback mocks.
 
         Order of preference:
         1) result.output if it's a str

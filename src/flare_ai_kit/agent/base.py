@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
-from typing import Any, List
+from typing import Any
 
 import structlog
 from pydantic import BaseModel, ConfigDict, Field
@@ -39,8 +39,8 @@ class AgentContext(BaseModel):
     agent_id: str = Field(..., description="Unique identifier for the agent")
     agent_name: str = Field(..., description="Human-readable name for the agent")
     system_prompt: str = Field(default="", description="System prompt for the agent")
-    conversation_history: List[ConversationMessage] = Field(
-        default_factory=lambda: [], description="Conversation history messages"
+    conversation_history: list[ConversationMessage] = Field(
+        default_factory=list, description="Conversation history messages"
     )
     max_history_length: int = Field(
         default=50, description="Maximum number of messages to keep in history"
