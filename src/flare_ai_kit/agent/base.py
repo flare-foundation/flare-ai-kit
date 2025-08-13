@@ -40,7 +40,8 @@ class AgentContext(BaseModel):
     agent_name: str = Field(..., description="Human-readable name for the agent")
     system_prompt: str = Field(default="", description="System prompt for the agent")
     conversation_history: list[ConversationMessage] = Field(
-        default_factory=list, description="Conversation history messages"
+        default_factory=lambda: list[ConversationMessage](),
+        description="Conversation history messages"
     )
     max_history_length: int = Field(
         default=50, description="Maximum number of messages to keep in history"
