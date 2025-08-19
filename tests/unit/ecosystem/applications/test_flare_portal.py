@@ -2,10 +2,12 @@ import warnings
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from typing import cast
 from web3 import Web3
+from web3.types import TxParams
 from web3.contract.contract import Contract
 
-from flare_ai_kit.ecosystem import Contracts, EcosystemSettingsModel
+from flare_ai_kit.ecosystem import Contracts, EcosystemSettings
 from flare_ai_kit.ecosystem.applications.flare_portal import FlarePortal
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.flare import Flare
@@ -19,7 +21,7 @@ class TestFlarePortal:
 
     def setup_method(self):
         """Set up test fixtures before each test method."""
-        self.settings = MagicMock(spec=EcosystemSettingsModel)
+        self.settings = MagicMock(spec=EcosystemSettings)
         self.settings.account_address = "0x9e8318cc9c83427870ed8994d818Ba7A92739B99"
         self.settings.account_private_key = (
             "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
@@ -142,14 +144,13 @@ class TestFlarePortal:
             return_value={"blockNumber": block_number}
         )
 
-        result = await self.flare_portal.wrap_flr_to_wflr(amount_flr)
+        result = await self.flare_portal.wrap_flr_to_wflr(amount_wei)
 
         assert result == tx_hash
-        self.flare_provider.w3.to_wei.assert_called_with(amount_flr, unit="ether")
         self.flare_provider.build_transaction.assert_called_with(
             function_call=self.flare_portal.wflr_contract.functions.deposit.return_value,
             from_addr=self.flare_provider.address,
-            custom_params={"value": amount_wei},
+            custom_params=cast(TxParams, {"value": amount_wei}),
         )
         self.flare_provider.eth_call.assert_called_with(
             contract_abi=self.wflr_abi, call_tx={"tx": "stubbed"}
@@ -174,14 +175,13 @@ class TestFlarePortal:
         )
         self.flare_provider.eth_call = AsyncMock(return_value=False)
 
-        result = await self.flare_portal.wrap_flr_to_wflr(amount_flr)
+        result = await self.flare_portal.wrap_flr_to_wflr(amount_wei)
 
         assert result is None
-        self.flare_provider.w3.to_wei.assert_called_with(amount_flr, unit="ether")
         self.flare_provider.build_transaction.assert_called_with(
             function_call=self.flare_portal.wflr_contract.functions.deposit.return_value,
             from_addr=self.flare_provider.address,
-            custom_params={"value": amount_wei},
+            custom_params=cast(TxParams, {"value": amount_wei}),
         )
         self.flare_provider.eth_call.assert_called_with(
             contract_abi=self.wflr_abi, call_tx={"tx": "stubbed"}
@@ -208,10 +208,9 @@ class TestFlarePortal:
             return_value={"blockNumber": block_number}
         )
 
-        result = await self.flare_portal.unwrap_wflr_to_flr(amount_flr)
+        result = await self.flare_portal.unwrap_wflr_to_flr(amount_wei)
 
         assert result == tx_hash
-        self.flare_provider.w3.to_wei.assert_called_with(amount_flr, unit="ether")
         self.flare_portal.wflr_contract.functions.withdraw.assert_called_with(
             amount_wei
         )
@@ -242,10 +241,9 @@ class TestFlarePortal:
         )
         self.flare_provider.eth_call = AsyncMock(return_value=False)
 
-        result = await self.flare_portal.unwrap_wflr_to_flr(amount_flr)
+        result = await self.flare_portal.unwrap_wflr_to_flr(amount_wei)
 
         assert result is None
-        self.flare_provider.w3.to_wei.assert_called_with(amount_flr, unit="ether")
         self.flare_portal.wflr_contract.functions.withdraw.assert_called_with(
             amount_wei
         )

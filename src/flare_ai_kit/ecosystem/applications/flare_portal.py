@@ -1,6 +1,9 @@
 import structlog
+from typing import Any, cast
+from web3.types import TxParams
+from hexbytes import HexBytes
 
-from flare_ai_kit.ecosystem import Contracts, EcosystemSettingsModel
+from flare_ai_kit.ecosystem import Contracts, EcosystemSettings
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.flare import Flare
 
@@ -18,7 +21,7 @@ class FlarePortal:
     @classmethod
     async def create(
         cls,
-        settings: EcosystemSettingsModel,
+        settings: EcosystemSettings,
         contracts: Contracts,
         flare_explorer: BlockExplorer,
         flare_provider: Flare,
@@ -31,7 +34,7 @@ class FlarePortal:
         and provider.
 
         Args:
-            settings (EcosystemSettingsModel): Configuration settings, including account details.
+            settings (EcosystemSettings): Configuration settings, including account details.
             contracts (Contracts): Contract addresses for the Flare blockchain.
             flare_explorer (BlockExplorer): Block explorer instance for querying contract ABIs.
             flare_provider (Flare): Provider instance for blockchain interactions.
@@ -58,11 +61,11 @@ class FlarePortal:
 
     def __init__(
         self,
-        settings: EcosystemSettingsModel,
+        settings: EcosystemSettings,
         contracts: Contracts,
         flare_explorer: BlockExplorer,
         flare_provider: Flare,
-        wflr_abi: list,
+        wflr_abi: list[dict[str, Any]],
     ) -> None:
         """
         Initialize a FlarePortal instance with the provided configuration and ABI.
@@ -71,7 +74,7 @@ class FlarePortal:
         including account details, contract addresses, and the WFLR contract instance.
 
         Args:
-            settings (EcosystemSettingsModel): Configuration settings, including account details.
+            settings (EcosystemSettings): Configuration settings, including account details.
             contracts (Contracts): Contract addresses for the Flare blockchain.
             flare_explorer (BlockExplorer): Block explorer instance for querying contract ABIs.
             flare_provider (Flare): Provider instance for blockchain interactions.
@@ -81,6 +84,10 @@ class FlarePortal:
             Exception: If the account address is not set in the flare_provider.
 
         """
+        if not flare_provider.address:
+            raise Exception(
+                "Please set settings.account_address in your .env file."
+            )
         self.settings = settings
         self.contracts = contracts
         self.flare_explorer = flare_explorer
@@ -91,9 +98,6 @@ class FlarePortal:
         self.wflr_contract = flare_provider.w3.eth.contract(
             address=contracts.flare.wflr, abi=wflr_abi
         )
-
-        if not self.account_address:
-            raise Exception("Flare provider must have a valid account address set.")
 
     async def wrap_flr_to_wflr(self, amount_WEI: int):
         """
@@ -118,9 +122,7 @@ class FlarePortal:
         wrap_tx = await self.flare_provider.build_transaction(
             function_call=wrap_fn,
             from_addr=self.flare_provider.address,
-            custom_params={
-                "value": amount_WEI
-            },
+            custom_params=cast(TxParams, {"value": amount_WEI}),
         )
 
         logger.debug("Wrap FLR to WFLR", tx=wrap_tx)
@@ -132,17 +134,17 @@ class FlarePortal:
             logger.warning(
                 "We stop here because the simulated wrap transaction was not sucessfull"
             )
-            return None
+            raise Exception("We stop here because the simulated transaction was not sucessfull")
 
         wrap_tx_hash = await self.flare_provider.sign_and_send_transaction(wrap_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            wrap_tx_hash
+            HexBytes(wrap_tx_hash)
         )
         logger.debug(f"Wrap transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{wrap_tx_hash}")
         return wrap_tx_hash
 
-    async def unwrap_wflr_to_flr(self, amount_WEI: float):
+    async def unwrap_wflr_to_flr(self, amount_WEI: int):
         """
         Unwrap WFLR to native FLR.
 
@@ -175,11 +177,11 @@ class FlarePortal:
             logger.warning(
                 "We stop here because the simulated unwrap transaction was not sucessfull"
             )
-            return None
+            raise Exception("We stop here because the simulated transaction was not sucessfull")
 
         unwrap_tx_hash = await self.flare_provider.sign_and_send_transaction(unwrap_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            unwrap_tx_hash
+            HexBytes(unwrap_tx_hash)
         )
         logger.debug(f"unwrap transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{unwrap_tx_hash}")

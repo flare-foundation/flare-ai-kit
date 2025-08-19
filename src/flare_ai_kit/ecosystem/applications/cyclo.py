@@ -1,11 +1,14 @@
 import re
+from decimal import Decimal
+from web3 import Web3
+from web3.contract import AsyncContract
 
 import structlog
-from decimal import Decimal
+from typing import Any
 
 from flare_ai_kit.ecosystem import (
     Contracts,
-    EcosystemSettingsModel,
+    EcosystemSettings,
 )
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.flare import Flare
@@ -17,7 +20,7 @@ class Cyclo:
     @classmethod
     async def create(
         cls,
-        settings: EcosystemSettingsModel,
+        settings: EcosystemSettings,
         contracts: Contracts,
         flare_explorer: BlockExplorer,
         flare_provider: Flare,
@@ -32,17 +35,21 @@ class Cyclo:
 
     def __init__(
         self,
-        settings: EcosystemSettingsModel,
+        settings: EcosystemSettings,
         contracts: Contracts,
         flare_explorer: BlockExplorer,
         flare_provider: Flare,
     ) -> None:
+        if not settings.account_address:
+            raise Exception(
+                "Please set settings.account_address in your .env file."
+            )
         self.contracts = contracts
         self.account_address = settings.account_address
         self.flare_explorer = flare_explorer
         self.flare_provider = flare_provider
 
-    def get_addresses(self, token: str) -> (str, str):
+    def get_addresses(self, token: str) -> tuple[str, str]:
         """
         Retrieve the token address and corresponding Cyclo contract address for a specified token.
 
@@ -71,7 +78,7 @@ class Cyclo:
 
         return token_address, cyclo_address
 
-    async def lock(self, token: str, amount_WEI: float) -> str:
+    async def lock(self, token: str, amount_WEI: int) -> tuple[str, int]:
         """
         Lock a specified amount of tokens in a Cyclo contract and return the transaction hash and deposit ID.
 
@@ -89,7 +96,6 @@ class Cyclo:
             ValueError: If the transaction fails with a ZeroSharesAmount error or no Deposit event is found.
 
         """
-
         # ======== Get addresses from token string ==============
         token_address, cyclo_address = self.get_addresses(token)
 
@@ -106,8 +112,8 @@ class Cyclo:
         # ============= Give allowance if needed  ===============
         allowance = await self.flare_provider.erc20_allowance(
             owner_address=self.flare_provider.address,
-            token_address=token_address,
-            spender_address=cyclo_address,
+            token_address=Web3.to_checksum_address(token_address),
+            spender_address=Web3.to_checksum_address(cyclo_address),
         )
         logger.debug(
             f"Allowance is {allowance}. This is {round(100 * allowance / amount_WEI, 2)}% of amount."
@@ -121,8 +127,9 @@ class Cyclo:
             )
 
         # ============= Build transaction ================
-        cyclo_contract = self.flare_provider.w3.eth.contract(
-            address=cyclo_address, abi=self.get_cyclo_contract_abi()
+        cyclo_contract: AsyncContract = self.flare_provider.w3.eth.contract(
+            address=Web3.to_checksum_address(cyclo_address), 
+            abi=self.get_cyclo_contract_abi()
         )
 
         amount = amount_WEI
@@ -156,12 +163,12 @@ class Cyclo:
             logger.warning(
                 "We stop here because the simulated transaction was not sucessfull"
             )
-            return None
+            raise Exception("We stop here because the simulated transaction was not sucessfull")
 
         # ============= Execute transaction ================
         lock_tx_hash = await self.flare_provider.sign_and_send_transaction(lock_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            lock_tx_hash
+            Web3.to_checksum_address(lock_tx_hash)
         )
         logger.debug(f"Lock transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{lock_tx_hash}")
@@ -197,8 +204,8 @@ class Cyclo:
         _token_address, cyclo_address = self.get_addresses(token)
 
         # ============= Build transaction ================
-        cyclo_contract = self.flare_provider.w3.eth.contract(
-            address=cyclo_address, abi=self.get_cyclo_contract_abi()
+        cyclo_contract: AsyncContract = self.flare_provider.w3.eth.contract(
+            address=Web3.to_checksum_address(cyclo_address), abi=self.get_cyclo_contract_abi()
         )
 
         # (uint256 shares, address receiver, address owner, uint256 id, bytes receiptInformation)
@@ -225,19 +232,19 @@ class Cyclo:
             logger.warning(
                 "We stop here because the simulated transaction was not sucessfull"
             )
-            return None
+            raise Exception("We stop here because the simulated transaction was not sucessfull")
 
         # ============= Execute transaction ================
         unlock_tx_hash = await self.flare_provider.sign_and_send_transaction(unlock_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            unlock_tx_hash
+            Web3.to_checksum_address(unlock_tx_hash)
         )
         logger.debug(f"unlock transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{unlock_tx_hash}")
 
         return unlock_tx_hash
 
-    def get_cyclo_contract_abi(self) -> list:
+    def get_cyclo_contract_abi(self) -> list[dict[str, Any]]:
         """
         Retrieve the ABI for the Cyclo contract.
 

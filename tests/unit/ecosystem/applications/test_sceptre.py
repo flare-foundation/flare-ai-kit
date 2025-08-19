@@ -1,6 +1,8 @@
 from unittest.mock import ANY, AsyncMock, MagicMock
 
 import pytest
+from typing import cast
+from web3.types import TxParams
 
 from flare_ai_kit.ecosystem.applications.sceptre import Sceptre
 
@@ -62,11 +64,10 @@ class TestSceptre:
         self.flare_provider.sign_and_send_transaction.return_value = tx_hash
 
         # Execute
-        result = await self.sceptre.stake(amount_flr)
+        result = await self.sceptre.stake(amount_wei)
 
         # Verify
         assert result == tx_hash
-        self.mock_web3.to_wei.assert_called_with(amount_flr, unit="ether")
         self.mock_web3.eth.contract.assert_called_with(
             address=self.contracts.flare.sflr, abi=ANY
         )
@@ -74,22 +75,25 @@ class TestSceptre:
         self.flare_provider.build_transaction.assert_awaited_with(
             function_call=self.mock_submit,
             from_addr=self.flare_provider.address,
-            custom_params={"value": amount_wei},
+            custom_params=cast(TxParams, {"value": amount_wei}),
         )
         self.flare_provider.eth_call.assert_awaited_once()
         self.flare_provider.sign_and_send_transaction.assert_awaited_once()
         self.mock_wait_for_receipt.assert_awaited_once_with(tx_hash)
 
     @pytest.mark.asyncio
-    async def test_stake_failed_simulation(self):
-        """Test stake with failed simulation."""
-        self.flare_provider.eth_call.return_value = False
+    async def test_stake_failed_simulation(self):    
+        self.flare_provider.eth_call = AsyncMock(return_value=False)
 
-        result = await self.sceptre.stake(10.0)
+        with pytest.raises(
+            Exception,
+            match="We stop here because the simulated transaction was not sucessfull"
+        ):
+            await self.sceptre.stake(10.0)
 
-        assert result is None
+        # since we bail on simulation, no send or receipt lookup
         self.flare_provider.sign_and_send_transaction.assert_not_called()
-        self.mock_wait_for_receipt.assert_not_called()
+        self.mock_wait_for_receipt.assert_not_called()        
 
     @pytest.mark.asyncio
     async def test_stake_invalid_amount(self):

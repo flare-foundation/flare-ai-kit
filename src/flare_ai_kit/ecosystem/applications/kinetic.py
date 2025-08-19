@@ -1,9 +1,13 @@
-
 import structlog
+from typing import Any
+from web3 import Web3
+from web3.contract import AsyncContract
+from web3.contract.async_contract import AsyncContract, AsyncContractFunction
+from hexbytes import HexBytes
 
 from flare_ai_kit.ecosystem import (
     Contracts,
-    EcosystemSettingsModel,
+    EcosystemSettings,
 )
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.flare import Flare
@@ -15,7 +19,7 @@ class Kinetic:
     @classmethod
     async def create(
         cls,
-        settings: EcosystemSettingsModel,
+        settings: EcosystemSettings,
         contracts: Contracts,
         flare_explorer: BlockExplorer,
         flare_provider: Flare,
@@ -24,7 +28,7 @@ class Kinetic:
         Asynchronously create a Kinetic instance with the provided configuration.
 
         Args:
-            settings (EcosystemSettingsModel): Configuration settings, including account details.
+            settings (EcosystemSettings): Configuration settings, including account details.
             contracts (Contracts): Contract addresses for the Flare blockchain.
             flare_explorer (BlockExplorer): Block explorer instance for transaction queries.
             flare_provider (Flare): Provider instance for blockchain interactions.
@@ -43,23 +47,21 @@ class Kinetic:
 
     def __init__(
         self,
-        settings: EcosystemSettingsModel,
+        settings: EcosystemSettings,
         contracts: Contracts,
         flare_explorer: BlockExplorer,
         flare_provider: Flare,
     ) -> None:
+        if not  settings.account_address:
+            raise Exception(
+                "Please set settings.account_address in your .env file."
+            )
         self.contracts = contracts
-        self.account_private_key = settings.account_private_key
         self.account_address = settings.account_address
         self.flare_explorer = flare_explorer
         self.flare_provider = flare_provider
 
-        if not self.account_private_key or not self.account_address:
-            raise Exception(
-                "Please set self.account_private_key and self.account_address in your .env file."
-            )
-
-    def get_addresses(self, token: str) -> (str, str):
+    def get_addresses(self, token: str) -> tuple[str, str]:
         """
         Retrieve the token address and corresponding Kinetic lending contract address for a specified token.
 
@@ -93,7 +95,7 @@ class Kinetic:
                 token_address = self.contracts.flare.flreth
                 lending_address = self.contracts.flare.kinetic_kFLRETH
             case _:
-                raise "Unsupported token"
+                raise Exception("Unsupported token")
 
         return token_address, lending_address
 
@@ -113,15 +115,15 @@ class Kinetic:
 
         Raises:
             Exception: If the token is unsupported or transaction building fails.
-        """
 
+        """
         # ======== Get addresses from token string ==============
         token_address, lending_address = self.get_addresses(token)
 
         # ============= Give allowance if needed  ===============
         allowance = await self.flare_provider.erc20_allowance(
             owner_address=self.flare_provider.address,
-            token_address=token_address,
+            token_address=Web3.to_checksum_address(token_address),
             spender_address=self.contracts.flare.sparkdex_swap_router,
         )
         logger.debug(
@@ -136,8 +138,8 @@ class Kinetic:
             )
 
         # ============= Build transaction ================
-        lending_contract = self.flare_provider.w3.eth.contract(
-            address=lending_address, abi=self.get_lending_contract_abi()
+        lending_contract: AsyncContract = self.flare_provider.w3.eth.contract(
+            address=Web3.to_checksum_address(lending_address), abi=self.get_lending_contract_abi()
         )
 
         mint_fn = lending_contract.functions.mint(amount_WEI)
@@ -155,12 +157,12 @@ class Kinetic:
             logger.warning(
                 "We stop here because the simulated transaction was not sucessfull"
             )
-            return None
+            raise Exception("We stop here because the simulated transaction was not sucessfull")
 
         # ============= Execute transaction ================
         mint_tx_hash = await self.flare_provider.sign_and_send_transaction(mint_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            mint_tx_hash
+            HexBytes(mint_tx_hash)
         )
         logger.debug(f"mint transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{mint_tx_hash}")
@@ -185,16 +187,15 @@ class Kinetic:
             Exception: If the token is unsupported or transaction building fails.
 
         """
-
         # ============= Map token string to addresses ================
-        token_address, lending_address = self.get_addresses(token)
+        _token_address, lending_address = self.get_addresses(token)
 
         # ============= Build transaction ================
-        lending_contract = self.flare_provider.w3.eth.contract(
-            address=lending_address, abi=self.get_lending_contract_abi()
+        lending_contract: AsyncContract = self.flare_provider.w3.eth.contract(
+            address=Web3.to_checksum_address(lending_address), abi=self.get_lending_contract_abi()
         )
 
-        withdraw_fn = lending_contract.functions.redeemUnderlying(amount_WEI)
+        withdraw_fn: AsyncContractFunction = lending_contract.functions.redeemUnderlying(amount_WEI)
         withdraw_tx = await self.flare_provider.build_transaction(
             function_call=withdraw_fn, from_addr=self.flare_provider.address
         )
@@ -209,14 +210,14 @@ class Kinetic:
             logger.warning(
                 "We stop here because the simulated transaction was not sucessfull"
             )
-            return None
+            raise Exception("We stop here because the simulated transaction was not sucessfull")
 
         # ============= Execute transaction ================
         withdraw_tx_hash = await self.flare_provider.sign_and_send_transaction(
             withdraw_tx
         )
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            withdraw_tx_hash
+            HexBytes(withdraw_tx_hash)
         )
         logger.debug(f"withdraw transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{withdraw_tx_hash}")
@@ -241,7 +242,7 @@ class Kinetic:
 
         """
         # ============= Map token string to addresses ================
-        token_address, lending_address = self.get_addresses(token)
+        _token_address, lending_address = self.get_addresses(token)
 
         # ============= Build transaction ================
         unitroller_contract = self.flare_provider.w3.eth.contract(
@@ -263,14 +264,14 @@ class Kinetic:
             logger.warning(
                 "We stop here because the simulated transaction was not sucessfull"
             )
-            return None
+            raise Exception("We stop here because the simulated transaction was not sucessfull")
 
         # ============= Execute transaction ================
         enable_col_tx_hash = await self.flare_provider.sign_and_send_transaction(
             enable_col_tx
         )
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            enable_col_tx_hash
+            HexBytes(enable_col_tx_hash)
         )
         logger.debug(f"enable_col transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{enable_col_tx_hash}")
@@ -295,7 +296,7 @@ class Kinetic:
 
         """
         # ============= Map token string to addresses ================
-        token_address, lending_address = self.get_addresses(token)
+        _token_address, lending_address = self.get_addresses(token)
 
         # ============= Build transaction ================
         unitroller_contract = self.flare_provider.w3.eth.contract(
@@ -317,21 +318,21 @@ class Kinetic:
             logger.warning(
                 "We stop here because the simulated transaction was not sucessfull"
             )
-            return None
+            raise Exception("We stop here because the simulated transaction was not sucessfull")
 
         # ============= Execute transaction ================
         disable_col_tx_hash = await self.flare_provider.sign_and_send_transaction(
             disable_col_tx
         )
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            disable_col_tx_hash
+            HexBytes(disable_col_tx_hash)
         )
         logger.debug(f"disable_col transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{disable_col_tx_hash}")
 
         return disable_col_tx_hash
 
-    def get_unitroller_contract_abi(self) -> list:
+    def get_unitroller_contract_abi(self) -> list[dict[str, Any]]:
         """
         Retrieve the ABI for the Kinetic Unitroller contract.
 
@@ -434,7 +435,7 @@ class Kinetic:
             },
         ]
 
-    def get_lending_contract_abi(self) -> list:
+    def get_lending_contract_abi(self) -> list[dict[str, Any]]:
         return [
             {
                 "constant": False,

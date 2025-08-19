@@ -1,6 +1,8 @@
 import structlog
+from typing import cast
+from web3.types import TxParams
 
-from flare_ai_kit.ecosystem import Contracts, EcosystemSettingsModel
+from flare_ai_kit.ecosystem import Contracts, EcosystemSettings
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.flare import Flare
 
@@ -11,7 +13,7 @@ class Sceptre:
     @classmethod
     async def create(
         cls,
-        settings: EcosystemSettingsModel,
+        settings: EcosystemSettings,
         contracts: Contracts,
         flare_explorer: BlockExplorer,
         flare_provider: Flare,
@@ -23,7 +25,7 @@ class Sceptre:
         then constructs a Sceptre instance. The contract ABI is fetched from the block explorer.
 
         Args:
-            settings (EcosystemSettingsModel): Configuration settings, including account details.
+            settings (EcosystemSettings): Configuration settings, including account details.
             contracts (Contracts): Contract addresses for the Flare blockchain.
             flare_explorer (BlockExplorer): Block explorer instance for querying contract ABIs.
             flare_provider (Flare): Provider instance for blockchain interactions.
@@ -35,10 +37,6 @@ class Sceptre:
             Exception: If the sFLR contract ABI cannot be fetched or the contract initialization fails.
 
         """
-        proxy_abi = await flare_explorer.get_contract_abi(contracts.flare.sflr)
-        proxy_contract = flare_provider.w3.eth.contract(
-            address=contracts.flare.sflr, abi=proxy_abi
-        )
 
         # Create Sceptre instance
         instance = cls(
@@ -51,18 +49,22 @@ class Sceptre:
 
     def __init__(
         self,
-        settings: EcosystemSettingsModel,
+        settings: EcosystemSettings,
         contracts: Contracts,
         flare_explorer: BlockExplorer,
         flare_provider: Flare,
-    ) -> "Sceptre":
+    ) -> None:
+        if not flare_provider.address:
+            raise Exception(
+                "Please set settings.account_address in your .env file."
+            )
         self.settings = settings
         self.contracts = contracts
         self.flare_explorer = flare_explorer
         self.flare_provider = flare_provider
         self.account_address = flare_provider.address
 
-    async def stake(self, amount_WEI: float):
+    async def stake(self, amount_WEI: int) -> str:
         """
         Stake native FLR tokens to receive sFLR (Staked FLR).
 
@@ -102,9 +104,7 @@ class Sceptre:
         stake_tx = await self.flare_provider.build_transaction(
             function_call=stake_fn,
             from_addr=self.flare_provider.address,
-            custom_params={
-                "value": amount_WEI
-            },
+            custom_params=cast(TxParams, {"value": amount_WEI}),
         )
 
         logger.debug("Stake FLR to sFLR", tx=stake_tx)
@@ -116,17 +116,17 @@ class Sceptre:
             logger.warning(
                 "We stop here because the simulated stake transaction was not sucessfull"
             )
-            return None
+            raise Exception("We stop here because the simulated transaction was not sucessfull")
 
         stake_tx_hash = await self.flare_provider.sign_and_send_transaction(stake_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            stake_tx_hash
+            stake_tx_hash # type: ignore
         )
         logger.debug(f"Stake transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{stake_tx_hash}")
         return stake_tx_hash
 
-    async def unstake(self, amount_WEI: float) -> str:
+    async def unstake(self, amount_WEI: int) -> str:
         """
         Unstake sFLR tokens to retrieve native FLR tokens.
 
@@ -182,11 +182,11 @@ class Sceptre:
             logger.warning(
                 "We stop here because the simulated stake transaction was not sucessfull"
             )
-            return None
+            raise Exception("We stop here because the simulated transaction was not sucessfull")
 
         stake_tx_hash = await self.flare_provider.sign_and_send_transaction(stake_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            stake_tx_hash
+            stake_tx_hash # type: ignore
         )
         logger.debug(f"Stake transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{stake_tx_hash}")

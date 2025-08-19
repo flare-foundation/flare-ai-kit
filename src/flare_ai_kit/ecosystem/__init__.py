@@ -2,12 +2,12 @@
 
 from .explorer import BlockExplorer
 from .flare import Flare
-from .protocols import FtsoV2
-from .settings_models import (
+from .protocols import FAssets, FtsoV2
+from .settings import (
     ChainIdConfig,
     ContractAddresses,
     Contracts,
-    EcosystemSettingsModel,
+    EcosystemSettings,
 )
 
 __all__ = [
@@ -15,7 +15,8 @@ __all__ = [
     "ChainIdConfig",
     "ContractAddresses",
     "Contracts",
-    "EcosystemSettingsModel",
+    "EcosystemSettings",
+    "FAssets",
     "Flare",
     "FtsoV2",
 ]

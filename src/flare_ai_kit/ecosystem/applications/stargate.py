@@ -1,11 +1,14 @@
-
 import structlog
 from web3 import Web3
+from web3.types import TxParams
+from typing import Any, cast
+from hexbytes import HexBytes
+import re
 
 from flare_ai_kit.ecosystem import (
     ChainIdConfig,
     Contracts,
-    EcosystemSettingsModel,
+    EcosystemSettings,
 )
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.flare import Flare
@@ -17,7 +20,7 @@ class Stargate:
     @classmethod
     async def create(
         cls,
-        settings: EcosystemSettingsModel,
+        settings: EcosystemSettings,
         contracts: Contracts,
         chains: ChainIdConfig,
         flare_explorer: BlockExplorer,
@@ -30,7 +33,7 @@ class Stargate:
         Stargate instance with the provided settings, contracts, chains, explorer, and provider.
 
         Args:
-            settings (EcosystemSettingsModel): Configuration settings, including account details.
+            settings (EcosystemSettings): Configuration settings, including account details.
             contracts (Contracts): Contract addresses for the Flare blockchain.
             chains (ChainIdConfig): Chain ID configuration for cross-chain operations.
             flare_explorer (BlockExplorer): Block explorer instance for querying contract ABIs.
@@ -61,12 +64,12 @@ class Stargate:
 
     def __init__(
         self,
-        settings: EcosystemSettingsModel,
+        settings: EcosystemSettings,
         contracts: Contracts,
         chains: ChainIdConfig,
         flare_explorer: BlockExplorer,
         flare_provider: Flare,
-        oft_abi: list,
+        oft_abi: list[dict[str, Any]],
     ) -> None:
         """
         Initialize a Stargate instance with the provided configuration and ABI.
@@ -76,7 +79,7 @@ class Stargate:
         contract instance. Validates that account address and private key are set.
 
         Args:
-            settings (EcosystemSettingsModel): Configuration settings, including account details.
+            settings (EcosystemSettings): Configuration settings, including account details.
             contracts (Contracts): Contract addresses for the Flare blockchain.
             chains (ChainIdConfig): Chain ID configuration for cross-chain operations.
             flare_explorer (BlockExplorer): Block explorer instance for querying contract ABIs.
@@ -84,21 +87,21 @@ class Stargate:
             oft_abi (list): ABI for the StargateOFTETH contract.
 
         Raises:
-            Exception: If account_private_key or account_address is not set in the settings.
+            Exception: If account_address is not set in the settings.
 
         """
+        if not settings.account_address:
+            raise Exception(
+                "Please set settings.account_address in your .env file."
+            )
         self.contracts = contracts
         self.chains = chains
-        self.account_private_key = settings.account_private_key
         self.account_address = settings.account_address
         self.flare_explorer = flare_explorer
         self.flare_provider = flare_provider
         self.oft_abi = oft_abi
 
-        if not self.account_private_key or not self.account_address:
-            raise Exception(
-                "Please set self.account_private_key and self.account_address in your .env file."
-            )
+        
 
         # Create Web3 contract instance to check version
         self.oft_contract = flare_provider.w3.eth.contract(
@@ -108,13 +111,12 @@ class Stargate:
         # version = oft_contract.functions.oftVersion().call()
         # structlog.get_logger().info("OFT Version", version=version)
 
-
     async def bridge_weth_to_chain(
         self,
         desired_amount_WEI: int,
         chain_id: int,
         max_slippage: float = 0.01,
-    ) -> None:
+    ) -> str:
         """
         Send ETH to the Base chain using the StargateOFTETH contract.
 
@@ -139,9 +141,14 @@ class Stargate:
         #
         # === Define parameter for the quoteOFT in the contract ===
         #
-        to_address = Web3.to_bytes(
-            hexstr="0x000000000000000000000000" + self.account_address[2:]
-        )
+        address_hex = self.account_address[2:].lower() 
+        if not Web3.is_address(address_hex):
+            raise ValueError(f"Invalid Ethereum address derived from account_address: {address_hex}")
+        padded_hex = "0x" + "000000000000000000000000" + address_hex
+        if not re.match(r"^0x[0-9a-fA-F]{64}$", padded_hex):
+            raise ValueError(f"Invalid padded hex string: {padded_hex}")
+        to_address = Web3.to_bytes(hexstr=padded_hex) # type: ignore
+
         amount = int(desired_amount_WEI)
         min_amount = int(desired_amount_WEI - (desired_amount_WEI * max_slippage))
         extra_options = b""
@@ -177,7 +184,7 @@ class Stargate:
                 min_limit_eth=oftLimits[0] / 1e18,
                 max_limit_eth=oftLimits[1] / 1e18,
             )
-            return None
+            raise ValueError("Desired send amount exceeds max limit")
 
         if desired_amount_WEI < oftLimits[0]:
             logger.warning(
@@ -186,7 +193,7 @@ class Stargate:
                 min_limit_eth=oftLimits[0] / 1e18,
                 max_limit_eth=oftLimits[1] / 1e18,
             )
-            return None
+            raise ValueError("Desired send amount is less than min limit")
         #
         # === Call the quoteSend function ===
         #
@@ -222,7 +229,7 @@ class Stargate:
         # === Call the approve function in the token contract, if needed ===
         #
         if desired_amount_WEI > allowance:
-            tx_approval_hash = await self.flare_provider.erc20_approve(
+            _tx_approval_hash = await self.flare_provider.erc20_approve(
                 token_address=self.contracts.flare.weth,
                 spender_address=self.contracts.flare.stargate_StargateOFTETH,
                 amount=desired_amount_WEI,
@@ -236,7 +243,7 @@ class Stargate:
         send_tx = await self.flare_provider.build_transaction(
             function_call=send_fn,
             from_addr=self.flare_provider.address,
-            custom_params={"value": nativeFee},
+            custom_params=cast(TxParams, {"value": nativeFee})
         )
         #
         # === Simulate send transaction ===
@@ -249,13 +256,13 @@ class Stargate:
             logger.warning(
                 "We stop here because the simulated send transaction was not sucessfull"
             )
-            return None
+            raise Exception("We stop here because the simulated send transaction was not sucessfull")
         #
         # === Call the send function ===
         #
         send_tx_hash = await self.flare_provider.sign_and_send_transaction(send_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            send_tx_hash
+            HexBytes(send_tx_hash)
         )
         logger.debug("Send transaction mined", block_number=receipt["blockNumber"])
         logger.debug(
