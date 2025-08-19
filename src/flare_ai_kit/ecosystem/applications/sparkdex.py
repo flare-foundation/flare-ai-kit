@@ -1,10 +1,12 @@
-
 import structlog
+from web3 import Web3
 from web3.contract.async_contract import AsyncContract
+from typing import Any
+from hexbytes import HexBytes
 
 from flare_ai_kit.ecosystem import (
     Contracts,
-    EcosystemSettingsModel,
+    EcosystemSettings,
 )
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.flare import Flare
@@ -16,7 +18,7 @@ class SparkDEX:
     @classmethod
     async def create(
         cls,
-        settings: EcosystemSettingsModel,
+        settings: EcosystemSettings,
         contracts: Contracts,
         flare_explorer: BlockExplorer,
         flare_provider: Flare,
@@ -28,7 +30,7 @@ class SparkDEX:
         and contract addresses, then constructs a SparkDEX instance.
 
         Args:
-            settings (EcosystemSettingsModel): Configuration settings, including account details.
+            settings (EcosystemSettings): Configuration settings, including account details.
             contracts (Contracts): Contract addresses for the Flare blockchain.
             flare_explorer (BlockExplorer): Block explorer instance for transaction queries.
             flare_provider (Flare): Provider instance for blockchain interactions.
@@ -58,13 +60,17 @@ class SparkDEX:
 
     def __init__(
         self,
-        settings: EcosystemSettingsModel,
+        settings: EcosystemSettings,
         contracts: Contracts,
         flare_explorer: BlockExplorer,
         flare_provider: Flare,
         universalrouter_contract: AsyncContract,
         swaprouter_contract: AsyncContract,
-    ) -> "SparkDEX":
+    ) -> None:
+        if not flare_provider.address:
+            raise Exception(
+                "Please set settings.account_address in your .env file."
+            )
         self.settings = settings
         self.contracts = contracts
         self.flare_explorer = flare_explorer
@@ -99,11 +105,10 @@ class SparkDEX:
             Exception: If the token addresses are invalid or transaction building fails.
 
         """
-
         # =========== Approve SparkDEX to spend token_in  ==============
         allowance = await self.flare_provider.erc20_allowance(
             owner_address=self.flare_provider.address,
-            token_address=token_in_addr,
+            token_address=Web3.to_checksum_address(token_in_addr),
             spender_address=self.contracts.flare.sparkdex_swap_router,
         )
         logger.debug(f"allowance={allowance}, amount_in_WEI={amount_in_WEI}")
@@ -117,8 +122,13 @@ class SparkDEX:
 
         # =============== Build swap transaction ==================
         fee_tier = 500  # Assuming 0.05% pool fee
+        
         block = await self.flare_provider.w3.eth.get_block("latest")
-        deadline = block["timestamp"] + 300
+        if "timestamp" in block:
+            deadline = block["timestamp"] + 300
+        else:
+            raise ValueError("Block fetched with w3.eth.get_block(\"latest\") has no timestamp.")
+        
         params = (
             token_in_addr,  # Token In
             token_out_addr,  # Token Out
@@ -143,18 +153,18 @@ class SparkDEX:
             logger.warning(
                 "We stop here because the simulated send transaction was not sucessfull"
             )
-            return None
+            raise Exception("We stop here because the simulated transaction was not sucessfull")
         # ======================= Execute swap =========================
         swap_tx_hash = await self.flare_provider.sign_and_send_transaction(swap_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            swap_tx_hash
+            HexBytes(swap_tx_hash)
         )
         logger.debug(f"Swap transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{swap_tx_hash}")
         return swap_tx_hash
 
 
-def get_universalrouter_abi() -> list[dict]:
+def get_universalrouter_abi() -> list[dict[str, Any]]:
     """
     Retrieve the ABI for the SparkDEX universal router contract.
 
@@ -188,7 +198,7 @@ def get_universalrouter_abi() -> list[dict]:
     ]
 
 
-def get_swaprouter_abi() -> list[dict]:
+def get_swaprouter_abi() -> list[dict[str, Any]]:
     """
     Retrieve the ABI for the SparkDEX swap router contract.
 

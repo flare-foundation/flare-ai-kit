@@ -6,9 +6,9 @@ from web3 import AsyncWeb3
 from flare_ai_kit.ecosystem.applications.cyclo import Cyclo
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.flare import Flare
-from flare_ai_kit.ecosystem.settings_models import (
+from flare_ai_kit.ecosystem.settings import (
     Contracts,
-    EcosystemSettingsModel,
+    EcosystemSettings,
 )
 
 
@@ -17,7 +17,7 @@ class TestCyclo:
         """
         Set up test fixtures before each test method.
         """
-        self.settings = MagicMock(spec=EcosystemSettingsModel)
+        self.settings = MagicMock(spec=EcosystemSettings)
         self.settings.account_address = "0x9e8318cc9c83427870ed8994d818Ba7A92739B99"
 
         self.contracts = MagicMock(spec=Contracts)

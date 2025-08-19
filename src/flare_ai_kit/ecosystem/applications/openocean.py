@@ -2,12 +2,15 @@ import logging
 
 import requests
 import structlog
-from web3 import AsyncWeb3, Web3
-from web3.types import HexStr, TxParams, Wei
+from web3 import Web3
+from web3.types import TxParams, Wei
+from eth_typing import ChecksumAddress
+from eth_typing import HexStr
+from typing import Any
 
 from flare_ai_kit.ecosystem import (
     Contracts,
-    EcosystemSettingsModel,
+    EcosystemSettings,
 )
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.flare import Flare
@@ -19,7 +22,7 @@ class OpenOcean:
     @classmethod
     async def create(
         cls,
-        settings: EcosystemSettingsModel,
+        settings: EcosystemSettings,
         contracts: Contracts,
         flare_explorer: BlockExplorer,
         provider: Flare,
@@ -35,11 +38,15 @@ class OpenOcean:
 
     def __init__(
         self,
-        settings: EcosystemSettingsModel,
+        settings: EcosystemSettings,
         contracts: Contracts,
         flare_explorer: BlockExplorer,
         provider: Flare,
     ) -> None:
+        if not settings.account_address:
+            raise Exception(
+                "Please set settings.account_address in your .env file."
+            )
         self.settings = settings
         self.contracts = contracts
         self.account_address = settings.account_address
@@ -49,7 +56,7 @@ class OpenOcean:
     def validate_config(self) -> None:
         """Validate that all required configuration attributes are set and valid."""
         logger.info(f"Validating configuration for {self.__class__.__name__}")
-        errors = []
+        errors: list[str] = []
 
         print(f"self.account_address: {self.account_address}")
         print(
@@ -93,16 +100,6 @@ class OpenOcean:
             errors.append(
                 f"provider.address ({self.provider.address}) is not a checksummed Ethereum address"
             )
-
-        # Validate provider.w3
-        if not hasattr(self.provider, "w3") or not isinstance(
-            self.provider.w3, AsyncWeb3
-        ):
-            errors.append("provider.w3 is not a valid Web3 instance")
-
-        # Validate flare_explorer
-        if not isinstance(self.flare_explorer, BlockExplorer):
-            errors.append("flare_explorer is not a valid BlockExplorer instance")
 
         if not self.settings.openocean_token_list:
             errors.append("settings.openocean_token_list is not set")
@@ -158,7 +155,7 @@ class OpenOcean:
         # Check and set a token allowance (if needed)
         allowance = await self.provider.erc20_allowance(
             owner_address=self.provider.address,
-            token_address=tokens[token_in_str],
+            token_address=Web3.to_checksum_address(tokens[token_in_str]),
             spender_address=self.contracts.flare.openocean_exchangeV2,
         )
         logger.debug(
@@ -182,7 +179,7 @@ class OpenOcean:
 
         return hash
 
-    def get_token_info(self):
+    def get_token_info(self) -> dict[str, ChecksumAddress]:
         """
         Fetches token information from OpenOcean API.
 
@@ -206,10 +203,12 @@ class OpenOcean:
                 token["symbol"].upper(): Web3.to_checksum_address(token["address"])
                 for token in data["data"]
             }
+            return token
         else:
             logging.error(f"Error occurred: {response.text}")
+            raise Exception(f"Got status != 200 from token info request in get_token_info: {response.text}")
 
-        return token
+        
 
     def get_gas_price(self, speed: str):
         """
@@ -245,7 +244,7 @@ class OpenOcean:
         gas_price: int,
         amount: float,
         slippage: int = 1,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """
         Fetches swap transaction data from OpenOcean API.
 
@@ -280,12 +279,13 @@ class OpenOcean:
 
         if response.status_code == 200:
             data = response.json()
+            return data["data"]
         else:
             logger.error("Error occurred:", response.text)
+            raise Exception(f"Got status != 200 back from transaction body request in get_transaction_body(): {response.text}")
 
-        return data["data"]
 
-    async def execute_swap(self, data: dict) -> str | None:
+    async def execute_swap(self, data: dict[str, Any]) -> str:
         """
         Executes a swap transaction using the OpenOcean DEX.
 
@@ -303,7 +303,7 @@ class OpenOcean:
             >>> print(f"Swap transaction hash: {hash}")
 
         """
-        base_tx_params = await self.provider._prepare_base_tx_params(
+        base_tx_params = await self.provider.prepare_base_tx_params(
             Web3.to_checksum_address(data["from"])
         )
 
@@ -321,9 +321,12 @@ class OpenOcean:
         tx_params["gas"] = gas_estimate
 
         hash = await self.provider.sign_and_send_transaction(tx_params)
-        return hash if hash else None
+        if hash:
+            return hash
+        else:
+            raise Exception("No hash returned from sign_and_send_transaction() in execute_swap()")
 
-    def get_abi(self) -> list[dict]:
+    def get_abi(self) -> list[dict[str, Any]]:
         return [
             {
                 "constant": False,

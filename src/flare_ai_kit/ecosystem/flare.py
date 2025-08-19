@@ -5,10 +5,12 @@ import statistics
 from collections.abc import Callable
 from functools import wraps
 from typing import Any, TypeVar, cast
+from hexbytes import HexBytes
 
 import structlog
 from eth_typing import ChecksumAddress
-from eth_utils import keccak
+#from eth_utils import keccak
+from eth_utils.crypto import keccak
 from web3 import AsyncHTTPProvider, AsyncWeb3
 from web3.contract.async_contract import AsyncContractFunction
 from web3.exceptions import (
@@ -93,14 +95,25 @@ class Flare:
             FlareConnectionError: If the Web3 provider cannot be initialized.
 
         """
-        self.address = settings.account_address
-        self.private_key = settings.account_private_key
-        self.web3_provider_url = str(settings.web3_provider_url)
-        self.max_retries = settings.max_retries
-        self.retry_delay = settings.retry_delay
-
         if not settings.account_address:
             raise ValueError("account_address must be set and non-empty")
+        self.address = settings.account_address
+        
+        if not settings.account_private_key:
+            raise ValueError("account_private_key must be set and non-empty")
+        self.private_key = settings.account_private_key
+        
+        if not settings.web3_provider_url:
+            raise ValueError("web3_provider_url must be set and non-empty")
+        self.web3_provider_url = str(settings.web3_provider_url)
+        
+        if not settings.max_retries:
+            raise ValueError("max_retries must be set and non-empty")
+        self.max_retries = settings.max_retries
+        
+        if not settings.retry_delay:
+            raise ValueError("retry_delay must be set and non-empty")
+        self.retry_delay = settings.retry_delay
 
         try:
             # Handle injecting PoA middlewares for testnets
@@ -112,7 +125,8 @@ class Flare:
                 middleware=[ExtraDataToPOAMiddleware] if settings.is_testnet else [],
             )
             # Inject geth_poa_middleware to handle Flare's oversized extraData
-            self.w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+# pyright: reportUnknownArgumentType=false            
+            self.w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0) 
             self.contract_registry = self.w3.eth.contract(
                 address=self.w3.to_checksum_address(CONTRACT_REGISTRY_ADDRESS),
                 abi=load_abi("FlareContractRegistry"),
@@ -167,7 +181,7 @@ class Flare:
         )
         return False
 
-    async def _prepare_base_tx_params(self, from_addr: ChecksumAddress) -> TxParams:
+    async def prepare_base_tx_params(self, from_addr: ChecksumAddress) -> TxParams:
         """
         Fetches nonce, gas fees (EIP-1559), and chain ID for a transaction.
 
@@ -185,9 +199,7 @@ class Flare:
         try:
             nonce, max_fee_per_gas, chain_id = await asyncio.gather(
                 self.w3.eth.get_transaction_count(from_addr),
-                self.estimate_gas_price(
-                    gas_priority_multiple=1.2
-                ),  # Use estimate_gas_price
+                self.estimate_gas_price(gas_priority_multiple=1.2),
                 self.w3.eth.chain_id,
             )
             max_priority_fee_per_gas = await self.w3.eth.max_priority_fee
@@ -198,14 +210,16 @@ class Flare:
             base_fee_per_gas = latest_block.get("baseFeePerGas")
             if base_fee_per_gas is None:
                 raise ValueError("baseFeePerGas not found in latest block")
-            max_fee_per_gas = max(max_fee_per_gas, base_fee_per_gas + max_priority_fee_per_gas)
+            max_fee_per_gas = max(
+                max_fee_per_gas, Wei(base_fee_per_gas + max_priority_fee_per_gas)
+            )
             params: TxParams = {
                 "from": from_addr,
                 "nonce": nonce,
                 "maxFeePerGas": max_fee_per_gas,
                 "maxPriorityFeePerGas": max_priority_fee_per_gas,
                 "chainId": chain_id,
-                "type": 2,
+                "type": 2, 
             }
             logger.debug("Prepared base transaction parameters", params=params)
         except Web3Exception as e:
@@ -220,21 +234,27 @@ class Flare:
         function_call: AsyncContractFunction,
         from_addr: ChecksumAddress,
         custom_params: TxParams | None = None,
-    ) -> TxParams | None:
+    ) -> TxParams:
         """Builds a transaction with dynamic gas and nonce parameters."""
-        base_tx = await self._prepare_base_tx_params(from_addr)
+        base_tx = await self.prepare_base_tx_params(from_addr)
         # Merge custom parameters, if provided, overriding base_tx values
         if custom_params is not None:
             base_tx.update(custom_params)
         # sys.exit()
         # Let web3.py handle gas estimation within build_transaction if not provided
 
-        tx = await function_call.build_transaction(base_tx)
-        logger.debug("Transaction built successfully", tx=tx)
-        return tx
-
+        try:
+            tx = await function_call.build_transaction(base_tx)
+            logger.debug("Transaction built successfully", tx=tx)
+            return tx
+        except Web3Exception as e:
+            msg = f"Failed to build transaction: {e}"
+            logger.exception(msg)
+            raise FlareTxError(msg) from e
+        
+        
     @with_web3_error_handling("Signing and sending transaction")
-    async def sign_and_send_transaction(self, tx: TxParams) -> str | None:
+    async def sign_and_send_transaction(self, tx: TxParams) -> str:
         """
         Sign and send a transaction to the network.
 
@@ -360,7 +380,7 @@ class Flare:
         checksum_from_address = self.w3.to_checksum_address(from_address)
         checksum_to_address = self.w3.to_checksum_address(to_address)
 
-        tx = await self._prepare_base_tx_params(from_addr=checksum_from_address)
+        tx = await self.prepare_base_tx_params(from_addr=checksum_from_address)
 
         tx["to"] = checksum_to_address
         tx["value"] = self.w3.to_wei(amount, unit="ether")
@@ -473,24 +493,33 @@ class Flare:
         function_call = token_contract.functions.approve(
             spender_address, approve_amount
         )
+        if not self.address:
+            raise ValueError("Account address not initialized")
         tx_approval = await self.build_transaction(
             function_call=function_call, from_addr=self.address
         )
         tx_approval_hash = await self.sign_and_send_transaction(tx_approval)
-        logger.debug(f"Approval tx hash: https://flarescan.com/tx/0x{tx_approval}")
 
         logger.debug("Waiting for approval tx to be mined...")
         approve_receipt = await self.w3.eth.wait_for_transaction_receipt(
-            tx_approval_hash
+            HexBytes(tx_approval_hash)
         )
+        
         # logger.info("Approval tx mined", blockNumber=approve_receipt.blockNumber)
         logger.debug(
             f"Approve transaction mined in block {approve_receipt['blockNumber']}"
         )
 
-        return tx_approval
+        if approve_receipt.get("status") == 0:
+            msg = f"Transaction {tx_approval_hash} failed (reverted)."
+            logger.error(msg, receipt=approve_receipt)
+            raise FlareTxRevertedError(msg)
 
-    async def eth_call(self, contract_abi, call_tx) -> bool:
+        logger.debug(f"Approval tx hash: https://flarescan.com/tx/0x{tx_approval_hash}")
+        return tx_approval_hash
+        
+
+    async def eth_call(self, contract_abi: list[dict[str, Any]], call_tx: TxParams) -> bool:
         try:
             await self.w3.eth.call(call_tx)
             logger.info("eth_call successful")
@@ -511,8 +540,8 @@ class Flare:
                 )
             return False
 
-    def get_fn_from_signature(self, abi, target_signature) -> str | None:
-        selectors = {}
+    def get_fn_from_signature(self, abi: list[dict[str, Any]], target_signature: str) -> str | None:
+        selectors: dict[str, str] = {}
 
         for item in abi:
             if item["type"] in ["function", "error"]:

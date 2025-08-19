@@ -10,34 +10,34 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class ContractAddresses(BaseModel):
     """A model for storing contract addresses for a single network."""
 
-    sparkdex_universal_router: ChecksumAddress | None = None
-    sparkdex_swap_router: ChecksumAddress | None = None
-    kinetic_comptroller: ChecksumAddress | None = None
-    kinetic_ksflr: ChecksumAddress | None = None
-    stargate_FeeLibV1ETH: ChecksumAddress | None = None
-    stargate_FeeLibV1USDC: ChecksumAddress | None = None
-    stargate_FeeLibV1USDT: ChecksumAddress | None = None
-    stargate_OFTTokenETH: ChecksumAddress | None = None
-    stargate_StargateOFTETH: ChecksumAddress | None = None
-    stargate_StargateOFTUSDC: ChecksumAddress | None = None
-    stargate_StargateOFTUSDT: ChecksumAddress | None = None
-    stargate_TokenMessaging: ChecksumAddress | None = None
-    stargate_Treasurer: ChecksumAddress | None = None
-    kinetic_kwETH: ChecksumAddress | None = None
-    kinetic_ksFLR: ChecksumAddress | None = None
-    kinetic_kUSDCe: ChecksumAddress | None = None
-    kinetic_kUSDT: ChecksumAddress | None = None
-    kinetic_kFLRETH: ChecksumAddress | None = None
-    kinetic_Unitroller: ChecksumAddress | None = None
-    cyclo_cysFLR: ChecksumAddress | None = None
-    cyclo_cywETH: ChecksumAddress | None = None
-    openocean_exchangeV2: ChecksumAddress | None = None
-    weth: ChecksumAddress | None = None
-    wflr: ChecksumAddress | None = None
-    sflr: ChecksumAddress | None = None
-    flreth: ChecksumAddress | None = None
-    usdce: ChecksumAddress | None = None
-    usdt: ChecksumAddress | None = None
+    sparkdex_universal_router: ChecksumAddress
+    sparkdex_swap_router: ChecksumAddress
+    kinetic_comptroller: ChecksumAddress
+    kinetic_ksflr: ChecksumAddress
+    stargate_FeeLibV1ETH: ChecksumAddress
+    stargate_FeeLibV1USDC: ChecksumAddress
+    stargate_FeeLibV1USDT: ChecksumAddress
+    stargate_OFTTokenETH: ChecksumAddress
+    stargate_StargateOFTETH: ChecksumAddress
+    stargate_StargateOFTUSDC: ChecksumAddress
+    stargate_StargateOFTUSDT: ChecksumAddress
+    stargate_TokenMessaging: ChecksumAddress
+    stargate_Treasurer: ChecksumAddress
+    kinetic_kwETH: ChecksumAddress
+    kinetic_ksFLR: ChecksumAddress
+    kinetic_kUSDCe: ChecksumAddress
+    kinetic_kUSDT: ChecksumAddress
+    kinetic_kFLRETH: ChecksumAddress
+    kinetic_Unitroller: ChecksumAddress
+    cyclo_cysFLR: ChecksumAddress
+    cyclo_cywETH: ChecksumAddress
+    openocean_exchangeV2: ChecksumAddress
+    weth: ChecksumAddress
+    wflr: ChecksumAddress
+    sflr: ChecksumAddress
+    flreth: ChecksumAddress
+    usdce: ChecksumAddress
+    usdt: ChecksumAddress
 
 
 class Contracts(BaseModel):
@@ -118,7 +118,6 @@ class Contracts(BaseModel):
         usdce=cast("ChecksumAddress", "0xFbDa5F676cB37624f28265A144A48B0d6e87d3b6"),
         usdt=cast("ChecksumAddress", "0x0B38e83B86d491735fEaa0a791F65c2B99535396"),
     )
-    coston2: ContractAddresses = ContractAddresses()
 
     @model_validator(mode="after")
     def enforce_flare_addresses(self) -> "Contracts":
@@ -131,7 +130,7 @@ class Contracts(BaseModel):
         return self
 
 
-class EcosystemSettingsModel(BaseSettings):
+class EcosystemSettings(BaseSettings):
     """Configuration specific to the Flare ecosystem interactions."""
 
     model_config = SettingsConfigDict(
@@ -178,15 +177,15 @@ class EcosystemSettingsModel(BaseSettings):
         default=None,
         description="Account private key to use when interacting onchain.",
     )
-    openocean_token_list: str | None = Field(
+    openocean_token_list: str = Field(
         "https://open-api.openocean.finance/v4/flare/tokenList",
         description="OpenOcean token list URL",
     )
-    openocean_gas_price: str | None = Field(
+    openocean_gas_price: str = Field(
         "https://open-api.openocean.finance/v4/bsc/gasPrice",
         description="OpenOcean gas price URL",
     )
-    openocean_swap: str | None = Field(
+    openocean_swap: str = Field(
         "https://open-api.openocean.finance/v4/flare/swap",
         description="OpenOcean swap URL",
     )
@@ -204,65 +203,55 @@ class EcosystemSettingsModel(BaseSettings):
         description="Optional API key for Flare Data Availability Layer.",
     )
 
-    model_config = SettingsConfigDict(
-        # This enables .env file support
-        env_file=".env",
-        # If .env file is not found, don't raise an error
-        env_file_encoding="utf-8",
-        # Optional: you can also specify multiple .env files
-        extra="ignore",
-    )
-
 
 class ChainIds(BaseModel):
     """A model for storing chain IDs for supported networks."""
 
-    flare: PositiveInt | None = None
-    coston2: PositiveInt | None = None
-    ethereum: PositiveInt | None = None
-    bnb_chain: PositiveInt | None = None
-    avalanche: PositiveInt | None = None
-    polygon: PositiveInt | None = None
-    arbitrum: PositiveInt | None = None
-    op_mainnet: PositiveInt | None = None
-    metis: PositiveInt | None = None
-    linea: PositiveInt | None = None
-    mantle: PositiveInt | None = None
-    base: PositiveInt | None = None
-    kava: PositiveInt | None = None
-    scroll: PositiveInt | None = None
-    aurora: PositiveInt | None = None
-    core: PositiveInt | None = None
-    sonic: PositiveInt | None = None
-    unichain: PositiveInt | None = None
-    gnosis: PositiveInt | None = None
-    soneium: PositiveInt | None = None
-    kaia: PositiveInt | None = None
-    iota: PositiveInt | None = None
-    taiko: PositiveInt | None = None
-    rari_chain: PositiveInt | None = None
-    sei: PositiveInt | None = None
-    gravity: PositiveInt | None = None
-    lightlink: PositiveInt | None = None
-    abstract: PositiveInt | None = None
-    flow: PositiveInt | None = None
-    goat: PositiveInt | None = None
-    berachain: PositiveInt | None = None
-    rootstock: PositiveInt | None = None
-    hemi: PositiveInt | None = None
-    vana: PositiveInt | None = None
-    ink: PositiveInt | None = None
-    glue: PositiveInt | None = None
-    fuse: PositiveInt | None = None
-    superposition: PositiveInt | None = None
-    degen: PositiveInt | None = None
-    codex: PositiveInt | None = None
-    story: PositiveInt | None = None
-    apechain: PositiveInt | None = None
-    telosevm: PositiveInt | None = None
-    plume_phoenix: PositiveInt | None = None
-    xdc: PositiveInt | None = None
-    nibiru: PositiveInt | None = None
+    flare: PositiveInt
+    ethereum: PositiveInt 
+    bnb_chain: PositiveInt
+    avalanche: PositiveInt
+    polygon: PositiveInt
+    arbitrum: PositiveInt 
+    op_mainnet: PositiveInt
+    metis: PositiveInt
+    linea: PositiveInt
+    mantle: PositiveInt
+    base: PositiveInt
+    kava: PositiveInt
+    scroll: PositiveInt
+    aurora: PositiveInt
+    core: PositiveInt
+    sonic: PositiveInt
+    unichain: PositiveInt 
+    gnosis: PositiveInt
+    soneium: PositiveInt
+    kaia: PositiveInt
+    iota: PositiveInt
+    taiko: PositiveInt
+    rari_chain: PositiveInt
+    sei: PositiveInt
+    gravity: PositiveInt
+    lightlink: PositiveInt
+    abstract: PositiveInt 
+    flow: PositiveInt
+    goat: PositiveInt
+    berachain: PositiveInt
+    rootstock: PositiveInt
+    hemi: PositiveInt
+    vana: PositiveInt
+    ink: PositiveInt
+    glue: PositiveInt
+    fuse: PositiveInt
+    superposition: PositiveInt
+    degen: PositiveInt
+    codex: PositiveInt
+    story: PositiveInt
+    apechain: PositiveInt 
+    telosevm: PositiveInt 
+    plume_phoenix: PositiveInt
+    xdc: PositiveInt
+    nibiru: PositiveInt
 
 
 class ChainIdConfig(BaseModel):
@@ -270,7 +259,6 @@ class ChainIdConfig(BaseModel):
 
     chains: ChainIds = ChainIds(
         flare=30295,
-        coston2=None,
         ethereum=30101,
         bnb_chain=30102,
         avalanche=30106,
@@ -317,10 +305,4 @@ class ChainIdConfig(BaseModel):
         nibiru=30369,
     )
 
-    @model_validator(mode="after")
-    def enforce_flare_chain_id(self) -> "ChainIdConfig":
-        """Ensure that the Flare mainnet chain ID is set."""
-        if self.chains.flare is None:
-            raise ValueError("'flare' chain ID must be set for mainnet")
-        return self
-
+   

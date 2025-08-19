@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import requests
 from web3 import AsyncWeb3, Web3
 
-from flare_ai_kit.ecosystem import Contracts, EcosystemSettingsModel
+from flare_ai_kit.ecosystem import Contracts, EcosystemSettings
 from flare_ai_kit.ecosystem.applications.openocean import OpenOcean
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.flare import Flare
@@ -15,8 +15,8 @@ class TestOpenOcean(unittest.IsolatedAsyncioTestCase):
         """
         Set up mock dependencies, mimicking ra_tls_main.py instantiation.
         """
-        # Mock EcosystemSettingsModel
-        self.settings = MagicMock(spec=EcosystemSettingsModel)
+        # Mock EcosystemSettings
+        self.settings = MagicMock(spec=EcosystemSettings)
         self.settings.account_address = "0x9e8318cc9c83427870ed8994d818Ba7A92739B99"
         self.settings.openocean_token_list = (
             "https://open-api.openocean.finance/v4/flare/tokenList"
@@ -125,7 +125,7 @@ class TestOpenOcean(unittest.IsolatedAsyncioTestCase):
             return_value="0xf4690a9c5afe7032ba2ce82977aa24b94e6ab61e8afea2ed10bd8087dcbf8496"
         )
 
-        self.provider._prepare_base_tx_params = AsyncMock(
+        self.provider.prepare_base_tx_params = AsyncMock(
             return_value={
                 "from": self.provider.address,
                 "nonce": 1,
@@ -173,7 +173,7 @@ class TestOpenOcean(unittest.IsolatedAsyncioTestCase):
             return_value="0xf4690a9c5afe7032ba2ce82977aa24b94e6ab61e8afea2ed10bd8087dcbf8496"
         )
 
-        self.provider._prepare_base_tx_params = AsyncMock(
+        self.provider.prepare_base_tx_params = AsyncMock(
             return_value={
                 "from": self.provider.address,
                 "nonce": 1,
@@ -322,7 +322,7 @@ class TestOpenOcean(unittest.IsolatedAsyncioTestCase):
             "value": "0",
             "data": "0xabcdef",
         }
-        self.provider._prepare_base_tx_params = AsyncMock(
+        self.provider.prepare_base_tx_params = AsyncMock(
             return_value={
                 "from": self.provider.address,
                 "nonce": 1,
@@ -353,7 +353,7 @@ class TestOpenOcean(unittest.IsolatedAsyncioTestCase):
             "value": "0",
             "data": "0xabcdef",
         }
-        self.provider._prepare_base_tx_params = AsyncMock(
+        self.provider.prepare_base_tx_params = AsyncMock(
             return_value={
                 "from": self.provider.address,
                 "nonce": 1,
