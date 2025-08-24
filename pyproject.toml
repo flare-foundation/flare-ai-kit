@@ -66,6 +66,12 @@ tee = [
 a2a = [
     "fastapi[standard]>=0.116.1",
 ]
+wallet = [
+    "httpx>=0.28.1",
+    "cryptography>=44.0.2",
+    "eth-account>=0.13.0",
+    "pyjwt>=2.10.1",
+]
 ingestion = [
     "pillow>=11.3.0",
     "pymupdf>=1.26.1",
@@ -85,6 +91,7 @@ dev = [
     "ruff>=0.11.2",
     "settings-doc>=4.3.2",
     "reportlab>=4.2.0",
+    "gitpython>=3.1.45",
 ]
 
 [tool.ruff]
