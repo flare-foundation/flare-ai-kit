@@ -7,7 +7,7 @@ class StargateClient:
     def __init__(self):
         self.base_url = "https://stargate.finance/api/v1"
 
-    async def describe_sparkDEX_services(self) -> str:
+    async def describe_stargate_services(self) -> str:
         return """
         Stargate is a composable cross-chain liquidity transport protocol enabling seamless asset transfers between blockchains.
         It allows users to:

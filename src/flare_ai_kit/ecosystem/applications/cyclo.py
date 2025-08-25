@@ -9,9 +9,9 @@ from flare_ai_kit.config import AppSettings
 from flare_ai_kit.ecosystem.settings import Contracts
 
 
-class CyloClient:
+class CycloClient:
     """
-    Client for interacting with the Cylo protocol.
+    Client for interacting with the Cyclo protocol.
     """
 
     def __init__(self):
@@ -23,20 +23,20 @@ class CyloClient:
         self.contracts = Contracts()
         self.address = self.settings.account_address
         self.private_key = self.settings.account_private_key
-        self.contract_address = self.contracts.flare.cylo_cysflr
-        self.abi = load_abi("cylo")
+        self.contract_address = self.contracts.flare.cyclo_cysflr
+        self.abi = load_abi("cyclo")
         self.contract = self.client.eth.contract(
             address=self.contract_address,
             abi=self.abi,
         )
 
-    def describe_cylo_services(self) -> str:
+    def describe_cyclo_services(self) -> str:
         return """
-        Cylo is a decentralized protocol on the Flare Network,
+        Cyclo is a decentralized protocol on the Flare Network,
         enabling users to create and manage synthetic assets.
         It allows for the creation of synthetic assets that track the value of real-world assets,
         providing a bridge between traditional finance and decentralized finance (DeFi).
-        Cylo leverages the Flare Time Series Oracle (FTSOv2) for accurate price feeds,
+        Cyclo leverages the Flare Time Series Oracle (FTSOv2) for accurate price feeds,
         ensuring that synthetic assets are always pegged to their underlying assets.
         """
 
@@ -54,7 +54,7 @@ class CyloClient:
         receipt_data: bytes,
     ):
         """
-        Deposit assets into the Cylo protocol.
+        Deposit assets into the Cyclo protocol.
         """
         if self.address is None:
             raise ValueError("Account address is not set")

@@ -14,10 +14,16 @@ class KineticClient:
         )
         self.contracts = Contracts()
         self.contract_address = self.contracts.flare.kinetic_comptroller
+        self.ksflr_address = self.contracts.flare.kinetic_ksflr
         self.abi = load_abi("kineticComptroller")
+        self.sflr_abi = load_abi("kineticSflr")
         self.contract = self.client.eth.contract(
             address=self.contract_address,
             abi=self.abi,
+        )
+        self.sflr_contract = self.client.eth.contract(
+            address=self.ksflr_address,
+            abi=self.sflr_abi,
         )
 
     async def describe_kinetic_services(self) -> str:
@@ -75,3 +81,63 @@ class KineticClient:
             ).call()
         except Exception as e:
             raise RuntimeError(f"Failed to check membership: {e}")
+
+    async def deposit(self, amount: int):
+        """
+        Deposits KSFLR tokens to the Kinetic protocol.
+        """
+        if self.settings.account_address is None:
+            raise ValueError("Address is not set")
+        try:
+            tx = await self.sflr_contract.functions.mint(amount).build_transaction(
+                {
+                    "gas": 200000,
+                    "gasPrice": await self.client.eth.gas_price,
+                    "nonce": await self.client.eth.get_transaction_count(
+                        self.settings.account_address
+                    ),
+                }
+            )
+            if self.settings.account_private_key is None:
+                raise ValueError("Private key is not set")
+            signed_tx = self.client.eth.account.sign_transaction(
+                tx, private_key=self.settings.account_private_key.get_secret_value()
+            )
+            tx_hash = await self.client.eth.send_raw_transaction(
+                signed_tx.raw_transaction
+            )
+            receipt = await self.client.eth.wait_for_transaction_receipt(tx_hash)
+            return receipt
+        except Exception as e:
+            raise RuntimeError(f"Failed to deposit KSFLR: {e}")
+
+    async def withdraw(self, amount: int):
+        """
+        Withdraws KSFLR tokens from the Kinetic protocol.
+        """
+        if self.settings.account_address is None:
+            raise ValueError("Address is not set")
+        try:
+            tx = await self.sflr_contract.functions.redeemUnderlying(
+                amount
+            ).build_transaction(
+                {
+                    "gas": 200000,
+                    "gasPrice": await self.client.eth.gas_price,
+                    "nonce": await self.client.eth.get_transaction_count(
+                        self.settings.account_address
+                    ),
+                }
+            )
+            if self.settings.account_private_key is None:
+                raise ValueError("Private key is not set")
+            signed_tx = self.client.eth.account.sign_transaction(
+                tx, private_key=self.settings.account_private_key.get_secret_value()
+            )
+            tx_hash = await self.client.eth.send_raw_transaction(
+                signed_tx.raw_transaction
+            )
+            receipt = await self.client.eth.wait_for_transaction_receipt(tx_hash)
+            return receipt
+        except Exception as e:
+            raise RuntimeError(f"Failed to withdraw KSFLR: {e}")

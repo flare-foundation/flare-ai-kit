@@ -77,13 +77,13 @@ class SparkDEXClient:
             print(f"Error during swap: {e}")
             raise RuntimeError("Swap transaction failed") from e
 
-    async def get_sprk_price(self) -> int | str | None:
-        url = "https://api.sparkdex.ai/price/latest?symbols=SPRK"
+    async def get_prices(self, token: str = "SPRK") -> int | str | None:
+        url = f"https://api.sparkdex.ai/price/latest?symbols={token}"
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.get(url)
                 response.raise_for_status()  # Raise an exception for HTTP errors
-                return response.json().get("SPRK")
+                return response.json().get(f"{token}")
             except httpx.HTTPStatusError as e:
                 print(f"HTTP error occurred: {e}")
             except Exception as e:

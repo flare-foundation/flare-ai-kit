@@ -97,3 +97,80 @@ class SceptreClient:
             return fee
         except Exception as e:
             raise RuntimeError(f"Failed to calculate fee from Sceptre: {e}")
+
+    async def deposit(self, amount: int, to: ChecksumAddress) -> str:
+        """
+        Calls the `depositTo()` method on the contract.
+        """
+        amount = Wei(amount)
+        contract_address = await self.get_sceptre_contract_address()
+        if not contract_address:
+            raise ValueError(
+                "Sceptre contract address is not set for the current network."
+            )
+
+        abi = load_abi("sceptreWflr")
+        contract = self.client.eth.contract(
+            address=contract_address,
+            abi=abi,
+        )
+        if self.settings.account_address is None:
+            raise ValueError("Address is not set")
+        try:
+            param: TxParams = {
+                "from": self.settings.account_address,
+                "value": amount,
+                "gas": 300000,
+                "gasPrice": self.client.to_wei(50, "gwei"),
+                "nonce": await self.client.eth.get_transaction_count(
+                    self.settings.account_address
+                ),
+            }
+            tx = await contract.functions.depositTo(to).build_transaction(param)
+            if self.settings.account_private_key is None:
+                raise ValueError("Private key is not set")
+            signed = self.client.eth.account.sign_transaction(
+                tx, self.settings.account_private_key.get_secret_value()
+            )
+            tx_hash = await self.client.eth.send_raw_transaction(signed.raw_transaction)
+            return tx_hash.hex()
+        except Exception as e:
+            raise RuntimeError(f"Failed to deposit to Sceptre: {e}")
+
+    async def withdraw(self, amount: int) -> str:
+        """
+        Calls the `withdraw()` method on the contract.
+        """
+        contract_address = await self.get_sceptre_contract_address()
+        if not contract_address:
+            raise ValueError(
+                "Sceptre contract address is not set for the current network."
+            )
+
+        abi = load_abi("sceptreWflr")
+        contract = self.client.eth.contract(
+            address=contract_address,
+            abi=abi,
+        )
+        if self.settings.account_address is None:
+            raise ValueError("Address is not set")
+        try:
+            tx = await contract.functions.withdraw(amount).build_transaction(
+                {
+                    "from": self.settings.account_address,
+                    "gas": 300000,
+                    "gasPrice": self.client.to_wei(50, "gwei"),
+                    "nonce": await self.client.eth.get_transaction_count(
+                        self.settings.account_address
+                    ),
+                }
+            )
+            if self.settings.account_private_key is None:
+                raise ValueError("Private key is not set")
+            signed = self.client.eth.account.sign_transaction(
+                tx, self.settings.account_private_key.get_secret_value()
+            )
+            tx_hash = await self.client.eth.send_raw_transaction(signed.raw_transaction)
+            return tx_hash.hex()
+        except Exception as e:
+            raise RuntimeError(f"Failed to withdraw from Sceptre: {e}")
