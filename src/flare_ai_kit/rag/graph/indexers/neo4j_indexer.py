@@ -34,6 +34,15 @@ class Neo4jIngester:
     def _create_transaction_nodes(
         tx: ManagedTransaction, transactions: list[dict[str, Any]]
     ) -> None:
+        # Normalize hashes to lowercase hex strings
+        for t in transactions:
+            if isinstance(t.get("hash"), (bytes, bytearray)):
+                t["hash"] = t["hash"].hex()
+            elif isinstance(t.get("hash"), str) and t["hash"].startswith("0x"):
+                t["hash"] = t["hash"][2:]  # strip 0x
+            elif isinstance(t.get("hash"), str):
+                t["hash"] = t["hash"].lower()
+
         tx.run(
             """
             UNWIND $transactions AS tx_data
@@ -88,13 +97,21 @@ class Neo4jIngester:
 
             tx: TxData = tx_raw
 
-            hash_bytes = tx.get("hash")
+            hash_val = tx.get("hash")
             block_number_val = tx.get("blockNumber")
             value = tx.get("value")
             from_address = cast("ChecksumAddress", tx.get("from"))
             to_address = cast("ChecksumAddress", tx.get("to"))
 
-            if not all([hash_bytes, block_number_val, value, from_address]):
+            # Normalize hash into canonical 0x-prefixed string
+            if isinstance(hash_val, (bytes, bytearray)):
+                hash_str = "0x" + hash_val.hex()
+            else:
+                hash_str = str(hash_val).lower()
+                if not hash_str.startswith("0x"):
+                    hash_str = "0x" + hash_str
+
+            if not all([hash_str, block_number_val, value, from_address]):
                 continue
 
             from_balance = await self.web3.eth.get_balance(from_address)
@@ -105,7 +122,7 @@ class Neo4jIngester:
 
             transactions.append(
                 {
-                    "hash": hash_bytes,
+                    "hash": hash_str,
                     "from": from_address,
                     "to": to_address,
                     "blockNumber": block_number_val,
@@ -126,4 +143,6 @@ class Neo4jIngester:
             if txs:
                 print(f"Ingesting block {i} with {len(txs)} transactions")
                 self.ingest_transactions(txs)
+            else:
+                print(f"Block {i} has no transactions, skipping")
         self.close()

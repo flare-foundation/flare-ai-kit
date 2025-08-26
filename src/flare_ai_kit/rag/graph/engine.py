@@ -24,37 +24,59 @@ class GraphQueryEngine:
             MATCH (tx:Transaction {hash: $tx_hash})
             OPTIONAL MATCH (from:Account)-[:FROM]->(tx)
             OPTIONAL MATCH (tx)-[:TO]->(to:Account)
-            RETURN tx, from.address AS from_address, to.address AS to_address
+            RETURN tx.hash AS hash,
+                   tx.blockNumber AS blockNumber,
+                   tx.value AS value,
+                   tx.timestamp AS timestamp,
+                   from.address AS from_address,
+                   to.address AS to_address
+            LIMIT 1
         """
-
-        def fetch_tx(tx: ManagedTransaction) -> Any:
-            return tx.run(query, tx_hash=tx_hash).single()
-
         with self._driver.session() as session:
-            result = session.execute_read(fetch_tx)
-
-            if result:
-                return {
-                    "tx": result["tx"],
-                    "from": result.get("from_address"),
-                    "to": result.get("to_address"),
-                }
-            return {}
+            result = session.execute_read(
+                lambda tx: tx.run(query, tx_hash=tx_hash).data()
+            )
+            if not result:
+                return {}
+            r = result[0]
+            return {
+                "hash": "0x" + r["hash"].hex()
+                if isinstance(r["hash"], (bytes, bytearray))
+                else str(r["hash"]).lower(),
+                "blockNumber": r["blockNumber"],
+                "value": r["value"],
+                "timestamp": r["timestamp"].isoformat() if r["timestamp"] else None,
+                "from_address": r.get("from_address"),
+                "to_address": r.get("to_address"),
+            }
 
     def get_recent_transactions(self, limit: int = 10) -> list[dict[str, Any]]:
         query = """
             MATCH (tx:Transaction)
-            RETURN tx
+            RETURN tx.hash AS hash,
+                   tx.blockNumber AS blockNumber,
+                   tx.value AS value,
+                   tx.timestamp AS timestamp
             ORDER BY tx.timestamp DESC
             LIMIT $limit
         """
-
-        def fetch_tx(tx: ManagedTransaction) -> Any:
-            return tx.run(query, limit=limit).single()
-
         with self._driver.session() as session:
-            results = session.execute_read(fetch_tx)
-            return [record["tx"] for record in results]
+            results = session.execute_read(lambda tx: tx.run(query, limit=limit).data())
+            cleaned: list[dict[str, Any]] = []
+            for r in results:
+                cleaned.append(
+                    {
+                        "hash": "0x" + r["hash"].hex()
+                        if isinstance(r["hash"], (bytes, bytearray))
+                        else str(r["hash"]).lower(),
+                        "blockNumber": r["blockNumber"],
+                        "value": r["value"],
+                        "timestamp": r["timestamp"].isoformat()
+                        if r["timestamp"]
+                        else None,
+                    }
+                )
+            return cleaned
 
     def get_account_balance(self, address: str) -> dict[str, Any]:
         query = """
@@ -81,7 +103,7 @@ class GraphQueryEngine:
         """
 
         def fetch_tx(tx: ManagedTransaction) -> Any:
-            return tx.run(query, limit=limit).single()
+            return tx.run(query, limit=limit).data()
 
         with self._driver.session() as session:
             result = session.execute_read(fetch_tx)

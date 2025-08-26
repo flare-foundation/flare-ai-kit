@@ -19,7 +19,7 @@ class GraphDbSettings(BaseSettings):
         description="Flare RPC endpoint URL.",
     )
     neo4j_uri: str = Field(
-        default="neo4j://localhost:7687",
+        default="bolt://localhost:7687",
         description="Connection URI for the Neo4j database.",
     )
     neo4j_username: str = Field(
