@@ -8,8 +8,13 @@ wheels/
 
 # Virtual environments
 .venv
+.venv*/
 .env
 .ruff_cache
 .pytest_cache
 .vscode
 .DS_Store
+
+
+# sqlite
+*.db

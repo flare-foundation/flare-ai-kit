@@ -21,7 +21,7 @@ from web3.middleware import (
 from web3.types import TxParams
 
 from flare_ai_kit.common import FlareTxError, FlareTxRevertedError, load_abi
-from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
+from flare_ai_kit.ecosystem.settings import EcosystemSettings
 
 logger = structlog.get_logger(__name__)
 
@@ -79,12 +79,12 @@ def with_web3_error_handling(operation_name: str) -> Callable[[F], F]:
 class Flare:
     """Handles interactions with the Flare blockchain."""
 
-    def __init__(self, settings: EcosystemSettingsModel) -> None:
+    def __init__(self, settings: EcosystemSettings) -> None:
         """
         Initialize the Flare Provider and connect to the RPC endpoint.
 
         Args:
-            settings: Instance of EcosystemSettingsModel containing connection
+            settings: Instance of EcosystemSettings containing connection
                       and account details.
 
         Raises:

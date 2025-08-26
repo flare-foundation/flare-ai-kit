@@ -6,7 +6,7 @@ import structlog
 
 from flare_ai_kit.common import FtsoFeedCategory, FtsoV2Error, load_abi
 from flare_ai_kit.ecosystem.flare import Flare
-from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
+from flare_ai_kit.ecosystem.settings import EcosystemSettings
 
 logger = structlog.get_logger(__name__)
 
@@ -20,25 +20,25 @@ T = TypeVar("T", bound="FtsoV2")
 class FtsoV2(Flare):
     """Fetches price data from Flare Time Series Oracle V2 contracts."""
 
-    def __init__(self, settings: EcosystemSettingsModel) -> None:
+    def __init__(self, settings: EcosystemSettings) -> None:
         super().__init__(settings)
         self.ftsov2 = None  # Will be initialized in 'create'
 
     # Factory method for asynchronous initialization
     @classmethod
-    async def create(cls, settings: EcosystemSettingsModel) -> Self:
+    async def create(cls, settings: EcosystemSettings) -> Self:
         """
         Asynchronously creates and initializes an FtsoV2 instance.
 
         Args:
-            settings: Instance of EcosystemSettingsModel.
+            settings: Instance of EcosystemSettings.
 
         Returns:
             A fully initialized AsyncFtsoV2 instance.
 
         """
         instance = cls(settings)
-        logger.debug("Initializing FtsoV2...")
+        logger.info("Initializing FtsoV2...")
         # Await the async method from the base class
         ftsov2_address = await instance.get_protocol_contract_address("FtsoV2")
         instance.ftsov2 = instance.w3.eth.contract(
@@ -193,6 +193,7 @@ class FtsoV2(Flare):
         logger.debug(
             "get_latest_prices",
             feed_names=feed_names,
+            feed_ids=feed_ids,
             value=values,
             decimals=decimals,
             timestamp=timestamp,

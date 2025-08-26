@@ -90,3 +90,51 @@ class EmbeddingsError(FlareAIKitError):
 # --- VectorDB Errors ---
 class VectorDbError(FlareAIKitError):
     """Raised for errors encountered when interacting with VectorDBs."""
+
+
+# --- FAssets Errors ---
+class FAssetsError(FlareAIKitError):
+    """Base exception for errors related to FAssets protocol interactions."""
+
+
+class FAssetsContractError(FAssetsError):
+    """Raised for errors during FAssets contract interactions."""
+
+
+class FAssetsMintError(FAssetsError):
+    """Raised for errors during FAssets minting process."""
+
+
+class FAssetsRedeemError(FAssetsError):
+    """Raised for errors during FAssets redemption process."""
+
+
+class FAssetsCollateralError(FAssetsError):
+    """Raised for errors related to FAssets collateral management."""
+
+
+class FAssetsAgentError(FAssetsError):
+    """Raised for errors related to FAssets agent operations."""
+
+
+# --- DA Layer Errors ---
+class DALayerError(FlareAIKitError):
+    """Base exception for errors related to Data Availability Layer interactions."""
+
+
+class AttestationNotFoundError(DALayerError):
+    """Raised when a requested attestation is not found."""
+
+
+class MerkleProofError(DALayerError):
+    """Raised for errors related to Merkle proof validation or processing."""
+
+
+# --- A2A Errors ---
+class A2AClientError(FlareAIKitError):
+    """Error class concerned with unrecoverable A2A errors."""
+
+
+# --- PDF Processing Errors ---
+class PdfPostingError(FlareAIKitError):
+    """Error class concerned with onchain PDF data posting errors."""
