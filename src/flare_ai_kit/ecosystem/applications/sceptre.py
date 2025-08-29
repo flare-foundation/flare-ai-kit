@@ -1,5 +1,6 @@
-import structlog
 from typing import cast
+
+import structlog
 from web3.types import TxParams
 
 from flare_ai_kit.ecosystem import Contracts, EcosystemSettings
@@ -37,7 +38,6 @@ class Sceptre:
             Exception: If the sFLR contract ABI cannot be fetched or the contract initialization fails.
 
         """
-
         # Create Sceptre instance
         instance = cls(
             settings=settings,
@@ -55,9 +55,7 @@ class Sceptre:
         flare_provider: Flare,
     ) -> None:
         if not flare_provider.address:
-            raise Exception(
-                "Please set settings.account_address in your .env file."
-            )
+            raise Exception("Please set settings.account_address in your .env file.")
         self.settings = settings
         self.contracts = contracts
         self.flare_explorer = flare_explorer
@@ -104,7 +102,7 @@ class Sceptre:
         stake_tx = await self.flare_provider.build_transaction(
             function_call=stake_fn,
             from_addr=self.flare_provider.address,
-            custom_params=cast(TxParams, {"value": amount_WEI}),
+            custom_params=cast("TxParams", {"value": amount_WEI}),
         )
 
         logger.debug("Stake FLR to sFLR", tx=stake_tx)
@@ -116,11 +114,13 @@ class Sceptre:
             logger.warning(
                 "We stop here because the simulated stake transaction was not sucessfull"
             )
-            raise Exception("We stop here because the simulated transaction was not sucessfull")
+            raise Exception(
+                "We stop here because the simulated transaction was not sucessfull"
+            )
 
         stake_tx_hash = await self.flare_provider.sign_and_send_transaction(stake_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            stake_tx_hash # type: ignore
+            stake_tx_hash  # type: ignore
         )
         logger.debug(f"Stake transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{stake_tx_hash}")
@@ -182,11 +182,13 @@ class Sceptre:
             logger.warning(
                 "We stop here because the simulated stake transaction was not sucessfull"
             )
-            raise Exception("We stop here because the simulated transaction was not sucessfull")
+            raise Exception(
+                "We stop here because the simulated transaction was not sucessfull"
+            )
 
         stake_tx_hash = await self.flare_provider.sign_and_send_transaction(stake_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            stake_tx_hash # type: ignore
+            stake_tx_hash  # type: ignore
         )
         logger.debug(f"Stake transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{stake_tx_hash}")

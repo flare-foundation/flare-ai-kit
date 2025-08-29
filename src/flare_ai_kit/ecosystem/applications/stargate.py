@@ -1,9 +1,10 @@
+import re
+from typing import Any, cast
+
 import structlog
+from hexbytes import HexBytes
 from web3 import Web3
 from web3.types import TxParams
-from typing import Any, cast
-from hexbytes import HexBytes
-import re
 
 from flare_ai_kit.ecosystem import (
     ChainIdConfig,
@@ -91,17 +92,13 @@ class Stargate:
 
         """
         if not settings.account_address:
-            raise Exception(
-                "Please set settings.account_address in your .env file."
-            )
+            raise Exception("Please set settings.account_address in your .env file.")
         self.contracts = contracts
         self.chains = chains
         self.account_address = settings.account_address
         self.flare_explorer = flare_explorer
         self.flare_provider = flare_provider
         self.oft_abi = oft_abi
-
-        
 
         # Create Web3 contract instance to check version
         self.oft_contract = flare_provider.w3.eth.contract(
@@ -141,13 +138,15 @@ class Stargate:
         #
         # === Define parameter for the quoteOFT in the contract ===
         #
-        address_hex = self.account_address[2:].lower() 
+        address_hex = self.account_address[2:].lower()
         if not Web3.is_address(address_hex):
-            raise ValueError(f"Invalid Ethereum address derived from account_address: {address_hex}")
+            raise ValueError(
+                f"Invalid Ethereum address derived from account_address: {address_hex}"
+            )
         padded_hex = "0x" + "000000000000000000000000" + address_hex
         if not re.match(r"^0x[0-9a-fA-F]{64}$", padded_hex):
             raise ValueError(f"Invalid padded hex string: {padded_hex}")
-        to_address = Web3.to_bytes(hexstr=padded_hex) # type: ignore
+        to_address = Web3.to_bytes(hexstr=padded_hex)  # type: ignore
 
         amount = int(desired_amount_WEI)
         min_amount = int(desired_amount_WEI - (desired_amount_WEI * max_slippage))
@@ -243,7 +242,7 @@ class Stargate:
         send_tx = await self.flare_provider.build_transaction(
             function_call=send_fn,
             from_addr=self.flare_provider.address,
-            custom_params=cast(TxParams, {"value": nativeFee})
+            custom_params=cast("TxParams", {"value": nativeFee}),
         )
         #
         # === Simulate send transaction ===
@@ -256,7 +255,9 @@ class Stargate:
             logger.warning(
                 "We stop here because the simulated send transaction was not sucessfull"
             )
-            raise Exception("We stop here because the simulated send transaction was not sucessfull")
+            raise Exception(
+                "We stop here because the simulated send transaction was not sucessfull"
+            )
         #
         # === Call the send function ===
         #

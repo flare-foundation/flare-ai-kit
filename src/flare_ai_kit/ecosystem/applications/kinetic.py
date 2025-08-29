@@ -1,9 +1,10 @@
-import structlog
 from typing import Any
+
+import structlog
+from hexbytes import HexBytes
 from web3 import Web3
 from web3.contract import AsyncContract
 from web3.contract.async_contract import AsyncContract, AsyncContractFunction
-from hexbytes import HexBytes
 
 from flare_ai_kit.ecosystem import (
     Contracts,
@@ -52,10 +53,8 @@ class Kinetic:
         flare_explorer: BlockExplorer,
         flare_provider: Flare,
     ) -> None:
-        if not  settings.account_address:
-            raise Exception(
-                "Please set settings.account_address in your .env file."
-            )
+        if not settings.account_address:
+            raise Exception("Please set settings.account_address in your .env file.")
         self.contracts = contracts
         self.account_address = settings.account_address
         self.flare_explorer = flare_explorer
@@ -139,7 +138,8 @@ class Kinetic:
 
         # ============= Build transaction ================
         lending_contract: AsyncContract = self.flare_provider.w3.eth.contract(
-            address=Web3.to_checksum_address(lending_address), abi=self.get_lending_contract_abi()
+            address=Web3.to_checksum_address(lending_address),
+            abi=self.get_lending_contract_abi(),
         )
 
         mint_fn = lending_contract.functions.mint(amount_WEI)
@@ -157,7 +157,9 @@ class Kinetic:
             logger.warning(
                 "We stop here because the simulated transaction was not sucessfull"
             )
-            raise Exception("We stop here because the simulated transaction was not sucessfull")
+            raise Exception(
+                "We stop here because the simulated transaction was not sucessfull"
+            )
 
         # ============= Execute transaction ================
         mint_tx_hash = await self.flare_provider.sign_and_send_transaction(mint_tx)
@@ -192,10 +194,13 @@ class Kinetic:
 
         # ============= Build transaction ================
         lending_contract: AsyncContract = self.flare_provider.w3.eth.contract(
-            address=Web3.to_checksum_address(lending_address), abi=self.get_lending_contract_abi()
+            address=Web3.to_checksum_address(lending_address),
+            abi=self.get_lending_contract_abi(),
         )
 
-        withdraw_fn: AsyncContractFunction = lending_contract.functions.redeemUnderlying(amount_WEI)
+        withdraw_fn: AsyncContractFunction = (
+            lending_contract.functions.redeemUnderlying(amount_WEI)
+        )
         withdraw_tx = await self.flare_provider.build_transaction(
             function_call=withdraw_fn, from_addr=self.flare_provider.address
         )
@@ -210,7 +215,9 @@ class Kinetic:
             logger.warning(
                 "We stop here because the simulated transaction was not sucessfull"
             )
-            raise Exception("We stop here because the simulated transaction was not sucessfull")
+            raise Exception(
+                "We stop here because the simulated transaction was not sucessfull"
+            )
 
         # ============= Execute transaction ================
         withdraw_tx_hash = await self.flare_provider.sign_and_send_transaction(
@@ -264,7 +271,9 @@ class Kinetic:
             logger.warning(
                 "We stop here because the simulated transaction was not sucessfull"
             )
-            raise Exception("We stop here because the simulated transaction was not sucessfull")
+            raise Exception(
+                "We stop here because the simulated transaction was not sucessfull"
+            )
 
         # ============= Execute transaction ================
         enable_col_tx_hash = await self.flare_provider.sign_and_send_transaction(
@@ -318,7 +327,9 @@ class Kinetic:
             logger.warning(
                 "We stop here because the simulated transaction was not sucessfull"
             )
-            raise Exception("We stop here because the simulated transaction was not sucessfull")
+            raise Exception(
+                "We stop here because the simulated transaction was not sucessfull"
+            )
 
         # ============= Execute transaction ================
         disable_col_tx_hash = await self.flare_provider.sign_and_send_transaction(
