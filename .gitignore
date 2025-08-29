@@ -15,6 +15,8 @@ wheels/
 .vscode
 .DS_Store
 
+# Python client 
+*.pem
 
 # sqlite
 *.db
