@@ -2,14 +2,24 @@
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import Any, Literal, cast
+from typing import Any
 
-from pydantic_ai import Agent
+try:
+    from pydantic_ai import Agent as _PydanticAgent  # type: ignore[import-untyped]
 
-from flare_ai_kit.common import Prediction
+    Agent = _PydanticAgent  # type: ignore[misc]
+except ImportError:
+    # Fallback for when pydantic_ai is not available
+    class Agent:  # type: ignore[misc]
+        """Fallback Agent when pydantic_ai is not available."""
+
+        def __init__(self, **kwargs: Any) -> None:
+            for key, value in kwargs.items():
+                setattr(self, key, value)
+
+
+from flare_ai_kit.common import AgentRole, Prediction
 from flare_ai_kit.consensus.coordinator.base import BaseCoordinator
-
-AgentRole = Literal["user", "system", "assistant", "summarizer", "critic"]
 
 
 @dataclass
@@ -17,14 +27,14 @@ class CoordinatorAgent:
     """Represents an agent managed by the coordinator."""
 
     agent_id: str
-    agent: Agent[Any, Any]
+    agent: Any
     role: AgentRole
     config: dict[str, Any] = field(default_factory=lambda: dict[str, Any]())
 
     @property
     def status(self) -> str:
         """Returns the status of the agent."""
-        return getattr(self.agent, "status", "unknown")
+        return getattr(self.agent, "status", "unknown")  # type: ignore[arg-type]
 
 
 class SimpleCoordinator(BaseCoordinator):
@@ -35,8 +45,8 @@ class SimpleCoordinator(BaseCoordinator):
 
     def add_agent(
         self,
-        agent: Agent[Any, Any],
-        role: str,  # Changed to str to match base class
+        agent: Any,
+        role: AgentRole,  # Use AgentRole type
         config: dict[str, Any] | None = None,
     ) -> None:
         """
@@ -48,16 +58,11 @@ class SimpleCoordinator(BaseCoordinator):
             config: Optional agent-specific configuration.
 
         """
-        # Validate the role matches our expected types
-        if role not in {"user", "system", "assistant", "summarizer", "critic"}:
-            msg = f"Invalid role: {role}"
-            raise ValueError(msg)
-
         agent_id = f"{type(agent).__name__}_{len(self.agents)}"
         self.agents[agent_id] = CoordinatorAgent(
             agent_id=agent_id,
             agent=agent,
-            role=cast("AgentRole", role),  # Safe cast after validation
+            role=role,
             config=config or {},
         )
 
@@ -96,13 +101,15 @@ class SimpleCoordinator(BaseCoordinator):
             A list of tuples (agent_id, result).
 
         """
-        selected = [
+        selected: list[tuple[str, Any]] = [
             (a.agent_id, a.agent)
             for a in self.agents.values()
             if role is None or a.role == role
         ]
 
-        results = await asyncio.gather(*(agent.run(task) for _, agent in selected))
+        results: list[Any] = list(
+            await asyncio.gather(*(agent.run(task) for _, agent in selected))
+        )
 
         return list(zip((aid for aid, _ in selected), results, strict=False))
 

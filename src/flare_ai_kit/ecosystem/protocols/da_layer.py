@@ -1,18 +1,24 @@
 """Interactions with Flare Data Availability (DA) Layer."""
 
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from types import TracebackType
 from typing import Any, Self, TypeVar
 from urllib.parse import urljoin
 
-import aiohttp
+import httpx
 import structlog
 
-from flare_ai_kit.common.exceptions import (
+from flare_ai_kit.common import (
+    AttestationData,
     AttestationNotFoundError,
+    AttestationResponse,
     DALayerError,
+    FTSOAnchorFeed,
+    FTSOAnchorFeedsWithProof,
+    FTSOAnchorFeedValue,
+    MerkleProof,
     MerkleProofError,
+    VotingRoundData,
 )
 from flare_ai_kit.ecosystem.flare import Flare
 from flare_ai_kit.ecosystem.settings import EcosystemSettings
@@ -24,87 +30,6 @@ logger = structlog.get_logger(__name__)
 
 # Type variable for the factory method pattern
 T = TypeVar("T", bound="DataAvailabilityLayer")
-
-
-@dataclass(frozen=True)
-class AttestationRequest:
-    """Represents an attestation request structure."""
-
-    attestation_type: str
-    source_id: str
-    message_integrity_code: str
-    request_body: dict[str, Any]
-
-
-@dataclass(frozen=True)
-class AttestationResponse:
-    """Represents an attestation response structure."""
-
-    attestation_type: str
-    source_id: str
-    voting_round: int
-    lowest_used_timestamp: int
-    request_body: dict[str, Any]
-    response_body: dict[str, Any]
-
-
-@dataclass(frozen=True)
-class MerkleProof:
-    """Represents a Merkle proof for attestation verification."""
-
-    merkle_proof: list[str]
-    leaf_index: int
-    total_leaves: int
-
-
-@dataclass(frozen=True)
-class AttestationData:
-    """Complete attestation data including response and proof."""
-
-    response: AttestationResponse
-    proof: MerkleProof
-
-
-@dataclass(frozen=True)
-class VotingRoundData:
-    """Data for a specific voting round."""
-
-    voting_round: int
-    merkle_root: str
-    timestamp: int
-    total_attestations: int
-    finalized: bool
-
-
-@dataclass(frozen=True)
-class FTSOAnchorFeed:
-    """FTSO anchor feed data structure."""
-
-    id: str
-    name: str
-    decimals: int
-    category: str
-    description: str
-
-
-@dataclass(frozen=True)
-class FTSOAnchorFeedValue:
-    """FTSO anchor feed value with proof."""
-
-    id: str
-    value: int
-    timestamp: int
-    decimals: int
-    proof: MerkleProof
-
-
-@dataclass(frozen=True)
-class FTSOAnchorFeedsWithProof:
-    """FTSO anchor feeds with proof for a specific voting round."""
-
-    voting_round: int
-    merkle_root: str
-    feeds: list[FTSOAnchorFeedValue]
 
 
 class DataAvailabilityLayer(Flare):
@@ -122,8 +47,8 @@ class DataAvailabilityLayer(Flare):
         super().__init__(settings)
         self.da_layer_base_url = str(settings.da_layer_base_url)
         self.da_layer_api_key = settings.da_layer_api_key
-        self.session: aiohttp.ClientSession | None = None
-        self.timeout = aiohttp.ClientTimeout(total=30.0)
+        self.client: httpx.AsyncClient | None = None
+        self.timeout = httpx.Timeout(30.0)
 
     @classmethod
     async def create(cls, settings: EcosystemSettings) -> Self:
@@ -140,7 +65,7 @@ class DataAvailabilityLayer(Flare):
         instance = cls(settings)
         logger.debug("Initializing DataAvailabilityLayer...")
 
-        # Initialize HTTP session
+        # Initialize HTTP client
         headers = {
             "Content-Type": "application/json",
             "User-Agent": "flare-ai-kit/1.0.0",
@@ -152,14 +77,13 @@ class DataAvailabilityLayer(Flare):
                 f"Bearer {instance.da_layer_api_key.get_secret_value()}"
             )
 
-        instance.session = aiohttp.ClientSession(
+        instance.client = httpx.AsyncClient(
             timeout=instance.timeout,
             headers=headers,
         )
 
         # Verify connection to DA Layer
         await instance._verify_connection()
-
         logger.debug(
             "DataAvailabilityLayer initialized", base_url=instance.da_layer_base_url
         )
@@ -167,7 +91,7 @@ class DataAvailabilityLayer(Flare):
 
     async def __aenter__(self) -> Self:
         """Async context manager entry."""
-        if not self.session:
+        if not self.client:
             headers = {
                 "Content-Type": "application/json",
                 "User-Agent": "flare-ai-kit/1.0.0",
@@ -179,7 +103,7 @@ class DataAvailabilityLayer(Flare):
                     f"Bearer {self.da_layer_api_key.get_secret_value()}"
                 )
 
-            self.session = aiohttp.ClientSession(
+            self.client = httpx.AsyncClient(
                 timeout=self.timeout,
                 headers=headers,
             )
@@ -195,10 +119,10 @@ class DataAvailabilityLayer(Flare):
         await self.close()
 
     async def close(self) -> None:
-        """Close the HTTP session."""
-        if self.session:
-            await self.session.close()
-            self.session = None
+        """Close the HTTP client."""
+        if self.client:
+            await self.client.aclose()
+            self.client = None
 
     async def _verify_connection(self) -> None:
         """Verify connection to the DA Layer API."""
@@ -238,39 +162,36 @@ class DataAvailabilityLayer(Flare):
             DALayerError: If request fails
 
         """
-        if not self.session:
-            msg = "HTTP session not initialized. Use create() method."
+        if not self.client:
+            msg = "HTTP client not initialized. Use create() method."
             raise DALayerError(msg)
 
         url = urljoin(self.da_layer_base_url, endpoint)
 
         try:
-            async with self.session.request(
+            response = await self.client.request(
                 method=method, url=url, params=params, json=data
-            ) as response:
-                if response.status == HTTP_NOT_FOUND:
-                    self._raise_not_found_error(endpoint)
-
-                response.raise_for_status()
-                result = await response.json()
-
-                logger.debug(
-                    "DA Layer API request successful",
-                    method=method,
-                    endpoint=endpoint,
-                    status=response.status,
-                )
-
-                return result
-
-        except aiohttp.ClientError as e:
-            msg = f"HTTP request failed for {method} {endpoint}: {e}"
+            )
+            if response.status_code == HTTP_NOT_FOUND:
+                self._raise_not_found_error(endpoint)
+            response.raise_for_status()
+            result = response.json()
+        except httpx.HTTPError as e:
+            msg = f"HTTP request failed for {method} {endpoint}"
             logger.exception(msg)
             raise DALayerError(msg) from e
         except Exception as e:
-            msg = f"Unexpected error during {method} {endpoint}: {e}"
+            msg = f"Unexpected error during {method} {endpoint}"
             logger.exception(msg)
             raise DALayerError(msg) from e
+        else:
+            logger.debug(
+                "DA Layer API request successful",
+                method=method,
+                endpoint=endpoint,
+                status_code=response.status_code,
+            )
+            return result
 
     async def get_attestation_data(
         self, voting_round: int, attestation_index: int

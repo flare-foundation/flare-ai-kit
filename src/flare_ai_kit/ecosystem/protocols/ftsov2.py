@@ -38,7 +38,7 @@ class FtsoV2(Flare):
 
         """
         instance = cls(settings)
-        logger.debug("Initializing FtsoV2...")
+        logger.info("Initializing FtsoV2...")
         # Await the async method from the base class
         ftsov2_address = await instance.get_protocol_contract_address("FtsoV2")
         instance.ftsov2 = instance.w3.eth.contract(
@@ -193,6 +193,7 @@ class FtsoV2(Flare):
         logger.debug(
             "get_latest_prices",
             feed_names=feed_names,
+            feed_ids=feed_ids,
             value=values,
             decimals=decimals,
             timestamp=timestamp,
