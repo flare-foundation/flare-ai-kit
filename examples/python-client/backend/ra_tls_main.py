@@ -1,23 +1,29 @@
 # ra_tls_main.py
 
 import asyncio
-import pathlib
-import socket
-import sys
 import json
-import traceback
+import pathlib
 import re
+import socket
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
-import structlog
-import h11
 
+import h11
+import structlog
+from flare_ai_kit.ecosystem.applications.cyclo import Cyclo
+from flare_ai_kit.ecosystem.applications.flare_portal import FlarePortal
+from flare_ai_kit.ecosystem.applications.kinetic import Kinetic
+from flare_ai_kit.ecosystem.applications.openocean import OpenOcean
+from flare_ai_kit.ecosystem.applications.sceptre import Sceptre
+from flare_ai_kit.ecosystem.applications.sparkdex import SparkDEX
+from flare_ai_kit.ecosystem.applications.stargate import Stargate
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.flare import Flare
-from flare_ai_kit.ecosystem.settings_models import (
+from flare_ai_kit.ecosystem.settings import (
     ChainIdConfig,
     Contracts,
-    EcosystemSettingsModel,
+    EcosystemSettings,
 )
 from flare_ai_kit.tee.attestation import VtpmAttestation
 from tlslite.api import (
@@ -30,26 +36,21 @@ from tlslite.api import (
 from tlslite.extensions import (
     SupportedGroupsExtension,
 )
+
+from generate_certs import generate_certificate
 from settings import settings
-
-from flare_ai_kit.ecosystem.applications.stargate import Stargate
-from flare_ai_kit.ecosystem.applications.flare_portal import FlarePortal
-from flare_ai_kit.ecosystem.applications.sceptre import Sceptre
-from flare_ai_kit.ecosystem.applications.sparkdex import SparkDEX
-from flare_ai_kit.ecosystem.applications.kinetic import Kinetic
-from flare_ai_kit.ecosystem.applications.cyclo import Cyclo
-from flare_ai_kit.ecosystem.applications.openocean import OpenOcean
-
 
 ###########################################################################
 # Constants
 ###########################################################################
 
-EVM_ADDRESS_PATTERN = re.compile(r'^0x[a-fA-F0-9]{40}$', re.IGNORECASE)
+EVM_ADDRESS_PATTERN = re.compile(r"^0x[a-fA-F0-9]{40}$", re.IGNORECASE)
 
 BASE_DIR = pathlib.Path(__file__).parent
-CERT_PATH = BASE_DIR / "serverCert.pem"
-KEY_PATH = BASE_DIR / "serverKey.pem"
+SERVER_CERT_NAME = "serverCert.pem"
+SERVER_KEY_NAME = "serverKey.pem"
+CERT_PATH = BASE_DIR / SERVER_CERT_NAME
+KEY_PATH = BASE_DIR / SERVER_KEY_NAME
 SIM_TOKEN_PATH = BASE_DIR / "sim_token.txt"
 
 ###########################################################################
@@ -64,11 +65,22 @@ executor = ThreadPoolExecutor(max_workers=10)
 attestation = VtpmAttestation(simulate=settings.simulate_attestation)
 attestation_token = bytes(attestation.get_token([]), encoding="utf-8")
 
+# Check if certificates exist and create if not
+
+if not CERT_PATH.exists() or not KEY_PATH.exists():
+    generate_certificate(
+        ip_address="0.0.0.0",
+        output_dir=BASE_DIR,
+        cert_name=SERVER_CERT_NAME,
+        key_name=SERVER_KEY_NAME,
+    )
+
 # Load certificate and private key from files
 cert = X509()
 with open(CERT_PATH, "rb") as f:
     decoded = f.read().decode()
     cert.parse(decoded)
+
 
 cert_chain = X509CertChain([cert])
 with open(KEY_PATH, "rb") as f:
@@ -86,7 +98,7 @@ supported_groups.create([23, 24])  # secp256r1 (23), secp384r1 (24)
 tls_settings.extensions = [supported_groups]
 
 # Create ecosystem settings, chains, contracts, explorer, and provider
-ecosystem_settings = EcosystemSettingsModel()
+ecosystem_settings = EcosystemSettings()
 chains = ChainIdConfig()
 contracts = Contracts()
 flare_explorer = BlockExplorer(ecosystem_settings)
@@ -96,15 +108,16 @@ flare_provider = Flare(ecosystem_settings)
 # Handler functions for API routes
 ###########################################################################
 
+
 # We use the Any type because the http header contains attributes with several different types.
 async def handle_bridge(request: dict[str, Any]) -> dict[str, Any]:
     """
     Handle a bridge request.
-    
+
     Args:
         request: A dictionary containing the request data, including a 'body' key with bytes.
-        
-    Request JSON args:  
+
+    Request JSON args:
         chain_id: This is the endpoint ID from here: https://docs.stargate.finance/resources/contracts/mainnet-contracts
         amount_wei: This is the amount of WETH to bridge, in wei
 
@@ -118,9 +131,19 @@ async def handle_bridge(request: dict[str, Any]) -> dict[str, Any]:
         amount_wei = result.get("amount_wei")
         chain_id = result.get("chain_id")
         if not isinstance(amount_wei, int) or amount_wei <= 0:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'amount' (must be a positive number)"}).encode())
+            return build_response(
+                400,
+                json.dumps(
+                    {"error": "Invalid or missing 'amount' (must be a positive number)"}
+                ).encode(),
+            )
         if not isinstance(chain_id, int) or not chain_id:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'chain' (must be a non-empty string)"}).encode())
+            return build_response(
+                400,
+                json.dumps(
+                    {"error": "Invalid or missing 'chain' (must be a non-empty string)"}
+                ).encode(),
+            )
 
         # Initialize Stargate
         stargate = await Stargate.create(
@@ -134,17 +157,23 @@ async def handle_bridge(request: dict[str, Any]) -> dict[str, Any]:
         # Call bridge_weth_to_chain
         try:
             tx_hash = await stargate.bridge_weth_to_chain(amount_wei, chain_id)
-            return build_response(201, json.dumps({"success": True, "tx_hash": tx_hash}).encode())
+            return build_response(
+                201, json.dumps({"success": True, "tx_hash": tx_hash}).encode()
+            )
         except Exception as e:
             logger.error(f"Transaction failed: {e}\n{''.join(traceback.format_exc())}")
-            return build_response(500, json.dumps({"error": f"Transaction failed: {str(e)}"}).encode())
+            return build_response(
+                500, json.dumps({"error": f"Transaction failed: {e!s}"}).encode()
+            )
 
     except Exception as e:
         # Catch any unexpected errors
         logger.error(f"Server error: {e}\n{''.join(traceback.format_exc())}")
-        return build_response(500, json.dumps({"error": f"Unexpected server error"}).encode())
-        
-    
+        return build_response(
+            500, json.dumps({"error": "Unexpected server error"}).encode()
+        )
+
+
 async def handle_swap(request: dict[str, Any]) -> dict[str, Any]:
     try:
         valid, result = check_valid_json(request)
@@ -156,37 +185,83 @@ async def handle_swap(request: dict[str, Any]) -> dict[str, Any]:
         token_out_addr = result.get("token_out_addr")
         amount_in_WEI = result.get("amount_in_WEI")
         amount_out_min_WEI = result.get("amount_out_min_WEI")
-        if not isinstance(token_in_addr, str) or not token_in_addr or not EVM_ADDRESS_PATTERN.match(token_in_addr):
-            return build_response(400, json.dumps({"error": "Invalid or missing 'token_in_addr' (must be a valid EVM address, e.g., 0x1234567890abcdef1234567890abcdef12345678)"}).encode())
-        if not isinstance(token_out_addr, str) or not token_out_addr or not EVM_ADDRESS_PATTERN.match(token_out_addr):
-            return build_response(400, json.dumps({"error": "Invalid or missing 'token_out_addr' (must be a valid EVM address, e.g., 0x1234567890abcdef1234567890abcdef12345678)"}).encode())
+        if (
+            not isinstance(token_in_addr, str)
+            or not token_in_addr
+            or not EVM_ADDRESS_PATTERN.match(token_in_addr)
+        ):
+            return build_response(
+                400,
+                json.dumps(
+                    {
+                        "error": "Invalid or missing 'token_in_addr' (must be a valid EVM address, e.g., 0x1234567890abcdef1234567890abcdef12345678)"
+                    }
+                ).encode(),
+            )
+        if (
+            not isinstance(token_out_addr, str)
+            or not token_out_addr
+            or not EVM_ADDRESS_PATTERN.match(token_out_addr)
+        ):
+            return build_response(
+                400,
+                json.dumps(
+                    {
+                        "error": "Invalid or missing 'token_out_addr' (must be a valid EVM address, e.g., 0x1234567890abcdef1234567890abcdef12345678)"
+                    }
+                ).encode(),
+            )
         if not isinstance(amount_in_WEI, int) or amount_in_WEI <= 0:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'amount_in_WEI' (must be a positive number)"}).encode())
+            return build_response(
+                400,
+                json.dumps(
+                    {
+                        "error": "Invalid or missing 'amount_in_WEI' (must be a positive number)"
+                    }
+                ).encode(),
+            )
         if not isinstance(amount_out_min_WEI, int) or amount_out_min_WEI < 0:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'amount_out_min_WEI' (must be a positive number)"}).encode())
-        
+            return build_response(
+                400,
+                json.dumps(
+                    {
+                        "error": "Invalid or missing 'amount_out_min_WEI' (must be a positive number)"
+                    }
+                ).encode(),
+            )
+
         # Initialize
-        sparkdex = await SparkDEX.create(settings=ecosystem_settings
-                 ,contracts=contracts
-                 ,flare_explorer=flare_explorer
-                 ,flare_provider=flare_provider)
+        sparkdex = await SparkDEX.create(
+            settings=ecosystem_settings,
+            contracts=contracts,
+            flare_explorer=flare_explorer,
+            flare_provider=flare_provider,
+        )
 
         # Call function
         try:
             tx_hash = await sparkdex.swap_erc20_tokens(
-                token_in_addr=token_in_addr
-                ,token_out_addr=token_out_addr
-                ,amount_in_WEI=amount_in_WEI
-                ,amount_out_min_WEI=amount_out_min_WEI)
-            return build_response(201, json.dumps({"success": True, "tx_hash": tx_hash}).encode())
+                token_in_addr=token_in_addr,
+                token_out_addr=token_out_addr,
+                amount_in_WEI=amount_in_WEI,
+                amount_out_min_WEI=amount_out_min_WEI,
+            )
+            return build_response(
+                201, json.dumps({"success": True, "tx_hash": tx_hash}).encode()
+            )
         except Exception as e:
             logger.error(f"Transaction failed: {e}\n{''.join(traceback.format_exc())}")
-            return build_response(500, json.dumps({"error": f"Transaction failed: {str(e)}"}).encode())
+            return build_response(
+                500, json.dumps({"error": f"Transaction failed: {e!s}"}).encode()
+            )
 
     except Exception as e:
         # Catch any unexpected errors
         logger.error(f"Server error: {e}\n{''.join(traceback.format_exc())}")
-        return build_response(500, json.dumps({"error": f"Unexpected server error"}).encode())    
+        return build_response(
+            500, json.dumps({"error": "Unexpected server error"}).encode()
+        )
+
 
 async def handle_wrap(request: dict[str, Any]) -> dict[str, Any]:
     try:
@@ -197,26 +272,42 @@ async def handle_wrap(request: dict[str, Any]) -> dict[str, Any]:
         # Extract parameters
         amount_WEI = result.get("amount_WEI")
         if not isinstance(amount_WEI, int) or amount_WEI < 0:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'amount_WEI' (must be a positive number)"}).encode())
-        
+            return build_response(
+                400,
+                json.dumps(
+                    {
+                        "error": "Invalid or missing 'amount_WEI' (must be a positive number)"
+                    }
+                ).encode(),
+            )
+
         # Initialize
-        flare_portal = await FlarePortal.create(settings=ecosystem_settings
-            ,contracts=contracts
-            ,flare_explorer=flare_explorer
-            ,flare_provider=flare_provider)
+        flare_portal = await FlarePortal.create(
+            settings=ecosystem_settings,
+            contracts=contracts,
+            flare_explorer=flare_explorer,
+            flare_provider=flare_provider,
+        )
 
         # Call function
         try:
             tx_hash = await flare_portal.wrap_flr_to_wflr(amount_WEI)
-            return build_response(201, json.dumps({"success": True, "tx_hash": tx_hash}).encode())
+            return build_response(
+                201, json.dumps({"success": True, "tx_hash": tx_hash}).encode()
+            )
         except Exception as e:
             logger.error(f"Transaction failed: {e}\n{''.join(traceback.format_exc())}")
-            return build_response(500, json.dumps({"error": f"Transaction failed: {str(e)}"}).encode())
+            return build_response(
+                500, json.dumps({"error": f"Transaction failed: {e!s}"}).encode()
+            )
 
     except Exception as e:
         # Catch any unexpected errors
         logger.error(f"Server error: {e}\n{''.join(traceback.format_exc())}")
-        return build_response(500, json.dumps({"error": f"Unexpected server error"}).encode())    
+        return build_response(
+            500, json.dumps({"error": "Unexpected server error"}).encode()
+        )
+
 
 async def handle_unwrap(request: dict[str, Any]) -> dict[str, Any]:
     try:
@@ -227,27 +318,42 @@ async def handle_unwrap(request: dict[str, Any]) -> dict[str, Any]:
         # Extract parameters
         amount_WEI = result.get("amount_WEI")
         if not isinstance(amount_WEI, int) or amount_WEI <= 0:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'amount_WEI' (must be a positive number)"}).encode())
-        
+            return build_response(
+                400,
+                json.dumps(
+                    {
+                        "error": "Invalid or missing 'amount_WEI' (must be a positive number)"
+                    }
+                ).encode(),
+            )
+
         # Initialize
-        flare_portal = await FlarePortal.create(settings=ecosystem_settings
-            ,contracts=contracts
-            ,flare_explorer=flare_explorer
-            ,flare_provider=flare_provider)
+        flare_portal = await FlarePortal.create(
+            settings=ecosystem_settings,
+            contracts=contracts,
+            flare_explorer=flare_explorer,
+            flare_provider=flare_provider,
+        )
 
         # Call function
         try:
             tx_hash = await flare_portal.unwrap_wflr_to_flr(amount_WEI)
-            return build_response(201, json.dumps({"success": True, "tx_hash": tx_hash}).encode())
+            return build_response(
+                201, json.dumps({"success": True, "tx_hash": tx_hash}).encode()
+            )
         except Exception as e:
             logger.error(f"Transaction failed: {e}\n{''.join(traceback.format_exc())}")
-            return build_response(500, json.dumps({"error": f"Transaction failed: {str(e)}"}).encode())
+            return build_response(
+                500, json.dumps({"error": f"Transaction failed: {e!s}"}).encode()
+            )
 
     except Exception as e:
         # Catch any unexpected errors
         logger.error(f"Server error: {e}\n{''.join(traceback.format_exc())}")
-        return build_response(500, json.dumps({"error": f"Unexpected server error"}).encode())
-    
+        return build_response(
+            500, json.dumps({"error": "Unexpected server error"}).encode()
+        )
+
 
 async def handle_stake(request: dict[str, Any]) -> dict[str, Any]:
     try:
@@ -258,26 +364,42 @@ async def handle_stake(request: dict[str, Any]) -> dict[str, Any]:
         # Extract parameters
         amount_WEI = result.get("amount_WEI")
         if not isinstance(amount_WEI, int) or amount_WEI <= 0:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'amount_WEI' (must be a positive number)"}).encode())
-        
+            return build_response(
+                400,
+                json.dumps(
+                    {
+                        "error": "Invalid or missing 'amount_WEI' (must be a positive number)"
+                    }
+                ).encode(),
+            )
+
         # Initialize
-        sceptre = await Sceptre.create(settings=ecosystem_settings
-            ,contracts=contracts
-            ,flare_explorer=flare_explorer
-            ,flare_provider=flare_provider)
+        sceptre = await Sceptre.create(
+            settings=ecosystem_settings,
+            contracts=contracts,
+            flare_explorer=flare_explorer,
+            flare_provider=flare_provider,
+        )
 
         # Call function
         try:
             tx_hash = await sceptre.stake(amount_WEI)
-            return build_response(201, json.dumps({"success": True, "tx_hash": tx_hash}).encode())
+            return build_response(
+                201, json.dumps({"success": True, "tx_hash": tx_hash}).encode()
+            )
         except Exception as e:
             logger.error(f"Transaction failed: {e}\n{''.join(traceback.format_exc())}")
-            return build_response(500, json.dumps({"error": f"Transaction failed: {str(e)}"}).encode())
+            return build_response(
+                500, json.dumps({"error": f"Transaction failed: {e!s}"}).encode()
+            )
 
     except Exception as e:
         # Catch any unexpected errors
         logger.error(f"Server error: {e}\n{''.join(traceback.format_exc())}")
-        return build_response(500, json.dumps({"error": f"Unexpected server error"}).encode())    
+        return build_response(
+            500, json.dumps({"error": "Unexpected server error"}).encode()
+        )
+
 
 async def handle_unstake(request: dict[str, Any]) -> dict[str, Any]:
     try:
@@ -288,26 +410,42 @@ async def handle_unstake(request: dict[str, Any]) -> dict[str, Any]:
         # Extract parameters
         amount_WEI = result.get("amount_WEI")
         if not isinstance(amount_WEI, int) or amount_WEI <= 0:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'amount_WEI' (must be a positive number)"}).encode())
-        
+            return build_response(
+                400,
+                json.dumps(
+                    {
+                        "error": "Invalid or missing 'amount_WEI' (must be a positive number)"
+                    }
+                ).encode(),
+            )
+
         # Initialize
-        sceptre = await Sceptre.create(settings=ecosystem_settings
-            ,contracts=contracts
-            ,flare_explorer=flare_explorer
-            ,flare_provider=flare_provider)
+        sceptre = await Sceptre.create(
+            settings=ecosystem_settings,
+            contracts=contracts,
+            flare_explorer=flare_explorer,
+            flare_provider=flare_provider,
+        )
 
         # Call function
         try:
             tx_hash = await sceptre.unstake(amount_WEI)
-            return build_response(201, json.dumps({"success": True, "tx_hash": tx_hash}).encode())
+            return build_response(
+                201, json.dumps({"success": True, "tx_hash": tx_hash}).encode()
+            )
         except Exception as e:
             logger.error(f"Transaction failed: {e}\n{''.join(traceback.format_exc())}")
-            return build_response(500, json.dumps({"error": f"Transaction failed: {str(e)}"}).encode())
+            return build_response(
+                500, json.dumps({"error": f"Transaction failed: {e!s}"}).encode()
+            )
 
     except Exception as e:
         # Catch any unexpected errors
         logger.error(f"Server error: {e}\n{''.join(traceback.format_exc())}")
-        return build_response(500, json.dumps({"error": f"Unexpected server error"}).encode())    
+        return build_response(
+            500, json.dumps({"error": "Unexpected server error"}).encode()
+        )
+
 
 async def handle_kinetic_supply(request: dict[str, Any]) -> dict[str, Any]:
     try:
@@ -319,31 +457,47 @@ async def handle_kinetic_supply(request: dict[str, Any]) -> dict[str, Any]:
         token_symbol = result.get("token_symbol")
         amount_WEI = result.get("amount_WEI")
         if not isinstance(token_symbol, str) or not token_symbol:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'token_symbol'"}).encode())
+            return build_response(
+                400, json.dumps({"error": "Invalid or missing 'token_symbol'"}).encode()
+            )
         if not isinstance(amount_WEI, int) or amount_WEI <= 0:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'amount_WEI' (must be a positive number)"}).encode())
-        
+            return build_response(
+                400,
+                json.dumps(
+                    {
+                        "error": "Invalid or missing 'amount_WEI' (must be a positive number)"
+                    }
+                ).encode(),
+            )
+
         # Initialize
-        kinetic = await Kinetic.create(settings=ecosystem_settings
-                 ,contracts=contracts
-                 ,flare_explorer=flare_explorer
-                 ,flare_provider=flare_provider)
+        kinetic = await Kinetic.create(
+            settings=ecosystem_settings,
+            contracts=contracts,
+            flare_explorer=flare_explorer,
+            flare_provider=flare_provider,
+        )
 
         # Call function
         try:
-            tx_hash = await kinetic.supply(
-                token=token_symbol
-                ,amount_WEI=amount_WEI)
-            return build_response(201, json.dumps({"success": True, "tx_hash": tx_hash}).encode())
+            tx_hash = await kinetic.supply(token=token_symbol, amount_WEI=amount_WEI)
+            return build_response(
+                201, json.dumps({"success": True, "tx_hash": tx_hash}).encode()
+            )
         except Exception as e:
             logger.error(f"Transaction failed: {e}\n{''.join(traceback.format_exc())}")
-            return build_response(500, json.dumps({"error": f"Transaction failed: {str(e)}"}).encode())
+            return build_response(
+                500, json.dumps({"error": f"Transaction failed: {e!s}"}).encode()
+            )
 
     except Exception as e:
         # Catch any unexpected errors
         logger.error(f"Server error: {e}\n{''.join(traceback.format_exc())}")
-        return build_response(500, json.dumps({"error": f"Unexpected server error"}).encode())     
-    
+        return build_response(
+            500, json.dumps({"error": "Unexpected server error"}).encode()
+        )
+
+
 async def handle_kinetic_withdraw(request: dict[str, Any]) -> dict[str, Any]:
     try:
         valid, result = check_valid_json(request)
@@ -354,31 +508,47 @@ async def handle_kinetic_withdraw(request: dict[str, Any]) -> dict[str, Any]:
         token_symbol = result.get("token_symbol")
         amount_WEI = result.get("amount_WEI")
         if not isinstance(token_symbol, str) or not token_symbol:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'token_symbol'"}).encode())
+            return build_response(
+                400, json.dumps({"error": "Invalid or missing 'token_symbol'"}).encode()
+            )
         if not isinstance(amount_WEI, int) or amount_WEI <= 0:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'amount_WEI' (must be a positive number)"}).encode())
-        
+            return build_response(
+                400,
+                json.dumps(
+                    {
+                        "error": "Invalid or missing 'amount_WEI' (must be a positive number)"
+                    }
+                ).encode(),
+            )
+
         # Initialize
-        kinetic = await Kinetic.create(settings=ecosystem_settings
-                 ,contracts=contracts
-                 ,flare_explorer=flare_explorer
-                 ,flare_provider=flare_provider)
+        kinetic = await Kinetic.create(
+            settings=ecosystem_settings,
+            contracts=contracts,
+            flare_explorer=flare_explorer,
+            flare_provider=flare_provider,
+        )
 
         # Call function
         try:
-            tx_hash = await kinetic.withdraw(
-                token=token_symbol
-                ,amount_WEI=amount_WEI)
-            return build_response(201, json.dumps({"success": True, "tx_hash": tx_hash}).encode())
+            tx_hash = await kinetic.withdraw(token=token_symbol, amount_WEI=amount_WEI)
+            return build_response(
+                201, json.dumps({"success": True, "tx_hash": tx_hash}).encode()
+            )
         except Exception as e:
             logger.error(f"Transaction failed: {e}\n{''.join(traceback.format_exc())}")
-            return build_response(500, json.dumps({"error": f"Transaction failed: {str(e)}"}).encode())
+            return build_response(
+                500, json.dumps({"error": f"Transaction failed: {e!s}"}).encode()
+            )
 
     except Exception as e:
         # Catch any unexpected errors
         logger.error(f"Server error: {e}\n{''.join(traceback.format_exc())}")
-        return build_response(500, json.dumps({"error": f"Unexpected server error"}).encode())     
-        
+        return build_response(
+            500, json.dumps({"error": "Unexpected server error"}).encode()
+        )
+
+
 async def handle_kinetic_enable_collateral(request: dict[str, Any]) -> dict[str, Any]:
     try:
         valid, result = check_valid_json(request)
@@ -388,26 +558,36 @@ async def handle_kinetic_enable_collateral(request: dict[str, Any]) -> dict[str,
         # Extract parameters
         token_symbol = result.get("token_symbol")
         if not isinstance(token_symbol, str) or not token_symbol:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'token_symbol'"}).encode())
+            return build_response(
+                400, json.dumps({"error": "Invalid or missing 'token_symbol'"}).encode()
+            )
         # Initialize
-        kinetic = await Kinetic.create(settings=ecosystem_settings
-                 ,contracts=contracts
-                 ,flare_explorer=flare_explorer
-                 ,flare_provider=flare_provider)
+        kinetic = await Kinetic.create(
+            settings=ecosystem_settings,
+            contracts=contracts,
+            flare_explorer=flare_explorer,
+            flare_provider=flare_provider,
+        )
 
         # Call function
         try:
-            tx_hash = await kinetic.enable_collateral(
-                token=token_symbol)
-            return build_response(201, json.dumps({"success": True, "tx_hash": tx_hash}).encode())
+            tx_hash = await kinetic.enable_collateral(token=token_symbol)
+            return build_response(
+                201, json.dumps({"success": True, "tx_hash": tx_hash}).encode()
+            )
         except Exception as e:
             logger.error(f"Transaction failed: {e}\n{''.join(traceback.format_exc())}")
-            return build_response(500, json.dumps({"error": f"Transaction failed: {str(e)}"}).encode())
+            return build_response(
+                500, json.dumps({"error": f"Transaction failed: {e!s}"}).encode()
+            )
 
     except Exception as e:
         # Catch any unexpected errors
         logger.error(f"Server error: {e}\n{''.join(traceback.format_exc())}")
-        return build_response(500, json.dumps({"error": f"Unexpected server error"}).encode())     
+        return build_response(
+            500, json.dumps({"error": "Unexpected server error"}).encode()
+        )
+
 
 async def handle_kinetic_disable_collateral(request: dict[str, Any]) -> dict[str, Any]:
     try:
@@ -418,27 +598,37 @@ async def handle_kinetic_disable_collateral(request: dict[str, Any]) -> dict[str
         # Extract parameters
         token_symbol = result.get("token_symbol")
         if not isinstance(token_symbol, str) or not token_symbol:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'token_symbol'"}).encode())
+            return build_response(
+                400, json.dumps({"error": "Invalid or missing 'token_symbol'"}).encode()
+            )
         # Initialize
-        kinetic = await Kinetic.create(settings=ecosystem_settings
-                 ,contracts=contracts
-                 ,flare_explorer=flare_explorer
-                 ,flare_provider=flare_provider)
+        kinetic = await Kinetic.create(
+            settings=ecosystem_settings,
+            contracts=contracts,
+            flare_explorer=flare_explorer,
+            flare_provider=flare_provider,
+        )
 
         # Call function
         try:
-            tx_hash = await kinetic.disable_collateral(
-                token=token_symbol)
-            return build_response(201, json.dumps({"success": True, "tx_hash": tx_hash}).encode())
+            tx_hash = await kinetic.disable_collateral(token=token_symbol)
+            return build_response(
+                201, json.dumps({"success": True, "tx_hash": tx_hash}).encode()
+            )
         except Exception as e:
             logger.error(f"Transaction failed: {e}\n{''.join(traceback.format_exc())}")
-            return build_response(500, json.dumps({"error": f"Transaction failed: {str(e)}"}).encode())
+            return build_response(
+                500, json.dumps({"error": f"Transaction failed: {e!s}"}).encode()
+            )
 
     except Exception as e:
         # Catch any unexpected errors
         logger.error(f"Server error: {e}\n{''.join(traceback.format_exc())}")
-        return build_response(500, json.dumps({"error": f"Unexpected server error"}).encode())     
-    
+        return build_response(
+            500, json.dumps({"error": "Unexpected server error"}).encode()
+        )
+
+
 async def handle_cyclo_lock(request: dict[str, Any]) -> dict[str, Any]:
     try:
         valid, result = check_valid_json(request)
@@ -449,30 +639,51 @@ async def handle_cyclo_lock(request: dict[str, Any]) -> dict[str, Any]:
         token_symbol = result.get("token_symbol")
         amount_WEI = result.get("amount_WEI")
         if not isinstance(token_symbol, str) or not token_symbol:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'token_symbol'"}).encode())
+            return build_response(
+                400, json.dumps({"error": "Invalid or missing 'token_symbol'"}).encode()
+            )
         if not isinstance(amount_WEI, int) or amount_WEI <= 0:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'amount_WEI' (must be a positive number)"}).encode())
-        
+            return build_response(
+                400,
+                json.dumps(
+                    {
+                        "error": "Invalid or missing 'amount_WEI' (must be a positive number)"
+                    }
+                ).encode(),
+            )
+
         # Initialize
-        cyclo = await Cyclo.create(settings=ecosystem_settings
-                 ,contracts=contracts
-                 ,flare_explorer=flare_explorer
-                 ,flare_provider=flare_provider)
+        cyclo = await Cyclo.create(
+            settings=ecosystem_settings,
+            contracts=contracts,
+            flare_explorer=flare_explorer,
+            flare_provider=flare_provider,
+        )
 
         # Call function
         try:
-            tx_hash, deposit_id  = await cyclo.lock(
-                token=token_symbol
-                ,amount_WEI=amount_WEI)
-            return build_response(201, json.dumps({"success": True, "tx_hash": tx_hash, "deposit_id": deposit_id}).encode())
+            tx_hash, deposit_id = await cyclo.lock(
+                token=token_symbol, amount_WEI=amount_WEI
+            )
+            return build_response(
+                201,
+                json.dumps(
+                    {"success": True, "tx_hash": tx_hash, "deposit_id": deposit_id}
+                ).encode(),
+            )
         except Exception as e:
             logger.error(f"Transaction failed: {e}\n{''.join(traceback.format_exc())}")
-            return build_response(500, json.dumps({"error": f"Transaction failed: {str(e)}"}).encode())
+            return build_response(
+                500, json.dumps({"error": f"Transaction failed: {e!s}"}).encode()
+            )
 
     except Exception as e:
         # Catch any unexpected errors
         logger.error(f"Server error: {e}\n{''.join(traceback.format_exc())}")
-        return build_response(500, json.dumps({"error": f"Unexpected server error"}).encode())     
+        return build_response(
+            500, json.dumps({"error": "Unexpected server error"}).encode()
+        )
+
 
 async def handle_cyclo_unlock(request: dict[str, Any]) -> dict[str, Any]:
     try:
@@ -485,40 +696,65 @@ async def handle_cyclo_unlock(request: dict[str, Any]) -> dict[str, Any]:
         deposit_id = result.get("deposit_id")
         unlock_proportion = result.get("unlock_proportion")
         if not isinstance(token_symbol, str) or not token_symbol:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'token_symbol'"}).encode())
+            return build_response(
+                400, json.dumps({"error": "Invalid or missing 'token_symbol'"}).encode()
+            )
         if not isinstance(deposit_id, int):
-            return build_response(400, json.dumps({"error": "Invalid or missing 'deposit_id'"}).encode())
-        if not isinstance(unlock_proportion, float) or unlock_proportion <= 0.0 or unlock_proportion > 1.0:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'unlock_proportion' (must be a positive number between 0 and 1)"}).encode())
-        
+            return build_response(
+                400, json.dumps({"error": "Invalid or missing 'deposit_id'"}).encode()
+            )
+        if (
+            not isinstance(unlock_proportion, float)
+            or unlock_proportion <= 0.0
+            or unlock_proportion > 1.0
+        ):
+            return build_response(
+                400,
+                json.dumps(
+                    {
+                        "error": "Invalid or missing 'unlock_proportion' (must be a positive number between 0 and 1)"
+                    }
+                ).encode(),
+            )
+
         # Initialize
-        cyclo = await Cyclo.create(settings=ecosystem_settings
-                 ,contracts=contracts
-                 ,flare_explorer=flare_explorer
-                 ,flare_provider=flare_provider)
+        cyclo = await Cyclo.create(
+            settings=ecosystem_settings,
+            contracts=contracts,
+            flare_explorer=flare_explorer,
+            flare_provider=flare_provider,
+        )
 
         # Call function
         try:
             tx_hash = await cyclo.unlock(
-                token=token_symbol
-                ,deposit_id=deposit_id
-                ,unlock_proportion=unlock_proportion)
-            return build_response(201, json.dumps({"success": True, "tx_hash": tx_hash}).encode())
+                token=token_symbol,
+                deposit_id=deposit_id,
+                unlock_proportion=unlock_proportion,
+            )
+            return build_response(
+                201, json.dumps({"success": True, "tx_hash": tx_hash}).encode()
+            )
         except Exception as e:
             logger.error(f"Transaction failed: {e}\n{''.join(traceback.format_exc())}")
-            return build_response(500, json.dumps({"error": f"Transaction failed: {str(e)}"}).encode())
+            return build_response(
+                500, json.dumps({"error": f"Transaction failed: {e!s}"}).encode()
+            )
 
     except Exception as e:
         # Catch any unexpected errors
         logger.error(f"Server error: {e}\n{''.join(traceback.format_exc())}")
-        return build_response(500, json.dumps({"error": f"Unexpected server error"}).encode())     
-    
+        return build_response(
+            500, json.dumps({"error": "Unexpected server error"}).encode()
+        )
+
+
 async def handle_openocean_swap(request: dict[str, Any]) -> dict[str, Any]:
     try:
         valid, result = check_valid_json(request)
         if not valid:
             return result
-        
+
         # Extract parameters
         # token_in_str: str, token_out_str: str, amount: float, speed: str
         token_in_str = result.get("token_in_str")
@@ -526,55 +762,86 @@ async def handle_openocean_swap(request: dict[str, Any]) -> dict[str, Any]:
         amount = result.get("amount")
         speed = result.get("speed")
         if not isinstance(token_in_str, str) or not token_in_str:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'token_in_str'"}).encode())
+            return build_response(
+                400, json.dumps({"error": "Invalid or missing 'token_in_str'"}).encode()
+            )
         if not isinstance(token_out_str, str) or not token_out_str:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'token_out_str'"}).encode())
-        if not isinstance(amount, float) or amount <= 0:
-            return build_response(400, json.dumps({"error": "Invalid or missing 'amount' (must be a positive number)"}).encode())
+            return build_response(
+                400,
+                json.dumps({"error": "Invalid or missing 'token_out_str'"}).encode(),
+            )
+        if not isinstance(amount, int) or amount <= 0:
+            return build_response(
+                400,
+                json.dumps(
+                    {"error": "Invalid or missing 'amount' (must be a positive number)"}
+                ).encode(),
+            )
         if not isinstance(speed, str):
-            return build_response(400, json.dumps({"error": "Invalid or missing 'speed' (should be 'low', 'medium', or 'high')"}).encode())
-        
+            return build_response(
+                400,
+                json.dumps(
+                    {
+                        "error": "Invalid or missing 'speed' (should be 'low', 'medium', or 'high')"
+                    }
+                ).encode(),
+            )
+
         # Initialize
-        openocean = await OpenOcean.create(settings=ecosystem_settings
-                 ,contracts=contracts
-                 ,flare_explorer=flare_explorer
-                 ,provider=flare_provider)
+        openocean = await OpenOcean.create(
+            settings=ecosystem_settings,
+            contracts=contracts,
+            flare_explorer=flare_explorer,
+            provider=flare_provider,
+        )
 
         # Call function
         try:
             tx_hash = await openocean.swap(
-                token_in_str=token_in_str
-                ,token_out_str=token_out_str
-                ,amount=amount
-                ,speed=speed)
-            return build_response(201, json.dumps({"success": True, "tx_hash": tx_hash}).encode())
+                token_in_str=token_in_str,
+                token_out_str=token_out_str,
+                amount=amount,
+                speed=speed,
+            )
+            return build_response(
+                201, json.dumps({"success": True, "tx_hash": tx_hash}).encode()
+            )
         except Exception as e:
             logger.error(f"Transaction failed: {e}\n{''.join(traceback.format_exc())}")
-            return build_response(500, json.dumps({"error": f"Transaction failed: {str(e)}"}).encode())
+            return build_response(
+                500, json.dumps({"error": f"Transaction failed: {e!s}"}).encode()
+            )
 
     except Exception as e:
         # Catch any unexpected errors
         logger.error(f"Server error: {e}\n{''.join(traceback.format_exc())}")
-        return build_response(500, json.dumps({"error": f"Unexpected server error"}).encode())    
-        
+        return build_response(
+            500, json.dumps({"error": "Unexpected server error"}).encode()
+        )
+
+
 ###########################################################################
 # Helper functions for handler functions
-###########################################################################      
-    
+###########################################################################
+
+
 def build_response(status: int, body: bytes) -> dict[str, Any]:
     return {
-            "status": status,
-            "headers": [(b"Content-Type", b"application/json"), (b"Connection", b"close")],
-            "body": body,
-        }
-    
-def check_valid_json(request: dict[str, Any]) -> tuple[bool, dict[str, Any] | dict[str, Any]]:
+        "status": status,
+        "headers": [(b"Content-Type", b"application/json"), (b"Connection", b"close")],
+        "body": body,
+    }
+
+
+def check_valid_json(
+    request: dict[str, Any],
+) -> tuple[bool, dict[str, Any]]:
     """
     Validates and parses the JSON body of a request.
-    
+
     Args:
         request: A dictionary containing the request data, including a 'body' key with bytes.
-    
+
     Returns:
         A tuple of (is_valid, result):
         - is_valid: True if the body is valid JSON, False otherwise.
@@ -582,12 +849,17 @@ def check_valid_json(request: dict[str, Any]) -> tuple[bool, dict[str, Any] | di
     """
     body = request.get("body", b"")
     if not body:
-        return False, build_response(400, json.dumps({"error": "Empty request body"}).encode())
+        return False, build_response(
+            400, json.dumps({"error": "Empty request body"}).encode()
+        )
     try:
         parsed_json = json.loads(body.decode("utf-8"))
         return True, parsed_json
     except json.JSONDecodeError:
-        return False, build_response(400, json.dumps({"error": "Invalid JSON in request body"}).encode())
+        return False, build_response(
+            400, json.dumps({"error": "Invalid JSON in request body"}).encode()
+        )
+
 
 ###########################################################################
 # Defining the API routes and map to handler functions
@@ -613,6 +885,7 @@ routes = {
 ###########################################################################
 # Function to handle incoming connections
 ###########################################################################
+
 
 async def handle_connection(client_sock: socket.socket, addr: str) -> None:
     logger.debug(f"Accepted connection from {addr}")
@@ -687,7 +960,11 @@ async def handle_connection(client_sock: socket.socket, addr: str) -> None:
                     "headers": headers,
                     "body": body,
                 }
-                response = await handler(request) if asyncio.iscoroutinefunction(handler) else handler(request)
+                response = (
+                    await handler(request)
+                    if asyncio.iscoroutinefunction(handler)
+                    else handler(request)
+                )
             else:
                 response = {
                     "status": 404,
@@ -710,7 +987,9 @@ async def handle_connection(client_sock: socket.socket, addr: str) -> None:
             ] + [(b"Content-Length", str(content_length).encode())]
 
             # Debug response
-            logger.debug(f"Sending response: status={response['status']}, headers={response['headers']}, body={response['body']}")
+            logger.debug(
+                f"Sending response: status={response['status']}, headers={response['headers']}, body={response['body']}"
+            )
 
             # Send response
             resp_event = h11.Response(
@@ -730,7 +1009,9 @@ async def handle_connection(client_sock: socket.socket, addr: str) -> None:
             )
 
         except Exception as e:
-            logger.error(f"HTTP processing error: {e}\n{''.join(traceback.format_exc())}")
+            logger.error(
+                f"HTTP processing error: {e}\n{''.join(traceback.format_exc())}"
+            )
 
     except Exception as e:
         logger.error(f"Connection error: {e}\n{''.join(traceback.format_exc())}")
@@ -741,9 +1022,11 @@ async def handle_connection(client_sock: socket.socket, addr: str) -> None:
             pass
         client_sock.close()
 
+
 ###########################################################################
 # Main
 ###########################################################################
+
 
 async def main() -> None:
     # Set up TCP socket

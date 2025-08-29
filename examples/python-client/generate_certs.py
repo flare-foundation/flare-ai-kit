@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import ipaddress
 import os
 
 from cryptography import x509
@@ -15,7 +16,11 @@ def create_attestation_extension(attestation_token: str) -> x509.SubjectAlternat
 
 
 def generate_certificate(
-    ip_address: str, output_dir: str, days_valid: int = 365
+    ip_address: str,
+    output_dir: str,
+    cert_name: str,
+    key_name: str,
+    days_valid: int = 365,
 ) -> None:
     """Generate a self-signed certificate and private key for the given IP address."""
     # Generate private key
@@ -42,10 +47,10 @@ def generate_certificate(
         ),
         critical=False,
     )
-    builder = builder.add_extension(
-        create_attestation_extension(placeholder_token),
-        critical=False,
-    )
+    # builder = builder.add_extension(
+    #    create_attestation_extension(placeholder_token),
+    #    critical=False,
+    # )
     certificate = builder.sign(private_key=private_key, algorithm=hashes.SHA256())
 
     # Serialize to PEM
@@ -58,8 +63,8 @@ def generate_certificate(
 
     # Save to files
     os.makedirs(output_dir, exist_ok=True)
-    cert_path = os.path.join(output_dir, f"cert-ss-{ip_address}.pem")
-    key_path = os.path.join(output_dir, f"key-ss-{ip_address}.pem")
+    cert_path = os.path.join(output_dir, cert_name)  # f"cert-ss-{ip_address}.pem")
+    key_path = os.path.join(output_dir, key_name)  # f"key-ss-{ip_address}.pem")
     with open(cert_path, "wb") as f:
         f.write(cert_pem)
     with open(key_path, "wb") as f:

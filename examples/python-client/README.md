@@ -1,5 +1,12 @@
+# Install and run
 
-```python3.12 -m backend.ra_tls_main```
+```uv sync --frozen --all-extras```
+
+```uv pip install -e "../..[rag,social,tee,a2a,ingestion]"```
+
+```uv run python -m backend.ra_tls_main```
+
+```uv run python -m client.client_test```
 
 # Docker commands
 
