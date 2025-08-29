@@ -1,8 +1,9 @@
+from typing import Any
+
 import structlog
+from hexbytes import HexBytes
 from web3 import Web3
 from web3.contract.async_contract import AsyncContract
-from typing import Any
-from hexbytes import HexBytes
 
 from flare_ai_kit.ecosystem import (
     Contracts,
@@ -68,9 +69,7 @@ class SparkDEX:
         swaprouter_contract: AsyncContract,
     ) -> None:
         if not flare_provider.address:
-            raise Exception(
-                "Please set settings.account_address in your .env file."
-            )
+            raise Exception("Please set settings.account_address in your .env file.")
         self.settings = settings
         self.contracts = contracts
         self.flare_explorer = flare_explorer
@@ -122,13 +121,15 @@ class SparkDEX:
 
         # =============== Build swap transaction ==================
         fee_tier = 500  # Assuming 0.05% pool fee
-        
+
         block = await self.flare_provider.w3.eth.get_block("latest")
         if "timestamp" in block:
             deadline = block["timestamp"] + 300
         else:
-            raise ValueError("Block fetched with w3.eth.get_block(\"latest\") has no timestamp.")
-        
+            raise ValueError(
+                'Block fetched with w3.eth.get_block("latest") has no timestamp.'
+            )
+
         params = (
             token_in_addr,  # Token In
             token_out_addr,  # Token Out
@@ -153,7 +154,9 @@ class SparkDEX:
             logger.warning(
                 "We stop here because the simulated send transaction was not sucessfull"
             )
-            raise Exception("We stop here because the simulated transaction was not sucessfull")
+            raise Exception(
+                "We stop here because the simulated transaction was not sucessfull"
+            )
         # ======================= Execute swap =========================
         swap_tx_hash = await self.flare_provider.sign_and_send_transaction(swap_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(

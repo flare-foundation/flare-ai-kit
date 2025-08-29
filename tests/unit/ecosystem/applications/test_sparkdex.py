@@ -2,11 +2,9 @@ import warnings
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from typing import cast
-from web3 import AsyncWeb3, Web3
-from web3.types import TxParams
-from web3.contract.async_contract import AsyncContract
 from hexbytes import HexBytes
+from web3 import AsyncWeb3
+from web3.contract.async_contract import AsyncContract
 
 from flare_ai_kit.ecosystem import Contracts, EcosystemSettings
 from flare_ai_kit.ecosystem.applications.sparkdex import (
@@ -62,7 +60,11 @@ class TestSparkDEX:
         swap = MagicMock(spec=AsyncContract)
 
         async def side_fx(address, abi):
-            return univ if address == self.contracts.flare.sparkdex_universal_router else swap
+            return (
+                univ
+                if address == self.contracts.flare.sparkdex_universal_router
+                else swap
+            )
 
         self.flare_provider.w3.eth.contract.side_effect = side_fx
 
@@ -94,7 +96,9 @@ class TestSparkDEX:
         self.flare_provider.build_transaction = AsyncMock(return_value={"tx": "x"})
         self.flare_provider.eth_call = AsyncMock(return_value=True)
         self.flare_provider.sign_and_send_transaction = AsyncMock(return_value="0xabc")
-        self.flare_provider.w3.eth.wait_for_transaction_receipt = AsyncMock(return_value={"blockNumber": 1})
+        self.flare_provider.w3.eth.wait_for_transaction_receipt = AsyncMock(
+            return_value={"blockNumber": 1}
+        )
         self.swap_ct.functions.exactInputSingle.return_value = MagicMock()
 
         tx = await self.sparkdex.swap_erc20_tokens(token_in, token_out, in_w, out_min)
@@ -117,7 +121,9 @@ class TestSparkDEX:
         self.flare_provider.build_transaction = AsyncMock(return_value={"tx": "x"})
         self.flare_provider.eth_call = AsyncMock(return_value=True)
         self.flare_provider.sign_and_send_transaction = AsyncMock(return_value="0xabc")
-        self.flare_provider.w3.eth.wait_for_transaction_receipt = AsyncMock(return_value={"blockNumber": 1})
+        self.flare_provider.w3.eth.wait_for_transaction_receipt = AsyncMock(
+            return_value={"blockNumber": 1}
+        )
         self.swap_ct.functions.exactInputSingle.return_value = MagicMock()
 
         tx = await self.sparkdex.swap_erc20_tokens(token_in, token_out, in_w, out_min)
@@ -145,7 +151,10 @@ class TestSparkDEX:
         self.flare_provider.eth_call = AsyncMock(return_value=False)
         self.swap_ct.functions.exactInputSingle.return_value = MagicMock()
 
-        with pytest.raises(Exception, match="We stop here because the simulated transaction was not sucessfull"):
+        with pytest.raises(
+            Exception,
+            match="We stop here because the simulated transaction was not sucessfull",
+        ):
             await self.sparkdex.swap_erc20_tokens(token_in, token_out, in_w, out_min)
 
     def test_get_univ_abi(self):

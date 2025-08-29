@@ -1,12 +1,11 @@
 import logging
+from typing import Any
 
 import requests
 import structlog
+from eth_typing import ChecksumAddress, HexStr
 from web3 import Web3
 from web3.types import TxParams, Wei
-from eth_typing import ChecksumAddress
-from eth_typing import HexStr
-from typing import Any
 
 from flare_ai_kit.ecosystem import (
     Contracts,
@@ -44,9 +43,7 @@ class OpenOcean:
         provider: Flare,
     ) -> None:
         if not settings.account_address:
-            raise Exception(
-                "Please set settings.account_address in your .env file."
-            )
+            raise Exception("Please set settings.account_address in your .env file.")
         self.settings = settings
         self.contracts = contracts
         self.account_address = settings.account_address
@@ -115,7 +112,7 @@ class OpenOcean:
             raise Exception(error_msg)
 
     async def swap(
-        self, token_in_str: str, token_out_str: str, amount: float, speed: str
+        self, token_in_str: str, token_out_str: str, amount: int, speed: str
     ) -> str | None:
         """
         Execute a token swap on OpenOcean DEX.
@@ -130,7 +127,7 @@ class OpenOcean:
         Args:
             token_in_str (str): Symbol of the input token (e.g., 'FLR', 'USDC')
             token_out_str (str): Symbol of the output token (e.g., 'WFLR', 'USDT')
-            amount (float): Amount of input tokens to swap (in token units, not WEI)
+            amount (int): Amount of input tokens to swap (with decimals, e.g. WEI for ETH)
             speed (str): Transaction speed setting for gas pricing ('low', 'medium', 'high')
 
         Returns:
@@ -204,11 +201,10 @@ class OpenOcean:
                 for token in data["data"]
             }
             return token
-        else:
-            logging.error(f"Error occurred: {response.text}")
-            raise Exception(f"Got status != 200 from token info request in get_token_info: {response.text}")
-
-        
+        logging.error(f"Error occurred: {response.text}")
+        raise Exception(
+            f"Got status != 200 from token info request in get_token_info: {response.text}"
+        )
 
     def get_gas_price(self, speed: str):
         """
@@ -271,19 +267,26 @@ class OpenOcean:
             "inTokenAddress": token_in_addr,
             "outTokenAddress": token_out_addr,
             "slippage": slippage,
-            "amount": amount,
-            "gasPrice": gas_price,
+            "amountDecimals": amount,
+            "gasPriceDecimals": gas_price,
             "account": self.provider.address,
+            "referrer": self.provider.address,
         }
+        logger.info(
+            "Request about to be sent: ",
+            url=self.settings.openocean_swap,
+            params=params,
+        )
         response = requests.get(self.settings.openocean_swap, params=params)
 
         if response.status_code == 200:
             data = response.json()
             return data["data"]
-        else:
-            logger.error("Error occurred:", response.text)
-            raise Exception(f"Got status != 200 back from transaction body request in get_transaction_body(): {response.text}")
 
+        logger.error(f"Error occurred: {response.text}")
+        raise Exception(
+            f"Got status != 200 back from transaction body request in get_transaction_body(): {response.text}"
+        )
 
     async def execute_swap(self, data: dict[str, Any]) -> str:
         """
@@ -323,8 +326,9 @@ class OpenOcean:
         hash = await self.provider.sign_and_send_transaction(tx_params)
         if hash:
             return hash
-        else:
-            raise Exception("No hash returned from sign_and_send_transaction() in execute_swap()")
+        raise Exception(
+            "No hash returned from sign_and_send_transaction() in execute_swap()"
+        )
 
     def get_abi(self) -> list[dict[str, Any]]:
         return [

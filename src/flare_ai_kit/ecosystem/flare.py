@@ -5,12 +5,13 @@ import statistics
 from collections.abc import Callable
 from functools import wraps
 from typing import Any, TypeVar, cast
-from hexbytes import HexBytes
 
 import structlog
 from eth_typing import ChecksumAddress
-#from eth_utils import keccak
+
+# from eth_utils import keccak
 from eth_utils.crypto import keccak
+from hexbytes import HexBytes
 from web3 import AsyncHTTPProvider, AsyncWeb3
 from web3.contract.async_contract import AsyncContractFunction
 from web3.exceptions import (
@@ -19,10 +20,12 @@ from web3.exceptions import (
     TransactionNotFound,
     Web3Exception,
 )
+
+# pyright: reportUnknownVariableType=false
 from web3.middleware import (
-    ExtraDataToPOAMiddleware,  # pyright: ignore[reportUnknownVariableType]
+    ExtraDataToPOAMiddleware,
 )
-from web3.types import TxParams, TxReceipt, Wei
+from web3.types import Nonce, TxParams, TxReceipt, Wei
 
 from flare_ai_kit.common import FlareTxError, FlareTxRevertedError, load_abi
 from flare_ai_kit.ecosystem.settings import EcosystemSettings
@@ -98,19 +101,19 @@ class Flare:
         if not settings.account_address:
             raise ValueError("account_address must be set and non-empty")
         self.address = settings.account_address
-        
+
         if not settings.account_private_key:
             raise ValueError("account_private_key must be set and non-empty")
         self.private_key = settings.account_private_key
-        
+
         if not settings.web3_provider_url:
             raise ValueError("web3_provider_url must be set and non-empty")
         self.web3_provider_url = str(settings.web3_provider_url)
-        
+
         if not settings.max_retries:
             raise ValueError("max_retries must be set and non-empty")
         self.max_retries = settings.max_retries
-        
+
         if not settings.retry_delay:
             raise ValueError("retry_delay must be set and non-empty")
         self.retry_delay = settings.retry_delay
@@ -125,8 +128,8 @@ class Flare:
                 middleware=[ExtraDataToPOAMiddleware] if settings.is_testnet else [],
             )
             # Inject geth_poa_middleware to handle Flare's oversized extraData
-# pyright: reportUnknownArgumentType=false            
-            self.w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0) 
+# pyright: reportUnknownArgumentType=false
+            self.w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
             self.contract_registry = self.w3.eth.contract(
                 address=self.w3.to_checksum_address(CONTRACT_REGISTRY_ADDRESS),
                 abi=load_abi("FlareContractRegistry"),
@@ -197,6 +200,9 @@ class Flare:
 
         """
         try:
+            nonce: Nonce
+            max_fee_per_gas: int
+            chain_id: int
             nonce, max_fee_per_gas, chain_id = await asyncio.gather(
                 self.w3.eth.get_transaction_count(from_addr),
                 self.estimate_gas_price(gas_priority_multiple=1.2),
@@ -204,19 +210,19 @@ class Flare:
             )
             max_priority_fee_per_gas = await self.w3.eth.max_priority_fee
             # Add 20% buffer to maxFeePerGas to account for base fee fluctuations
-            max_fee_per_gas = Wei(int(max_fee_per_gas * 1.2))
+            max_fee_per_gas = int(max_fee_per_gas * 1.2)
             # Ensure maxFeePerGas is at least baseFee + maxPriorityFeePerGas
             latest_block = await self.w3.eth.get_block("latest")
             base_fee_per_gas = latest_block.get("baseFeePerGas")
             if base_fee_per_gas is None:
                 raise ValueError("baseFeePerGas not found in latest block")
             max_fee_per_gas = max(
-                max_fee_per_gas, Wei(base_fee_per_gas + max_priority_fee_per_gas)
+                max_fee_per_gas, base_fee_per_gas + max_priority_fee_per_gas
             )
             params: TxParams = {
                 "from": from_addr,
                 "nonce": nonce,
-                "maxFeePerGas": max_fee_per_gas,
+                "maxFeePerGas": Wei(max_fee_per_gas),
                 "maxPriorityFeePerGas": max_priority_fee_per_gas,
                 "chainId": chain_id,
                 "type": 2, 
@@ -251,8 +257,7 @@ class Flare:
             msg = f"Failed to build transaction: {e}"
             logger.exception(msg)
             raise FlareTxError(msg) from e
-        
-        
+
     @with_web3_error_handling("Signing and sending transaction")
     async def sign_and_send_transaction(self, tx: TxParams) -> str:
         """
@@ -308,6 +313,28 @@ class Flare:
             msg = f"Failed to send transaction or get receipt: {e}"
             logger.exception(msg, tx_details=tx)
             raise FlareTxError(msg) from e
+
+    @with_web3_error_handling("Estimating transaction gas limit")
+    async def estimate_gas(self, tx: TxParams, gas_buffer: float = 0.2) -> int | None:
+        try:
+            gas_estimate = await self.w3.eth.estimate_gas(tx)
+            gas_limit = int(gas_estimate * (1 + gas_buffer))
+            return gas_limit
+        except Exception as e:
+            logger.warning(f"Gas estimation failed: {e}")
+            return None
+
+    @with_web3_error_handling("Estimating gas price")
+    async def estimate_gas_price(self, gas_priority_multiple: float = 1) -> int:
+        fee_history = await self.w3.eth.fee_history(
+            10, "latest", reward_percentiles=[50]
+        )  # Median reward for last 10 blocks
+        base_fee: int = fee_history["baseFeePerGas"][-1]  # Most recent base fee
+        priority_fee: int = int(
+            int(statistics.median(fee_history["reward"][0])) * gas_priority_multiple
+        )  # Median priority fee
+        gas_price: int = base_fee + priority_fee  # EIP-1559 compatible gas price
+        return int(gas_price)
 
     @with_web3_error_handling("Checking balance")
     async def check_balance(self, address: str) -> float:
@@ -504,7 +531,7 @@ class Flare:
         approve_receipt = await self.w3.eth.wait_for_transaction_receipt(
             HexBytes(tx_approval_hash)
         )
-        
+
         # logger.info("Approval tx mined", blockNumber=approve_receipt.blockNumber)
         logger.debug(
             f"Approve transaction mined in block {approve_receipt['blockNumber']}"
@@ -517,9 +544,10 @@ class Flare:
 
         logger.debug(f"Approval tx hash: https://flarescan.com/tx/0x{tx_approval_hash}")
         return tx_approval_hash
-        
 
-    async def eth_call(self, contract_abi: list[dict[str, Any]], call_tx: TxParams) -> bool:
+    async def eth_call(
+        self, contract_abi: list[dict[str, Any]], call_tx: TxParams
+    ) -> bool:
         try:
             await self.w3.eth.call(call_tx)
             logger.info("eth_call successful")
@@ -540,7 +568,9 @@ class Flare:
                 )
             return False
 
-    def get_fn_from_signature(self, abi: list[dict[str, Any]], target_signature: str) -> str | None:
+    def get_fn_from_signature(
+        self, abi: list[dict[str, Any]], target_signature: str
+    ) -> str | None:
         selectors: dict[str, str] = {}
 
         for item in abi:

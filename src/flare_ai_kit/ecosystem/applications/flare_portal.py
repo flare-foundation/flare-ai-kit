@@ -1,7 +1,8 @@
-import structlog
 from typing import Any, cast
-from web3.types import TxParams
+
+import structlog
 from hexbytes import HexBytes
+from web3.types import TxParams
 
 from flare_ai_kit.ecosystem import Contracts, EcosystemSettings
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
@@ -85,9 +86,7 @@ class FlarePortal:
 
         """
         if not flare_provider.address:
-            raise Exception(
-                "Please set settings.account_address in your .env file."
-            )
+            raise Exception("Please set settings.account_address in your .env file.")
         self.settings = settings
         self.contracts = contracts
         self.flare_explorer = flare_explorer
@@ -122,7 +121,7 @@ class FlarePortal:
         wrap_tx = await self.flare_provider.build_transaction(
             function_call=wrap_fn,
             from_addr=self.flare_provider.address,
-            custom_params=cast(TxParams, {"value": amount_WEI}),
+            custom_params=cast("TxParams", {"value": amount_WEI}),
         )
 
         logger.debug("Wrap FLR to WFLR", tx=wrap_tx)
@@ -134,7 +133,9 @@ class FlarePortal:
             logger.warning(
                 "We stop here because the simulated wrap transaction was not sucessfull"
             )
-            raise Exception("We stop here because the simulated transaction was not sucessfull")
+            raise Exception(
+                "We stop here because the simulated transaction was not sucessfull"
+            )
 
         wrap_tx_hash = await self.flare_provider.sign_and_send_transaction(wrap_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
@@ -177,7 +178,9 @@ class FlarePortal:
             logger.warning(
                 "We stop here because the simulated unwrap transaction was not sucessfull"
             )
-            raise Exception("We stop here because the simulated transaction was not sucessfull")
+            raise Exception(
+                "We stop here because the simulated transaction was not sucessfull"
+            )
 
         unwrap_tx_hash = await self.flare_provider.sign_and_send_transaction(unwrap_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(

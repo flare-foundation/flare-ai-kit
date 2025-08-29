@@ -1,11 +1,12 @@
 import warnings
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from typing import cast
+from hexbytes import HexBytes
 from web3 import Web3
-from web3.types import TxParams
 from web3.contract.contract import Contract
+from web3.types import TxParams
 
 from flare_ai_kit.ecosystem import Contracts, EcosystemSettings
 from flare_ai_kit.ecosystem.applications.flare_portal import FlarePortal
@@ -115,7 +116,7 @@ class TestFlarePortal:
         flare_provider_no_address.w3.eth = MagicMock()
 
         with pytest.raises(
-            Exception, match="Flare provider must have a valid account address set."
+            Exception, match="Please set settings.account_address in your .env file."
         ):
             FlarePortal(
                 settings=self.settings,
@@ -148,9 +149,10 @@ class TestFlarePortal:
 
         assert result == tx_hash
         self.flare_provider.build_transaction.assert_called_with(
-            function_call=self.flare_portal.wflr_contract.functions.deposit.return_value,
+            function_call=self.flare_portal.wflr_contract.functions.deposit(),
             from_addr=self.flare_provider.address,
-            custom_params=cast(TxParams, {"value": amount_wei}),
+            # custom_params=cast("TxParams", {"value": amount_wei}),
+            custom_params={"value": amount_wei},
         )
         self.flare_provider.eth_call.assert_called_with(
             contract_abi=self.wflr_abi, call_tx={"tx": "stubbed"}
@@ -159,7 +161,7 @@ class TestFlarePortal:
             {"tx": "stubbed"}
         )
         self.flare_provider.w3.eth.wait_for_transaction_receipt.assert_called_with(
-            tx_hash
+            HexBytes(tx_hash)
         )
 
     @pytest.mark.asyncio
@@ -175,13 +177,16 @@ class TestFlarePortal:
         )
         self.flare_provider.eth_call = AsyncMock(return_value=False)
 
-        result = await self.flare_portal.wrap_flr_to_wflr(amount_wei)
+        # result = await self.flare_portal.wrap_flr_to_wflr(amount_wei)
+        # assert result is None
 
-        assert result is None
+        with pytest.raises(Exception, match="simulated transaction was not sucessfull"):
+            result = await self.flare_portal.wrap_flr_to_wflr(amount_wei)
+
         self.flare_provider.build_transaction.assert_called_with(
             function_call=self.flare_portal.wflr_contract.functions.deposit.return_value,
             from_addr=self.flare_provider.address,
-            custom_params=cast(TxParams, {"value": amount_wei}),
+            custom_params=cast("TxParams", {"value": amount_wei}),
         )
         self.flare_provider.eth_call.assert_called_with(
             contract_abi=self.wflr_abi, call_tx={"tx": "stubbed"}
@@ -225,7 +230,7 @@ class TestFlarePortal:
             {"tx": "stubbed"}
         )
         self.flare_provider.w3.eth.wait_for_transaction_receipt.assert_called_with(
-            tx_hash
+            HexBytes(tx_hash)
         )
 
     @pytest.mark.asyncio
@@ -241,9 +246,9 @@ class TestFlarePortal:
         )
         self.flare_provider.eth_call = AsyncMock(return_value=False)
 
-        result = await self.flare_portal.unwrap_wflr_to_flr(amount_wei)
+        with pytest.raises(Exception, match="simulated transaction was not sucessfull"):
+            result = await self.flare_portal.unwrap_wflr_to_flr(amount_wei)
 
-        assert result is None
         self.flare_portal.wflr_contract.functions.withdraw.assert_called_with(
             amount_wei
         )

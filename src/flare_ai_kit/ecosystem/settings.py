@@ -208,11 +208,11 @@ class ChainIds(BaseModel):
     """A model for storing chain IDs for supported networks."""
 
     flare: PositiveInt
-    ethereum: PositiveInt 
+    ethereum: PositiveInt
     bnb_chain: PositiveInt
     avalanche: PositiveInt
     polygon: PositiveInt
-    arbitrum: PositiveInt 
+    arbitrum: PositiveInt
     op_mainnet: PositiveInt
     metis: PositiveInt
     linea: PositiveInt
@@ -223,7 +223,7 @@ class ChainIds(BaseModel):
     aurora: PositiveInt
     core: PositiveInt
     sonic: PositiveInt
-    unichain: PositiveInt 
+    unichain: PositiveInt
     gnosis: PositiveInt
     soneium: PositiveInt
     kaia: PositiveInt
@@ -233,7 +233,7 @@ class ChainIds(BaseModel):
     sei: PositiveInt
     gravity: PositiveInt
     lightlink: PositiveInt
-    abstract: PositiveInt 
+    abstract: PositiveInt
     flow: PositiveInt
     goat: PositiveInt
     berachain: PositiveInt
@@ -247,8 +247,8 @@ class ChainIds(BaseModel):
     degen: PositiveInt
     codex: PositiveInt
     story: PositiveInt
-    apechain: PositiveInt 
-    telosevm: PositiveInt 
+    apechain: PositiveInt
+    telosevm: PositiveInt
     plume_phoenix: PositiveInt
     xdc: PositiveInt
     nibiru: PositiveInt
@@ -304,5 +304,3 @@ class ChainIdConfig(BaseModel):
         xdc=30365,
         nibiru=30369,
     )
-
-   

@@ -1,7 +1,7 @@
+from typing import cast
 from unittest.mock import ANY, AsyncMock, MagicMock
 
 import pytest
-from typing import cast
 from web3.types import TxParams
 
 from flare_ai_kit.ecosystem.applications.sceptre import Sceptre
@@ -75,25 +75,25 @@ class TestSceptre:
         self.flare_provider.build_transaction.assert_awaited_with(
             function_call=self.mock_submit,
             from_addr=self.flare_provider.address,
-            custom_params=cast(TxParams, {"value": amount_wei}),
+            custom_params=cast("TxParams", {"value": amount_wei}),
         )
         self.flare_provider.eth_call.assert_awaited_once()
         self.flare_provider.sign_and_send_transaction.assert_awaited_once()
         self.mock_wait_for_receipt.assert_awaited_once_with(tx_hash)
 
     @pytest.mark.asyncio
-    async def test_stake_failed_simulation(self):    
+    async def test_stake_failed_simulation(self):
         self.flare_provider.eth_call = AsyncMock(return_value=False)
 
         with pytest.raises(
             Exception,
-            match="We stop here because the simulated transaction was not sucessfull"
+            match="We stop here because the simulated transaction was not sucessfull",
         ):
             await self.sceptre.stake(10.0)
 
         # since we bail on simulation, no send or receipt lookup
         self.flare_provider.sign_and_send_transaction.assert_not_called()
-        self.mock_wait_for_receipt.assert_not_called()        
+        self.mock_wait_for_receipt.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_stake_invalid_amount(self):

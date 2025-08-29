@@ -1,10 +1,11 @@
 import re
 from decimal import Decimal
-from web3 import Web3
-from web3.contract import AsyncContract
+from typing import Any
 
 import structlog
-from typing import Any
+from hexbytes import HexBytes
+from web3 import Web3
+from web3.contract import AsyncContract
 
 from flare_ai_kit.ecosystem import (
     Contracts,
@@ -41,9 +42,7 @@ class Cyclo:
         flare_provider: Flare,
     ) -> None:
         if not settings.account_address:
-            raise Exception(
-                "Please set settings.account_address in your .env file."
-            )
+            raise Exception("Please set settings.account_address in your .env file.")
         self.contracts = contracts
         self.account_address = settings.account_address
         self.flare_explorer = flare_explorer
@@ -128,8 +127,8 @@ class Cyclo:
 
         # ============= Build transaction ================
         cyclo_contract: AsyncContract = self.flare_provider.w3.eth.contract(
-            address=Web3.to_checksum_address(cyclo_address), 
-            abi=self.get_cyclo_contract_abi()
+            address=Web3.to_checksum_address(cyclo_address),
+            abi=self.get_cyclo_contract_abi(),
         )
 
         amount = amount_WEI
@@ -163,12 +162,14 @@ class Cyclo:
             logger.warning(
                 "We stop here because the simulated transaction was not sucessfull"
             )
-            raise Exception("We stop here because the simulated transaction was not sucessfull")
+            raise Exception(
+                "We stop here because the simulated transaction was not sucessfull"
+            )
 
         # ============= Execute transaction ================
         lock_tx_hash = await self.flare_provider.sign_and_send_transaction(lock_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            Web3.to_checksum_address(lock_tx_hash)
+            HexBytes(lock_tx_hash)
         )
         logger.debug(f"Lock transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{lock_tx_hash}")
@@ -205,7 +206,8 @@ class Cyclo:
 
         # ============= Build transaction ================
         cyclo_contract: AsyncContract = self.flare_provider.w3.eth.contract(
-            address=Web3.to_checksum_address(cyclo_address), abi=self.get_cyclo_contract_abi()
+            address=Web3.to_checksum_address(cyclo_address),
+            abi=self.get_cyclo_contract_abi(),
         )
 
         # (uint256 shares, address receiver, address owner, uint256 id, bytes receiptInformation)
@@ -232,12 +234,14 @@ class Cyclo:
             logger.warning(
                 "We stop here because the simulated transaction was not sucessfull"
             )
-            raise Exception("We stop here because the simulated transaction was not sucessfull")
+            raise Exception(
+                "We stop here because the simulated transaction was not sucessfull"
+            )
 
         # ============= Execute transaction ================
         unlock_tx_hash = await self.flare_provider.sign_and_send_transaction(unlock_tx)
         receipt = await self.flare_provider.w3.eth.wait_for_transaction_receipt(
-            Web3.to_checksum_address(unlock_tx_hash)
+            HexBytes(unlock_tx_hash)
         )
         logger.debug(f"unlock transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{unlock_tx_hash}")

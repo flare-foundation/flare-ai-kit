@@ -2,15 +2,14 @@ import warnings
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from web3 import Web3
-from web3.types import TxParams
-from web3.contract.contract import Contract
 from hexbytes import HexBytes
+from web3 import Web3
+from web3.contract.contract import Contract
 
 from flare_ai_kit.ecosystem import ChainIdConfig, Contracts, EcosystemSettings
+from flare_ai_kit.ecosystem.applications.stargate import Stargate
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.flare import Flare
-from flare_ai_kit.ecosystem.applications.stargate import Stargate
 
 # Suppress all websockets warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning, module=r"websockets.*")
@@ -122,7 +121,9 @@ class TestStargate:
         provider.w3.eth = MagicMock()
         provider.w3.eth.contract = MagicMock()
 
-        with pytest.raises(Exception, match="Please set settings.account_address in your .env file."):
+        with pytest.raises(
+            Exception, match="Please set settings.account_address in your .env file."
+        ):
             await Stargate.create(
                 settings=settings,
                 contracts=contracts,
@@ -134,7 +135,9 @@ class TestStargate:
     def test_init_missing_account_address(self):
         settings = MagicMock(spec=EcosystemSettings)
         settings.account_address = ""
-        with pytest.raises(Exception, match="Please set settings.account_address in your .env file."):
+        with pytest.raises(
+            Exception, match="Please set settings.account_address in your .env file."
+        ):
             Stargate(
                 settings=settings,
                 contracts=self.contracts,
@@ -156,7 +159,7 @@ class TestStargate:
         allowance = desired_amount_wei // 2
 
         to_address = Web3.to_bytes(
-            hexstr="0x" + "0"*24 + self.settings.account_address[2:]
+            hexstr="0x" + "0" * 24 + self.settings.account_address[2:]
         )
         send_param = (
             self.chain_id,
@@ -187,7 +190,9 @@ class TestStargate:
             return_value={"blockNumber": 1}
         )
 
-        result = await self.stargate.bridge_weth_to_chain(desired_amount_wei, self.chain_id)
+        result = await self.stargate.bridge_weth_to_chain(
+            desired_amount_wei, self.chain_id
+        )
         assert result == tx_hash
         self.flare_provider.w3.eth.wait_for_transaction_receipt.assert_called_with(
             # Stargate now wraps hash in HexBytes before waiting
@@ -209,7 +214,9 @@ class TestStargate:
         self.stargate.oft_contract.functions.quoteOFT.return_value.call = AsyncMock(
             return_value=((1, 5), (), (0,))
         )
-        with pytest.raises(ValueError, match="Desired send amount is less than min limit"):
+        with pytest.raises(
+            ValueError, match="Desired send amount is less than min limit"
+        ):
             await self.stargate.bridge_weth_to_chain(0, self.chain_id)
 
     @pytest.mark.asyncio
@@ -224,11 +231,16 @@ class TestStargate:
         self.stargate.oft_contract.functions.quoteSend.return_value.call = AsyncMock(
             return_value=(10**15, 0)
         )
-        self.flare_provider.erc20_balanceOf = AsyncMock(return_value=2*desired_amount_wei)
+        self.flare_provider.erc20_balanceOf = AsyncMock(
+            return_value=2 * desired_amount_wei
+        )
         self.flare_provider.erc20_allowance = AsyncMock(return_value=desired_amount_wei)
         self.flare_provider.erc20_approve = AsyncMock(return_value="0xapprove")
         self.flare_provider.build_transaction = AsyncMock(return_value={"tx": "stub"})
         self.flare_provider.eth_call = AsyncMock(return_value=False)
 
-        with pytest.raises(Exception, match="We stop here because the simulated send transaction was not sucessfull"):
+        with pytest.raises(
+            Exception,
+            match="We stop here because the simulated send transaction was not sucessfull",
+        ):
             await self.stargate.bridge_weth_to_chain(desired_amount_wei, self.chain_id)
