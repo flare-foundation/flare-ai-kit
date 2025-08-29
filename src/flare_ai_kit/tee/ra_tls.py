@@ -74,7 +74,7 @@ def generate_key_and_csr(
     return key_pem, csr_pem
 
 
-def generate_self_signed_cert(token, common_name, days_valid):
+def generate_self_signed_cert(token: str, common_name: str, days_valid: int):
     # logger.info("Generating self-signed certificate with SAN")
     try:
         # Generate private key
@@ -97,9 +97,9 @@ def generate_self_signed_cert(token, common_name, days_valid):
                 ]
             )
         )
-        builder = builder.not_valid_before(datetime.datetime.utcnow())
+        builder = builder.not_valid_before(datetime.datetime.now(datetime.UTC))
         builder = builder.not_valid_after(
-            datetime.datetime.utcnow() + datetime.timedelta(days=days_valid)
+            datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=days_valid)
         )
         builder = builder.serial_number(x509.random_serial_number())
         builder = builder.public_key(public_key)
@@ -162,9 +162,9 @@ def generate_self_signed_cert_OLD(
         .issuer_name(issuer)
         .public_key(private_key.public_key())
         .serial_number(x509.random_serial_number())
-        .not_valid_before(datetime.datetime.utcnow())
+        .not_valid_before(datetime.datetime.now(datetime.UTC))
         .not_valid_after(
-            datetime.datetime.utcnow() + datetime.timedelta(days=days_valid)
+            datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=days_valid)
         )
         .add_extension(
             x509.SubjectAlternativeName([x509.DNSName("localhost")]), critical=False
