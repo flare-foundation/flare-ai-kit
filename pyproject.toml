@@ -35,6 +35,10 @@ dependencies = [
     "pytesseract>=0.3.13",
     "gitpython>=3.1.45",
     "google-adk>=1.9.0",
+    "dulwich>=0.24.1",
+    "qdrant-client>=1.15.1",
+    "pyjwt>=2.10.1",
+    "pyopenssl>=25.1.0",
 ]
 
 [project.urls]
