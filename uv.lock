@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -823,6 +823,7 @@ name = "flare-ai-kit"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "dulwich" },
     { name = "gitpython" },
     { name = "google-adk" },
     { name = "google-genai" },
@@ -830,8 +831,11 @@ dependencies = [
     { name = "pillow" },
     { name = "pydantic" },
     { name = "pydantic-ai" },
+    { name = "pyjwt" },
     { name = "pymupdf" },
+    { name = "pyopenssl" },
     { name = "pytesseract" },
+    { name = "qdrant-client" },
     { name = "structlog" },
     { name = "tenacity" },
     { name = "web3" },
@@ -887,6 +891,7 @@ requires-dist = [
     { name = "cryptography", marker = "extra == 'tee'", specifier = ">=44.0.2" },
     { name = "cryptography", marker = "extra == 'wallet'", specifier = ">=44.0.2" },
     { name = "discord-py", marker = "extra == 'social'", specifier = ">=2.3.2" },
+    { name = "dulwich", specifier = ">=0.24.1" },
     { name = "dulwich", marker = "extra == 'rag'", specifier = ">=0.23.2" },
     { name = "eth-account", marker = "extra == 'wallet'", specifier = ">=0.13.0" },
     { name = "fastapi", extras = ["standard"], marker = "extra == 'a2a'", specifier = ">=0.116.1" },
@@ -899,14 +904,17 @@ requires-dist = [
     { name = "pillow", marker = "extra == 'ingestion'", specifier = ">=11.3.0" },
     { name = "pydantic", specifier = ">=2.11.1" },
     { name = "pydantic-ai", specifier = ">=0.0.46" },
+    { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "pyjwt", marker = "extra == 'tee'", specifier = ">=2.10.1" },
     { name = "pyjwt", marker = "extra == 'wallet'", specifier = ">=2.10.1" },
     { name = "pymupdf", specifier = ">=1.26.1" },
     { name = "pymupdf", marker = "extra == 'ingestion'", specifier = ">=1.26.1" },
+    { name = "pyopenssl", specifier = ">=25.1.0" },
     { name = "pyopenssl", marker = "extra == 'tee'", specifier = ">=25.0.0" },
     { name = "pytesseract", specifier = ">=0.3.13" },
     { name = "pytesseract", marker = "extra == 'ingestion'", specifier = ">=0.3.13" },
     { name = "python-telegram-bot", marker = "extra == 'social'", specifier = ">=22.0" },
+    { name = "qdrant-client", specifier = ">=1.15.1" },
     { name = "qdrant-client", marker = "extra == 'rag'", specifier = ">=1.13.3" },
     { name = "slack-sdk", marker = "extra == 'social'", specifier = ">=3.26.2" },
     { name = "structlog", specifier = ">=25.2.0" },
