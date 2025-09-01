@@ -95,6 +95,8 @@ class Cyclo:
             ValueError: If the transaction fails with a ZeroSharesAmount error or no Deposit event is found.
 
         """
+        if self.flare_provider.address is None:
+            raise ValueError("Wallet address cannot be None.")
         # ======== Get addresses from token string ==============
         token_address, cyclo_address = self.get_addresses(token)
 
@@ -201,6 +203,8 @@ class Cyclo:
             Exception: If the token is unsupported or transaction building fails.
 
         """
+        if self.flare_provider.address is None:
+            raise ValueError("Wallet address cannot be None.")
         # ============= Map token string to addresses ================
         _token_address, cyclo_address = self.get_addresses(token)
 

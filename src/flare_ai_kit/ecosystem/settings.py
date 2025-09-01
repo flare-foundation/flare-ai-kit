@@ -178,15 +178,15 @@ class EcosystemSettings(BaseSettings):
         description="Account private key to use when interacting onchain.",
     )
     openocean_token_list: str = Field(
-        "https://open-api.openocean.finance/v4/flare/tokenList",
+        default="https://open-api.openocean.finance/v4/flare/tokenList",
         description="OpenOcean token list URL",
     )
     openocean_gas_price: str = Field(
-        "https://open-api.openocean.finance/v4/bsc/gasPrice",
+        default="https://open-api.openocean.finance/v4/bsc/gasPrice",
         description="OpenOcean gas price URL",
     )
     openocean_swap: str = Field(
-        "https://open-api.openocean.finance/v4/flare/swap",
+        default="https://open-api.openocean.finance/v4/flare/swap",
         description="OpenOcean swap URL",
     )
     contracts: Contracts = Field(
