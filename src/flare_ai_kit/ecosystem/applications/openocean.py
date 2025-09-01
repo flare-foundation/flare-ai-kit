@@ -141,6 +141,9 @@ class OpenOcean:
             >>> print(f"Swap completed: {hash}")
 
         """
+        if self.provider.address is None:
+            raise ValueError("Wallet address cannot be None.")
+
         amount_WEI = self.provider.w3.to_wei(amount, unit="ether")
 
         # Get token info

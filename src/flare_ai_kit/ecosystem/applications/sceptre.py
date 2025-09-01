@@ -82,6 +82,9 @@ class Sceptre:
             Exception: If the transaction building or execution fails.
 
         """
+        if self.flare_provider.address is None:
+            raise ValueError("Wallet address cannot be None.")
+
         stake_abi = [
             {
                 "inputs": [],
@@ -146,6 +149,9 @@ class Sceptre:
             Exception: If the transaction building or execution fails.
 
         """
+        if self.flare_provider.address is None:
+            raise ValueError("Wallet address cannot be None.")
+
         unstake_abi = [
             {
                 "inputs": [

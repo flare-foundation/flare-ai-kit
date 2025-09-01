@@ -116,6 +116,9 @@ class Kinetic:
             Exception: If the token is unsupported or transaction building fails.
 
         """
+        if self.flare_provider.address is None:
+            raise ValueError("Wallet address cannot be None.")
+
         # ======== Get addresses from token string ==============
         token_address, lending_address = self.get_addresses(token)
 
@@ -189,6 +192,9 @@ class Kinetic:
             Exception: If the token is unsupported or transaction building fails.
 
         """
+        if self.flare_provider.address is None:
+            raise ValueError("Wallet address cannot be None.")
+
         # ============= Map token string to addresses ================
         _token_address, lending_address = self.get_addresses(token)
 
@@ -248,6 +254,8 @@ class Kinetic:
             Exception: If the token is unsupported or transaction building fails.
 
         """
+        if self.flare_provider.address is None:
+            raise ValueError("Wallet address cannot be None.")
         # ============= Map token string to addresses ================
         _token_address, lending_address = self.get_addresses(token)
 
@@ -304,6 +312,9 @@ class Kinetic:
             Exception: If the token is unsupported or transaction building fails.
 
         """
+        if self.flare_provider.address is None:
+            raise ValueError("Wallet address cannot be None.")
+
         # ============= Map token string to addresses ================
         _token_address, lending_address = self.get_addresses(token)
 

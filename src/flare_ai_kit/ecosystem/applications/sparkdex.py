@@ -104,6 +104,9 @@ class SparkDEX:
             Exception: If the token addresses are invalid or transaction building fails.
 
         """
+        if self.flare_provider.address is None:
+            raise ValueError("Wallet address cannot be None.")
+
         # =========== Approve SparkDEX to spend token_in  ==============
         allowance = await self.flare_provider.erc20_allowance(
             owner_address=self.flare_provider.address,

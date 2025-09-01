@@ -117,6 +117,9 @@ class FlarePortal:
             Exception: If transaction building or execution fails.
 
         """
+        if self.flare_provider.address is None:
+            raise ValueError("Wallet address cannot be None.")
+
         wrap_fn = self.wflr_contract.functions.deposit()
         wrap_tx = await self.flare_provider.build_transaction(
             function_call=wrap_fn,
@@ -164,6 +167,9 @@ class FlarePortal:
             Exception: If transaction building or execution fails.
 
         """
+        if self.flare_provider.address is None:
+            raise ValueError("Wallet address cannot be None.")
+
         unwrap_fn = self.wflr_contract.functions.withdraw(amount_WEI)
         unwrap_tx = await self.flare_provider.build_transaction(
             function_call=unwrap_fn, from_addr=self.flare_provider.address

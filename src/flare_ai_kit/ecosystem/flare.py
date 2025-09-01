@@ -21,10 +21,16 @@ from web3.exceptions import (
     Web3Exception,
 )
 
+# from web3.middleware import ExtraDataToPOAMiddleware as _RawExtraDataToPOAMiddleware
+from web3.middleware import ExtraDataToPOAMiddleware, Web3Middleware
+
+# Annotate as a middleware class to keep pyright happy:
+poa: type[Web3Middleware] = ExtraDataToPOAMiddleware
+
 # pyright: reportUnknownVariableType=false
-from web3.middleware import (
-    ExtraDataToPOAMiddleware,
-)
+# from web3.middleware import (
+#    ExtraDataToPOAMiddleware,
+# )
 from web3.types import Nonce, TxParams, TxReceipt, Wei
 
 from flare_ai_kit.common import FlareTxError, FlareTxRevertedError, load_abi
@@ -98,24 +104,10 @@ class Flare:
             FlareConnectionError: If the Web3 provider cannot be initialized.
 
         """
-        if not settings.account_address:
-            raise ValueError("account_address must be set and non-empty")
         self.address = settings.account_address
-
-        if not settings.account_private_key:
-            raise ValueError("account_private_key must be set and non-empty")
         self.private_key = settings.account_private_key
-
-        if not settings.web3_provider_url:
-            raise ValueError("web3_provider_url must be set and non-empty")
         self.web3_provider_url = str(settings.web3_provider_url)
-
-        if not settings.max_retries:
-            raise ValueError("max_retries must be set and non-empty")
         self.max_retries = settings.max_retries
-
-        if not settings.retry_delay:
-            raise ValueError("retry_delay must be set and non-empty")
         self.retry_delay = settings.retry_delay
 
         try:
@@ -128,8 +120,9 @@ class Flare:
                 middleware=[ExtraDataToPOAMiddleware] if settings.is_testnet else [],
             )
             # Inject geth_poa_middleware to handle Flare's oversized extraData
-# pyright: reportUnknownArgumentType=false
-            self.w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+            # self.w3.middleware_onion.inject(ExtraDataToPOAMiddleware(), layer=0)
+            self.w3.middleware_onion.inject(poa, layer=0)
+
             self.contract_registry = self.w3.eth.contract(
                 address=self.w3.to_checksum_address(CONTRACT_REGISTRY_ADDRESS),
                 abi=load_abi("FlareContractRegistry"),
@@ -225,7 +218,7 @@ class Flare:
                 "maxFeePerGas": Wei(max_fee_per_gas),
                 "maxPriorityFeePerGas": max_priority_fee_per_gas,
                 "chainId": chain_id,
-                "type": 2, 
+                "type": 2,
             }
             logger.debug("Prepared base transaction parameters", params=params)
         except Web3Exception as e:
@@ -358,28 +351,6 @@ class Flare:
             balance_float=balance_float,
         )
         return balance_float
-
-    @with_web3_error_handling("Estimating transaction gas limit")
-    async def estimate_gas(self, tx: TxParams, gas_buffer: float = 0.2) -> int | None:
-        try:
-            gas_estimate = await self.w3.eth.estimate_gas(tx)
-            gas_limit = int(gas_estimate * (1 + gas_buffer))
-            return gas_limit
-        except Exception as e:
-            logger.warning(f"Gas estimation failed: {e}")
-            return None
-
-    @with_web3_error_handling("Estimating gas price")
-    async def estimate_gas_price(self, gas_priority_multiple: float = 1) -> int:
-        fee_history = await self.w3.eth.fee_history(
-            10, "latest", reward_percentiles=[50]
-        )  # Median reward for last 10 blocks
-        base_fee = fee_history["baseFeePerGas"][-1]  # Most recent base fee
-        priority_fee = (
-            int(statistics.median(fee_history["reward"][0])) * gas_priority_multiple
-        )  # Median priority fee
-        gas_price = base_fee + priority_fee  # EIP-1559 compatible gas price
-        return int(gas_price)
 
     @with_web3_error_handling("Creating FLR transfer transaction")
     async def create_send_flr_tx(

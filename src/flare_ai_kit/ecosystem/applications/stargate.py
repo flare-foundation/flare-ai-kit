@@ -135,6 +135,9 @@ class Stargate:
             Exception: If transaction building or execution fails.
 
         """
+        if self.flare_provider.address is None:
+            raise ValueError("Wallet address cannot be None.")
+
         #
         # === Define parameter for the quoteOFT in the contract ===
         #

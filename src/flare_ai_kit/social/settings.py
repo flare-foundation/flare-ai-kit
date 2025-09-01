@@ -30,58 +30,58 @@ class SocialSettings(BaseSettings):
         description="API key for Telegram.",
     )
     telegram_bot_token: SecretStr | None = Field(
-        None,
+        default=None,
         description="API key for Telegram.",
     )
     telegram_chat_id: SecretStr | None = Field(
-        None,
+        default=None,
         description="API key for Telegram.",
     )
 
     # Discord settings
     discord_bot_token: SecretStr | None = Field(
-        None,
+        default=None,
         description="Bot token for Discord.",
     )
     discord_channel_id: SecretStr | None = Field(
-        None,
+        default=None,
         description="Channel ID for Discord.",
     )
 
     # Slack settings
     slack_bot_token: SecretStr | None = Field(
-        None,
+        default=None,
         description="Bot token for Slack.",
     )
     slack_channel_id: SecretStr | None = Field(
-        None,
+        default=None,
         description="Channel name for Slack.",
     )
 
     # Farcaster settings
     farcaster_api_key: SecretStr | None = Field(
-        None,
+        default=None,
         description="API key for Farcaster.",
     )
     farcaster_signer_uuid: SecretStr | None = Field(
-        None,
+        default=None,
         description="Signer UUID for Farcaster.",
     )
     farcaster_fid: SecretStr | None = Field(
-        None,
+        default=None,
         description="Farcaster FID.",
     )
     farcaster_api_url: SecretStr | None = Field(
-        None,
+        default=None,
         description="Base URL for Farcaster API.",
     )
 
     # Github settings
     github_token: SecretStr | None = Field(
-        None,
+        default=None,
         description="Token for github.",
     )
     github_repo: SecretStr | None = Field(
-        None,
+        default=None,
         description="Repository for github.",
     )
