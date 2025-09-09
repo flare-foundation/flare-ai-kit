@@ -3,7 +3,7 @@
 from typing import override
 
 import structlog
-from google import genai  # pyright: ignore[reportMissingTypeStubs]
+from google import genai  # type: ignore
 from google.genai import types  # pyright: ignore[reportMissingTypeStubs]
 
 from flare_ai_kit.common import EmbeddingsError
@@ -37,7 +37,7 @@ class GeminiEmbedding(BaseEmbedding):
         """
         self.model = model
         self.output_dimensionality = output_dimensionality
-        self.client = genai.Client(api_key=api_key)
+        self.client = genai.Client(api_key=api_key)  # type: ignore
 
     @override
     def embed_content(
@@ -83,7 +83,7 @@ class GeminiEmbedding(BaseEmbedding):
             output_dimensionality=self.output_dimensionality,
         )
 
-        response = self.client.models.embed_content(  # pyright: ignore[reportUnknownMemberType]
+        response = self.client.models.embed_content(  # type: ignore
             model=self.model,
             contents=contents_list,  # type: ignore[reportArgumentType]
             config=types.EmbedContentConfig(
@@ -93,29 +93,30 @@ class GeminiEmbedding(BaseEmbedding):
             ),
         )
 
-        if hasattr(response, "embeddings") and response.embeddings:
+        if hasattr(response, "embeddings") and response.embeddings:  # type: ignore
             # Ignore return type check due to potential incomplete stubs
-            embedding_values = [list(embedding) for embedding in response.embeddings]
+            embedding_values = [list(embedding) for embedding in response.embeddings]  # type: ignore
 
-            if len(embedding_values) != num_items:
+            if len(embedding_values) != num_items:  # type: ignore
                 logger.warning(
                     "Mismatch between number of inputs and embeddings returned",
                     inputs=num_items,
-                    outputs=len(embedding_values),
+                    outputs=len(embedding_values),  # type: ignore
                 )
                 # Raising error for now to indicate inconsistency.
                 msg = f"Expected {num_items} embeddings, but received "
-                f"{len(embedding_values)}"
+                f"{len(embedding_values)}"  # type: ignore
                 raise EmbeddingsError(msg)
 
             logger.debug(
                 "Successfully generated Gemini embeddings.",
-                num_embeddings=len(embedding_values),
+                num_embeddings=len(embedding_values),  # type: ignore
             )
-            return embedding_values  # pyright: ignore[reportReturnType]
+            return embedding_values  # type: ignore
         # Handle cases where the API call succeeded but returned no embeddings
         logger.error(
-            "Gemini API returned no embeddings.", response_details=str(response)
+            "Gemini API returned no embeddings.",
+            response_details=str(response),  # type: ignore
         )
         msg = "Gemini API call succeeded but returned no embeddings."
         raise EmbeddingsError(msg)
