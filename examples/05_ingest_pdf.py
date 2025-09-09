@@ -2,18 +2,20 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, mock_open, patch
 
 from data.create_sample_invoice import create_invoice_and_build_template
+from google.adk.agents import Agent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
 from flare_ai_kit import FlareAIKit
-from flare_ai_kit.agent.adk_agent import pdf_agent
+from flare_ai_kit.agent.pdf_tools import read_pdf_text_tool
 from flare_ai_kit.config import AppSettings
 from flare_ai_kit.ingestion.settings import (
     IngestionSettings,
@@ -55,18 +57,22 @@ def _json_from(text: str) -> dict[str, Any]:
 
 
 async def parse_pdf_to_template_json(
-    pdf: str | Path, template: PDFTemplateSettings, max_pages: int | None = None
+    agent: Agent,
+    pdf: str | Path,
+    template: PDFTemplateSettings,
+    max_pages: int | None = None,
 ) -> dict[str, Any]:
     """Setup in-memory ADK agent, give it the PDF, template and prompt."""
     pdf = Path(pdf)
     svc = InMemorySessionService()
     await svc.create_session(app_name="app", user_id="u", session_id="s")
-    runner = Runner(agent=pdf_agent, app_name="app", session_service=svc)
+    runner = Runner(agent=agent, app_name="app", session_service=svc)
 
     msg = types.Content(
         role="user", parts=[types.Part(text=_prompt(pdf, template, max_pages))]
     )
     final_text = None
+    print(f"Calling {agent.name} using model: {agent.model}")
     async for ev in runner.run_async(user_id="u", session_id="s", new_message=msg):
         if ev.is_final_response() and ev.content and ev.content.parts:
             final_text = ev.content.parts[0].text
@@ -97,6 +103,33 @@ async def main() -> None:
         ),
     )
 
+    # Inject Gemini API Key
+    if app_settings.agent and app_settings.agent.gemini_api_key:
+        api_key = app_settings.agent.gemini_api_key.get_secret_value()
+        os.environ["GOOGLE_API_KEY"] = api_key
+
+    # Create ADK agent with tool access.
+    pdf_agent_instruction = (
+        "You are a PDF extraction agent. "
+        "Independently read PDFs using tools and return ONLY JSON matching this schema:\n"
+        "{\n"
+        '  "template_name": string,\n'
+        '  "fields": [ {"field_name": string, "value": string|null}, ... ]\n'
+        "}\n"
+        "- Always call read_pdf_text with the provided file path.\n"
+        "- Use ONLY the template JSON (field order and names) provided by the user to decide what to extract.\n"
+        "- If a field is not found, set its value to null.\n"
+        "- Do not include prose or explanations. Reply with a single JSON object only."
+    )
+
+    # Construct the Agent instance using the imported tool and settings
+    pdf_agent = Agent(
+        name="flare_pdf_agent",
+        model=app_settings.agent.gemini_model,
+        tools=[read_pdf_text_tool],
+        instruction=pdf_agent_instruction,
+    )
+
     # Mock onchain contract posting
     with (
         patch(
@@ -114,7 +147,9 @@ async def main() -> None:
         print("📄 extracted:", mock_post.call_args[0][0])
 
     # Agent PDF parsing
-    structured = await parse_pdf_to_template_json(pdf_path, template, max_pages=1)
+    structured = await parse_pdf_to_template_json(
+        pdf_agent, pdf_path, template, max_pages=1
+    )
     print("🧩 agent JSON:", json.dumps(structured, indent=2))
 
 
