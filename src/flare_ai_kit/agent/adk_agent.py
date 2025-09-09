@@ -1,4 +1,5 @@
-# agent/adk_agent.py
+"""Based ADK Agent using all tools."""
+
 from google.adk.agents import Agent
 
 from flare_ai_kit.agent.settings import AgentSettings

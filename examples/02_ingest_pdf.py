@@ -6,7 +6,6 @@ then processes the file to demonstrate a successful extraction.
 """
 
 import asyncio
-from pathlib import Path
 from unittest.mock import AsyncMock, mock_open, patch
 
 from data.create_sample_invoice import create_invoice_and_get_coords
@@ -62,7 +61,7 @@ async def main() -> None:
                 "use_ocr": False,
                 "contract_settings": {
                     "contract_address": "0x0000000000000000000000000000000000000000",
-                    "abi_path": Path(__file__),
+                    "abi_name": "OnchainDataRegistry",
                     "function_name": "registerDocument",
                 },
             }

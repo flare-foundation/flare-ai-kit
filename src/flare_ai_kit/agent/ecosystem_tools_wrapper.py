@@ -1,3 +1,5 @@
+"""Wrapper for Google ADK ecosystem tools."""
+
 from eth_typing import ChecksumAddress
 from httpx import HTTPStatusError, RequestError, TimeoutException
 from web3.contract.async_contract import AsyncContractFunction
@@ -11,9 +13,7 @@ from flare_ai_kit.common import AbiError, ExplorerError
 
 @adk.tool
 async def check_balance(address: str) -> float:
-    """
-    Check the balance of a given Flare address in FLR.
-    """
+    """Check FLR balance of a given address."""
     from flare_ai_kit.ecosystem.flare import Flare
     from flare_ai_kit.ecosystem.settings import EcosystemSettings
 
@@ -130,7 +130,8 @@ async def get_ftso_latest_price(feed_name: str) -> float:
     settings = EcosystemSettings()
     ftso = await FtsoV2.create(settings)
     if not ftso:
-        raise ValueError("FtsoV2 instance not fully initialized. Use FtsoV2.create().")
+        msg = "FtsoV2 instance not fully initialized. Use FtsoV2.create()."
+        raise ValueError(msg)
 
     return await ftso.get_latest_price(feed_name)
 
@@ -159,7 +160,8 @@ async def get_ftso_latest_prices(feed_names: list[str]) -> list[float]:
     settings = EcosystemSettings()
     ftso = await FtsoV2.create(settings)
     if not ftso:
-        raise ValueError("FtsoV2 instance not fully initialized. Use FtsoV2.create().")
+        msg = "FtsoV2 instance not fully initialized. Use FtsoV2.create()."
+        raise ValueError(msg)
 
     return await ftso.get_latest_prices(feed_names)
 
@@ -193,9 +195,11 @@ async def get_contract_abi(contract_address: str) -> list[dict[str, str]]:
         async with explorer:
             return await explorer.get_contract_abi(contract_address)
     except (HTTPStatusError, RequestError, TimeoutException) as e:
-        raise ExplorerError(f"Failed to fetch contract ABI: {e}")
+        msg = f"Failed to fetch contract ABI: {e}"
+        raise ExplorerError(msg) from e
     except AbiError as e:
-        raise ValueError(f"Invalid ABI response for contract {contract_address}: {e}")
+        msg = f"Invalid ABI response for contract {contract_address}: {e}"
+        raise ValueError(msg) from e
 
 
 # --- Social: X (Twitter) ---
@@ -210,9 +214,8 @@ async def post_to_x(content: str) -> bool:
     settings = SocialSettings()  # type: ignore[call-arg]
     x_client = XClient(settings)
     if not x_client.is_configured:
-        raise ValueError(
-            "XClient is not configured. Ensure API keys are set in the environment."
-        )
+        msg = "XClient is not configured. Ensure API keys are set."
+        raise ValueError(msg)
 
     return await x_client.post_tweet(content)
 
@@ -230,7 +233,7 @@ async def send_telegram_message(chat_id: str, message: str) -> bool:
     Args:
         chat_id: The unique identifier for the target chat
             (e.g., '@channelname' or a user ID).
-        text: The text of the message to send.
+        message: The text of the message to send.
 
     Returns:
         True if the message was sent successfully, False otherwise.
@@ -242,8 +245,7 @@ async def send_telegram_message(chat_id: str, message: str) -> bool:
     settings = SocialSettings()  # type: ignore[call-arg]
     telegram_client = TelegramClient(settings)
     if not telegram_client.is_configured:
-        raise ValueError(
-            "TelegramClient is not configured. Ensure API token is set in the environment."
-        )
+        msg = "TelegramClient is not configured. Ensure API keys are set."
+        raise ValueError(msg)
 
     return await telegram_client.send_message(chat_id, message)
