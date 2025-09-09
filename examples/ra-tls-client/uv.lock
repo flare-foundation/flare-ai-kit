@@ -498,7 +498,7 @@ wheels = [
 ]
 
 [[package]]
-name = "flare-ai-kit-python-client"
+name = "flare-ai-kit-ra-tls-client"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

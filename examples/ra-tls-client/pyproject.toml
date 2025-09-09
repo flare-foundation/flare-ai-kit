@@ -1,7 +1,7 @@
 
-# pyproject.toml (flare-ai-kit-python-client)
+# pyproject.toml (flare-ai-kit-ra-tls-client)
 [project]
-name = "flare-ai-kit-python-client"
+name = "flare-ai-kit-ra-tls-client"
 version = "0.1.0"
 description = "Flare AI Kit example Python client"
 readme = "README.md"
@@ -34,9 +34,9 @@ dev = [
     "ruff>=0.9.1",
 ]
 
-[tool.uv.dependencies]
-flare-ai-kit = { path = "../.." }
-
+#[tool.uv.dependencies]
+#flare-ai-kit = { path = "../.." }
+#
 
 [project.scripts]
 start-backend = "backend.ra_tls_main:start"

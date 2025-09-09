@@ -9,7 +9,7 @@ resolution-markers = [
 [manifest]
 members = [
     "flare-ai-kit",
-    "flare-ai-kit-python-client",
+    "flare-ai-kit-ra-tls-client",
 ]
 
 [[package]]
@@ -988,9 +988,9 @@ dev = [
 ]
 
 [[package]]
-name = "flare-ai-kit-python-client"
+name = "flare-ai-kit-ra-tls-client"
 version = "0.1.0"
-source = { editable = "examples/python-client" }
+source = { editable = "examples/ra-tls-client" }
 dependencies = [
     { name = "aiohttp" },
     { name = "cryptography" },

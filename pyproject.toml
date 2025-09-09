@@ -123,5 +123,5 @@ pythonpath = ["src"]  # Add this to ensure pytest finds flare_ai_kit
 [tool.hatch.metadata]
 allow-direct-references = true
 
-[tool.uv.workspace]
-members = ["examples/python-client"]
+#[tool.uv.workspace]
+#members = ["examples/ra-tls-client"]
