@@ -1,21 +1,21 @@
 # Flare AI Kit
 
-SDK for building **verifiable AI Agents** on Flare using Confidential Space.
+SDK for building **verifiable AI Agents** on Flare using Confidential Space Trusted Execution Environments (TEEs).
 
 > [!WARNING]
 >
-> Flare AI Kit is currently under active development (pre-release/alpha stage).
+> Flare AI Kit is currently under active development (alpha stage).
 >
 > Interfaces, APIs, and functionalities may change frequently and potentially in backward-incompatible ways before a stable release.
 > Use with caution.
 
 ## ✨ Features
 
-- **Verifiable Execution**: Run logic in hardware‑isolated TEEs - [GCP Confidential Space TDX](https://cloud.google.com/confidential-computing/confidential-space/docs/confidential-space-overview).
-- **Consensus Engine**: Multi‑agent [Consensus Learning](https://arxiv.org/abs/2402.16157) via [Google Agent2Agent](https://github.com/a2aproject/A2A) protocol.
-- **Strictly‑Typed Agents**: Build with [PydanticAI](https://ai.pydantic.dev) to enforce structured outputs across 200+ LLMs.
-- **Flare Protocol Integration**: [FTSO](https://dev.flare.network/ftso/overview), [FDC](https://dev.flare.network/fdc/overview), [FAssets](https://dev.flare.network/fassets/overview), plus ecosystem dApps like [Sceptre](http://sceptre.fi) and [SparkDEX](https://sparkdex.ai).
-- **Social Intelligence**: Analytics and connectors for X, Telegram, Farcaster.
+- **Verifiable execution**: Run logic inside Intel TDX TEEs via [GCP Confidential Space](https://cloud.google.com/confidential-computing/confidential-space/docs/confidential-space-overview).
+- **Multi-agent consensus**: Majority/Tournament/[Consensus Learning](https://arxiv.org/abs/2402.16157) via [Google Agent2Agent](https://github.com/a2aproject/A2A) protocol.
+- **Agent framework**: Built on [Google ADK](https://google.github.io/adk-docs/) with tool-calling, orchestration and evaluation.
+- **Flare integration**: [FTSO](https://dev.flare.network/ftso/overview), [FDC](https://dev.flare.network/fdc/overview), [FAssets](https://dev.flare.network/fassets/overview) + ecosystem dApps ([Sceptre](https://sceptre.fi), [SparkDEX](https://sparkdex.ai), ...).
+- **Social connectors**: X, Telegram, Farcaster.
 
 ## 🏗️ Architecture
 
@@ -80,22 +80,17 @@ flowchart TD
 
 - [uv](https://github.com/astral-sh/uv) with Python >= 3.12
 - [Docker](https://www.docker.com).
+- (For deployment) Authenticated [gcloud CLI](https://cloud.google.com/sdk/docs/install).
 
-1. **Clone the repo:**
+1. **Clone & configure:**
 
    ```bash
    git clone --recursive https://github.com/flare-foundation/flare-ai-kit.git
    cd flare-ai-kit
+   cp .env.example .env  # add API keys and settings
    ```
 
-2. **Configure your environment:**
-
-   ```bash
-   # Copy the template and add your models, API keys etc.
-   cp .env.example .env
-   ```
-
-3. **Install dependencies:**
+2. **Install:**
 
    ```bash
    uv sync --all-extras
@@ -106,22 +101,15 @@ flowchart TD
 Run the following commands to format, lint, type-check, and test your code before committing.
 
 ```bash
-# Format, lint, and auto-fix
-uv run ruff format
-uv run ruff check --fix
-
-# Run static type checking
-uv run pyright
-
-# Run tests
-uv run pytest
+# Format, lint, type-check, test
+uv run ruff format && uv run ruff check --fix && uv run pyright && uv run pytest
 ```
 
-## 🚧 Build with Docker
+## 🐳 Docker
 
 ```bash
 docker build -t flare-ai-kit .
-docker run -rm --env-file .env flare-ai-kit
+docker run --rm --env-file .env flare-ai-kit
 ```
 
 ## ☁️ Deploy to Confidential Space
@@ -134,12 +122,14 @@ docker run -rm --env-file .env flare-ai-kit
 
    ```bash
    chmod +x gcloud-deploy.sh
-   ./gcloud-deploy.sh # For verbose mode: ./gcloud-deploy.sh -v
+   ./gcloud-deploy.sh # verbose: ./gcloud-deploy.sh -v
    ```
 
 ## 🤝 Contributing
 
-Contributions are highly encouraged! Please review the [CONTRIBUTING.md](CONTRIBUTING.md) guide for details on code style (Conventional Commits, Strict Typing), testing, and the PR process.
+See [CONTRIBUTING.md](CONTRIBUTING.md). 
+We use Conventional Commits, Ruff/Pyright gates, and pytest. 
+Please include tests and update docs for any user-visible changes.
 
 ## 📜 License
 
