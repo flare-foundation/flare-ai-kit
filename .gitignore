@@ -8,6 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+venv/
 .venv*/
 .env
 .ruff_cache
@@ -18,3 +19,6 @@ wheels/
 
 # sqlite
 *.db
+simple_gemini_test.py
+test_agent_framework.py
+test_gemini_real.py
