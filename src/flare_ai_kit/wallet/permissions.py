@@ -148,7 +148,7 @@ class PermissionEngine:
 
         return most_restrictive_action, violations
 
-    async def _evaluate_policy(
+    async def _evaluate_policy(  # noqa: C901
         self, transaction: TransactionRequest, policy: TransactionPolicy, wallet_id: str
     ) -> list[PolicyViolation]:
         """Evaluate a transaction against a single policy."""
@@ -164,7 +164,8 @@ class PermissionEngine:
                     PolicyViolation(
                         policy_name=policy.name,
                         violation_type="max_transaction_value",
-                        description=f"Transaction value {tx_value} ETH exceeds limit {policy.max_transaction_value} ETH",
+                        description=f"{tx_value} exceeds tx value"
+                        f"limit {policy.max_transaction_value}",
                         suggested_action=PolicyAction.DENY,
                     )
                 )
@@ -178,7 +179,8 @@ class PermissionEngine:
                     PolicyViolation(
                         policy_name=policy.name,
                         violation_type="daily_spending_limit",
-                        description=f"Transaction would exceed daily limit. Spent: {daily_spent}, Limit: {policy.daily_spending_limit}",
+                        description=f"Transaction would exceed daily limit."
+                        f"Spent: {daily_spent}, Limit: {policy.daily_spending_limit}",
                         suggested_action=PolicyAction.DENY,
                     )
                 )
@@ -203,7 +205,7 @@ class PermissionEngine:
                 PolicyViolation(
                     policy_name=policy.name,
                     violation_type="destination_not_allowed",
-                    description=f"Transaction to non-whitelisted destination: {transaction.to}",
+                    description=f"Tx to non-whitelisted dest: {transaction.to}",
                     suggested_action=PolicyAction.DENY,
                 )
             )
@@ -227,33 +229,41 @@ class PermissionEngine:
                     PolicyViolation(
                         policy_name=policy.name,
                         violation_type="time_restriction",
-                        description=f"Transactions not allowed at hour {current_hour} UTC",
+                        description=f"Transactions not allowed at {current_hour} UTC",
                         suggested_action=PolicyAction.DENY,
                     )
                 )
 
         # Check gas restrictions
-        if policy.max_gas_price and transaction.gas_price:
-            if int(transaction.gas_price) > int(policy.max_gas_price):
-                violations.append(
-                    PolicyViolation(
-                        policy_name=policy.name,
-                        violation_type="gas_price_too_high",
-                        description=f"Gas price {transaction.gas_price} exceeds limit {policy.max_gas_price}",
-                        suggested_action=PolicyAction.REQUIRE_APPROVAL,
-                    )
+        if (
+            policy.max_gas_price
+            and transaction.gas_price
+            and int(transaction.gas_price) > int(policy.max_gas_price)
+        ):
+            violations.append(
+                PolicyViolation(
+                    policy_name=policy.name,
+                    violation_type="gas_price_too_high",
+                    description=f"Gas price {transaction.gas_price} exceeds"
+                    f"limit {policy.max_gas_price}",
+                    suggested_action=PolicyAction.REQUIRE_APPROVAL,
                 )
+            )
 
-        if policy.max_gas_limit and transaction.gas_limit:
-            if int(transaction.gas_limit) > int(policy.max_gas_limit):
-                violations.append(
-                    PolicyViolation(
-                        policy_name=policy.name,
-                        violation_type="gas_limit_too_high",
-                        description=f"Gas limit {transaction.gas_limit} exceeds limit {policy.max_gas_limit}",
-                        suggested_action=PolicyAction.REQUIRE_APPROVAL,
-                    )
+        if (
+            policy.max_gas_limit
+            and transaction.gas_limit
+            and int(transaction.gas_limit) > int(policy.max_gas_limit)
+        ):
+            violations.append(
+                PolicyViolation(
+                    policy_name=policy.name,
+                    violation_type="gas_limit_too_high",
+                    description=f"{transaction.gas_limit} exceeds"
+                    f"limit {policy.max_gas_limit}",
+                    suggested_action=PolicyAction.REQUIRE_APPROVAL,
                 )
+            )
 
         # Check rate limiting
         for window in policy.time_windows:
@@ -263,7 +273,7 @@ class PermissionEngine:
 
         return violations
 
-    def _calculate_daily_spending(self, wallet_id: str) -> Decimal:
+    def _calculate_daily_spending(self, _: str) -> Decimal:
         """Calculate total spending in the last 24 hours."""
         cutoff = datetime.now(UTC) - timedelta(days=1)
         daily_transactions = [
@@ -277,7 +287,7 @@ class PermissionEngine:
         transaction: TransactionRequest,
         policy: TransactionPolicy,
         window: TimeWindow,
-        wallet_id: str,
+        _: str,
     ) -> list[PolicyViolation]:
         """Check if transaction violates rate limiting rules."""
         violations: list[PolicyViolation] = []

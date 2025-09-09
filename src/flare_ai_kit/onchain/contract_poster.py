@@ -1,11 +1,10 @@
 """Handles posting data to a smart contract on the Flare blockchain."""
 
-import json
 from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from flare_ai_kit.common import FlareTxError
+from flare_ai_kit.common import FlareTxError, load_abi
 from flare_ai_kit.ecosystem.flare import Flare
 from flare_ai_kit.ecosystem.settings import EcosystemSettings
 from flare_ai_kit.ingestion.settings import OnchainContractSettings
@@ -36,13 +35,11 @@ class ContractPoster(Flare):
         super().__init__(ecosystem_settings)
 
         self.contract_settings = contract_settings
-        with self.contract_settings.abi_path.open() as f:
-            abi = json.load(f)
         self.contract = self.w3.eth.contract(
             address=self.w3.to_checksum_address(
                 self.contract_settings.contract_address
             ),
-            abi=abi,
+            abi=load_abi(contract_settings.abi_name),
         )
 
     async def post_data(self, data: dict[str, Any]) -> str | None:

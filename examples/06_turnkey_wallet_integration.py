@@ -91,13 +91,12 @@ async def create_demo_wallet(wallet: TurnkeyWallet) -> tuple[str, str]:
         address_info = await wallet.get_address(wallet_id)
         print(f"📍 Wallet address: {address_info.address}")
         print(f"📍 Derivation path: {address_info.derivation_path}")
-
-        return wallet_id, address_info.address
-
     except Exception as e:
         print(f"❌ Failed to create wallet: {e}")
         # For demo purposes, return mock values
         return "demo_wallet_id", "0x742d35Cc6634C0532925a3b8D8C8EE7c9e92bb1b"
+    else:
+        return wallet_id, address_info.address
 
 
 async def register_ai_agent(
@@ -148,11 +147,11 @@ async def simulate_tee_operation(_tee_manager: TEESecurityManager) -> str:
         # In production, this would create a secure operation
 
         print("✅ TEE operation simulated (would validate in production)")
-        return mock_attestation_token
-
     except Exception as e:
         print(f"❌ TEE operation failed: {e}")
         print("   Using mock attestation for demo purposes")
+        return mock_attestation_token
+    else:
         return mock_attestation_token
 
 
@@ -202,12 +201,11 @@ async def execute_ai_transaction(
             print(f"   📋 Signed transaction: {result['signed_transaction'][:50]}...")
         else:
             print(f"❌ Transaction failed: {result['error']}")
-
-        return result
-
     except Exception as e:
         print(f"❌ Transaction execution error: {e}")
         return {"success": False, "error": str(e)}
+    else:
+        return result
 
 
 async def demonstrate_policy_enforcement(

@@ -139,7 +139,7 @@ class TurnkeyAgentConnector:
         logger.info("AI agent unregistered successfully", agent_id=agent_id)
         return True
 
-    async def execute_agent_transaction(
+    async def execute_agent_transaction(  # noqa: PLR0911
         self,
         agent_transaction: AgentTransaction,
         attestation_token: str | None = None,

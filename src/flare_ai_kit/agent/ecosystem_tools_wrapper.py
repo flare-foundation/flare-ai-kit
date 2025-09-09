@@ -1,3 +1,4 @@
+# type: ignore
 from eth_typing import ChecksumAddress
 from httpx import HTTPStatusError, RequestError, TimeoutException
 from web3.contract.async_contract import AsyncContractFunction

@@ -195,7 +195,7 @@ class EcosystemSettings(BaseSettings):
     )
 
     da_layer_base_url: HttpUrl = Field(
-        default=HttpUrl("https://flr-data-availability.flare.network/api/v1/"),
+        default=HttpUrl("https://flr-data-availability.flare.network/api/"),
         description="Flare Data Availability Layer API base URL.",
     )
     da_layer_api_key: SecretStr | None = Field(
