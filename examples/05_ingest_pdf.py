@@ -1,94 +1,121 @@
-"""
-Example of using the PDF ingestion and on-chain posting feature.
-
-This script first generates a sample PDF and gets its exact data coordinates,
-then processes the file to demonstrate a successful extraction.
-"""
+from __future__ import annotations
 
 import asyncio
+import json
+import re
+from pathlib import Path
+from typing import Any
 from unittest.mock import AsyncMock, mock_open, patch
 
-from data.create_sample_invoice import create_invoice_and_get_coords
+from data.create_sample_invoice import create_invoice_and_build_template
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+from google.genai import types
 
 from flare_ai_kit import FlareAIKit
+from flare_ai_kit.agent.adk_agent import pdf_agent
 from flare_ai_kit.config import AppSettings
+from flare_ai_kit.ingestion.settings import (
+    IngestionSettings,
+    OnchainContractSettings,
+    PDFIngestionSettings,
+    PDFTemplateSettings,
+)
 
 MOCK_TX_HASH = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
 
 
-async def main() -> None:
-    """Main function to run the PDF ingestion example with a real PDF."""
-    # Step 1: Generate the sample PDF and get the exact coordinates
-    print("📄 Generating sample_invoice.pdf and finding coordinates...")
-    coords = create_invoice_and_get_coords()
-    print("-" * 30)
-
-    print("🚀 Starting PDF ingestion example...")
-
-    # --- Configuration with programmatically found and CASTED coordinates ---
-    settings = AppSettings(
-        log_level="INFO",
-        ingestion={
-            "pdf_ingestion": {
-                "templates": [
-                    {
-                        "template_name": "generated_invoice",
-                        "fields": [
-                            {
-                                "field_name": "invoice_id",
-                                "x0": int(coords["invoice_id"].x0),  # type: ignore[reportArgumentType]
-                                "y0": int(coords["invoice_id"].y0),  # type: ignore[reportArgumentType]
-                                "x1": int(coords["invoice_id"].x1),  # type: ignore[reportArgumentType]
-                                "y1": int(coords["invoice_id"].y1),  # type: ignore[reportArgumentType]
-                            },
-                            {
-                                "field_name": "issue_date",
-                                "x0": int(coords["issue_date"].x0),  # type: ignore[reportArgumentType]
-                                "y0": int(coords["issue_date"].y0),  # type: ignore[reportArgumentType]
-                                "x1": int(coords["issue_date"].x1),  # type: ignore[reportArgumentType]
-                                "y1": int(coords["issue_date"].y1),  # type: ignore[reportArgumentType]
-                            },
-                            {
-                                "field_name": "amount_due",
-                                "x0": int(coords["amount_due"].x0),  # type: ignore[reportArgumentType]
-                                "y0": int(coords["amount_due"].y0),  # type: ignore[reportArgumentType]
-                                "x1": int(coords["amount_due"].x1),  # type: ignore[reportArgumentType]
-                                "y1": int(coords["amount_due"].y1),  # type: ignore[reportArgumentType]
-                            },
-                        ],
-                    }
-                ],
-                "use_ocr": False,
-                "contract_settings": {
-                    "contract_address": "0x0000000000000000000000000000000000000000",
-                    "abi_name": "OnchainDataRegistry",
-                    "function_name": "registerDocument",
-                },
-            }
-        },
+def _prompt(pdf: Path, template: PDFTemplateSettings, max_pages: int | None) -> str:
+    """Build the prompt from the template."""
+    return (
+        "Parse this PDF using tools and return ONLY JSON per the template.\n"
+        f"PDF_PATH: {pdf}\nMAX_PAGES: {max_pages or 'ALL'}\n\n"
+        "TEMPLATE_JSON:\n```json\n" + json.dumps(template.model_dump()) + "\n```\n\n"
+        "- Call read_pdf_text(file_path=PDF_PATH, max_pages=MAX_PAGES).\n"
+        "- Extract each field in TEMPLATE_JSON.fields.\n"
+        "- Reply with a single JSON object (no markdown)."
     )
 
-    # mock the blockchain and ABI file-opening parts.
+
+def _json_from(text: str) -> dict[str, Any]:
+    """Extract JSON from agent return text."""
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as e:
+        fence = re.search(
+            r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL | re.IGNORECASE
+        )
+        if fence:
+            return json.loads(fence.group(1))
+        blob = re.search(r"\{.*\}", text, re.DOTALL)
+        if blob:
+            return json.loads(blob.group(0))
+        msg = f"Agent response is not valid JSON:\n{text}"
+        raise RuntimeError(msg) from e
+
+
+async def parse_pdf_to_template_json(
+    pdf: str | Path, template: PDFTemplateSettings, max_pages: int | None = None
+) -> dict[str, Any]:
+    """Setup in-memory ADK agent, give it the PDF, template and prompt."""
+    pdf = Path(pdf)
+    svc = InMemorySessionService()
+    await svc.create_session(app_name="app", user_id="u", session_id="s")
+    runner = Runner(agent=pdf_agent, app_name="app", session_service=svc)
+
+    msg = types.Content(
+        role="user", parts=[types.Part(text=_prompt(pdf, template, max_pages))]
+    )
+    final_text = None
+    async for ev in runner.run_async(user_id="u", session_id="s", new_message=msg):
+        if ev.is_final_response() and ev.content and ev.content.parts:
+            final_text = ev.content.parts[0].text
+            break
+    if not final_text:
+        msg = "Agent produced no response."
+        raise RuntimeError(msg)
+    return _json_from(final_text)
+
+
+async def main() -> None:
+    # Create PDF and save it
+    pdf_path, template = create_invoice_and_build_template("generated_invoice")
+
+    # Add template to global settings
+    app_settings = AppSettings(
+        log_level="INFO",
+        ingestion=IngestionSettings(
+            pdf_ingestion=PDFIngestionSettings(
+                templates=[template],
+                use_ocr=False,
+                contract_settings=OnchainContractSettings(
+                    contract_address="0x0000000000000000000000000000000000000000",
+                    abi_name="OnchainDataRegistry",
+                    function_name="registerDocument",
+                ),
+            )
+        ),
+    )
+
+    # Mock onchain contract posting
     with (
         patch(
             "flare_ai_kit.onchain.contract_poster.ContractPoster.post_data",
             new_callable=AsyncMock,
             return_value=MOCK_TX_HASH,
-        ) as mock_post_data,
+        ) as mock_post,
         patch("flare_ai_kit.onchain.contract_poster.open", mock_open(read_data="[]")),
     ):
-        kit = FlareAIKit(config=settings)
-
+        kit = FlareAIKit(config=app_settings)
         tx_hash = await kit.pdf_processor.ingest_and_post(
-            file_path="examples/data/sample_invoice.pdf",
-            template_name="generated_invoice",
+            file_path=str(pdf_path), template_name=template.template_name
         )
+        print("✅ on-chain tx:", tx_hash)
+        print("📄 extracted:", mock_post.call_args[0][0])
 
-        print("\n✅ Workflow executed successfully!")
-
-        extracted_data = mock_post_data.call_args[0][0]
-        print(f"   📄 REAL data extracted from PDF: {extracted_data}")
-        print(f"   🔗 Mocked on-chain posting returned transaction hash: {tx_hash}")
+    # Agent PDF parsing
+    structured = await parse_pdf_to_template_json(pdf_path, template, max_pages=1)
+    print("🧩 agent JSON:", json.dumps(structured, indent=2))
 
 
 if __name__ == "__main__":
