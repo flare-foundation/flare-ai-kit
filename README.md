@@ -127,8 +127,8 @@ docker run --rm --env-file .env flare-ai-kit
 
 ## 🤝 Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). 
-We use Conventional Commits, Ruff/Pyright gates, and pytest. 
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+We use Conventional Commits, Ruff/Pyright gates, and pytest.
 Please include tests and update docs for any user-visible changes.
 
 ## 📜 License
