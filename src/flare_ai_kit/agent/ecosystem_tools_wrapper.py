@@ -1,3 +1,4 @@
+# type: ignore
 from eth_typing import ChecksumAddress
 from httpx import HTTPStatusError, RequestError, TimeoutException
 from web3.contract.async_contract import AsyncContractFunction
@@ -22,7 +23,7 @@ async def check_balance(address: str) -> float:
     return await flare.check_balance(address)
 
 
-@adk.tool
+@adk.tool  
 async def check_connection() -> bool:
     """
     Check the connection status to the configured RPC endpoint.
@@ -39,7 +40,7 @@ async def check_connection() -> bool:
     return await flare.check_connection()
 
 
-@adk.tool
+@adk.tool  
 async def build_transaction(
     function_call: AsyncContractFunction, from_addr: ChecksumAddress
 ) -> TxParams | None:
@@ -52,7 +53,7 @@ async def build_transaction(
     return await flare.build_transaction(function_call, from_addr)
 
 
-@adk.tool
+@adk.tool  
 async def sign_and_send_transaction(tx: TxParams) -> str | None:
     """
     Sign and send a transaction to the network.
@@ -75,7 +76,7 @@ async def sign_and_send_transaction(tx: TxParams) -> str | None:
     return await flare.sign_and_send_transaction(tx)
 
 
-@adk.tool
+@adk.tool  
 async def create_send_flr_tx(
     from_address: str, to_address: str, amount: float
 ) -> TxParams:
@@ -105,7 +106,7 @@ async def create_send_flr_tx(
 # --- FTSO Protocol ---
 
 
-@adk.tool
+@adk.tool  
 async def get_ftso_latest_price(feed_name: str) -> float:
     """
     Retrieves the latest price for a single feed.
@@ -135,7 +136,7 @@ async def get_ftso_latest_price(feed_name: str) -> float:
     return await ftso.get_latest_price(feed_name)
 
 
-@adk.tool
+@adk.tool  
 async def get_ftso_latest_prices(feed_names: list[str]) -> list[float]:
     """
     Retrieves the latest prices for multiple feeds within the same category.
@@ -167,7 +168,7 @@ async def get_ftso_latest_prices(feed_names: list[str]) -> list[float]:
 # --- Explorer ---
 
 
-@adk.tool
+@adk.tool  
 async def get_contract_abi(contract_address: str) -> list[dict[str, str]]:
     """
     Asynchronously get the ABI for a contract from the Chain Explorer API.
@@ -201,7 +202,7 @@ async def get_contract_abi(contract_address: str) -> list[dict[str, str]]:
 # --- Social: X (Twitter) ---
 
 
-@adk.tool
+@adk.tool  
 async def post_to_x(content: str) -> bool:
     """Posts a message to X (Twitter)."""
     from flare_ai_kit.social.settings import SocialSettings
@@ -220,7 +221,7 @@ async def post_to_x(content: str) -> bool:
 # --- Social: Telegram ---
 
 
-@adk.tool
+@adk.tool  
 async def send_telegram_message(chat_id: str, message: str) -> bool:
     """
     Sends a message to a Telegram chat.
