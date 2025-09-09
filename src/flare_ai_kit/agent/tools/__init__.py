@@ -1,4 +1,4 @@
-"""Generic for ADK tool."""
+"""Generic for ADK tools."""
 
 import inspect
 from collections.abc import Callable
@@ -15,7 +15,7 @@ RT = TypeVar("RT")  # Return type
 TOOL_REGISTRY: list[Any] = []
 
 
-def tool(func: Callable[..., RT]) -> Callable[..., RT]:  # noqa: UP047
+def adk_tool(func: Callable[..., RT]) -> Callable[..., RT]:  # noqa: UP047
     """
     Decorator to register a function as a Gemini-compatible ADK tool.
 
@@ -29,7 +29,6 @@ def tool(func: Callable[..., RT]) -> Callable[..., RT]:  # noqa: UP047
         logger.info("adk_tool", func=func.__name__, args=args, kwargs=kwargs)
         return func(*args, **kwargs)
 
-    # Choose appropriate wrapper
     tool_obj = (
         LongRunningFunctionTool(func=func) if is_async else FunctionTool(func=func)
     )
