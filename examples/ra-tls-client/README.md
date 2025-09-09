@@ -11,10 +11,10 @@
 # Docker commands
 
 Build the example. Note MUST BE EXECUTED FROM flare-ai-kit ROOT
-```docker build --no-cache --progress=plain -t flare-ai-kit-python-client -f examples/python-client/Dockerfile .```
+```docker build --no-cache --progress=plain -t flare-ai-kit-ra-tls-client -f examples/ra-tls-client/Dockerfile .```
 
 Run the container and start the servers
-```docker run --rm -p 80:80 -it --env-file .env flare-ai-kit-python-client```
+```docker run --rm -p 80:80 -it --env-file .env flare-ai-kit-ra-tls-client```
 
 Clear containers and images
 ```docker builder prune --all```
@@ -29,8 +29,8 @@ Copy self-signed certificate from the docker container
 ## Clear all docker images, build, and then run the container
 ```zsh
 docker builder prune --all &&
-docker build --no-cache --progress=plain -t flare-ai-kit-python-client -f examples/python-client/Dockerfile . > build.log 2>&1 &&
-docker run --rm -p 4433:4433 -it --env-file .env flare-ai-kit-python-client
+docker build --no-cache --progress=plain -t flare-ai-kit-ra-tls-client -f examples/ra-tls-client/Dockerfile . > build.log 2>&1 &&
+docker run --rm -p 4433:4433 -it --env-file .env flare-ai-kit-ra-tls-client
 ```
 
 # Debug

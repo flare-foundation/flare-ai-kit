@@ -586,12 +586,12 @@ async def main() -> None:
 
     #
     # Wrap FLR to WFLR
-    # wrap_tx_hash = await wrap_flr(
-    #    amount=20.0,  # 1 FLR
-    #    attestation_token=attestation_token
-    # )
-    # if wrap_tx_hash:
-    #    logger.debug(f"Wrap Transaction hash: https://flarescan.com/tx/0x{wrap_tx_hash}")
+    wrap_tx_hash = await wrap_flr(
+       amount=20.0,  # 1 FLR
+       attestation_token=attestation_token
+    )
+    if wrap_tx_hash:
+       logger.debug(f"Wrap Transaction hash: https://flarescan.com/tx/0x{wrap_tx_hash}")
 
     #
     # SparkDEX swap
