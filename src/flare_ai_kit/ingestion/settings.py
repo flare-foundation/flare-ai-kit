@@ -1,6 +1,6 @@
 """Settings for Vector RAG."""
 
-from pydantic import Field, FilePath, PositiveInt, model_validator
+from pydantic import Field, PositiveInt, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_ALLOWED_EXTENSIONS = {
@@ -89,8 +89,8 @@ class OnchainContractSettings(BaseSettings):
     contract_address: str = Field(
         description="The address of the OnchainDataRegistry smart contract."
     )
-    abi_path: FilePath = Field(
-        description="The path to the ABI file for the smart contract."
+    abi_name: str = Field(
+        description="ABI file name for the smart contract (under flare-ai-kit/abi/)."
     )
     function_name: str = Field(
         "registerDocument",

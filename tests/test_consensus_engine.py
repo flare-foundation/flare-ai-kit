@@ -316,7 +316,7 @@ class TestConsensusEngine:
         # Add mock agents
         agents = [MockAgent(f"agent{i}", confidence=0.8 + i * 0.05) for i in range(3)]
 
-        for i, agent in enumerate(agents):
+        for _, agent in enumerate(agents):
             consensus_engine.coordinator.add_agent(agent, role="analyzer")
 
         # Process task through consensus engine

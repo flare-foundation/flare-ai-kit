@@ -114,7 +114,7 @@ async def test_get_contract_abi(mock_init):
     ):
         from flare_ai_kit.agent.ecosystem_tools_wrapper import get_contract_abi
 
-        result = await get_contract_abi("0xabc")
+        await get_contract_abi("0xabc")
 
 
 @patch("flare_ai_kit.social.x.XClient.__init__", return_value=None)

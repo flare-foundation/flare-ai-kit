@@ -65,7 +65,7 @@ class TEESecurityManager:
         except Exception as e:
             logger.exception("TEE attestation validation failed", error=str(e))
             msg = f"Invalid TEE attestation: {e}"
-            raise ValueError(msg)
+            raise ValueError(msg) from e
 
         # Generate operation ID
         operation_id = self._generate_operation_id(operation_type, operation_data)
