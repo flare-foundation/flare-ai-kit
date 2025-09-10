@@ -64,14 +64,15 @@ class PDFFieldExtractionSettings(BaseSettings):
     """Specifies fields to extract from a PDF and their locations."""
 
     field_name: str = Field(description="The name of the field to extract.")
-    x0: int = Field(description="The starting x-coordinate of the bounding box.")
-    y0: int = Field(description="The starting y-coordinate of the bounding box.")
-    x1: int = Field(description="The ending x-coordinate of the bounding box.")
-    y1: int = Field(description="The ending y-coordinate of the bounding box.")
     data_type: str = Field(
         "string",
         description="The data type of the field (e.g., 'string', 'integer', 'date').",
     )
+    # For deterministic extraction pipeline
+    x0: int | None = Field(default=None, description="The starting x-coordinate of the bounding box.")
+    y0: int | None = Field(default=None, description="The starting y-coordinate of the bounding box.")
+    x1: int | None = Field(default=None, description="The ending x-coordinate of the bounding box.")
+    y1: int | None = Field(default=None, description="The ending y-coordinate of the bounding box.")
 
 
 class PDFTemplateSettings(BaseSettings):
