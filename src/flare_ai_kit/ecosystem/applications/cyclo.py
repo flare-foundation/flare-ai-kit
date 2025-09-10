@@ -1,12 +1,12 @@
 import re
 from decimal import Decimal
-from typing import Any
 
 import structlog
 from hexbytes import HexBytes
 from web3 import Web3
 from web3.contract import AsyncContract
 
+from flare_ai_kit.common import load_abi
 from flare_ai_kit.ecosystem import (
     Contracts,
     EcosystemSettings,
@@ -130,7 +130,7 @@ class Cyclo:
         # ============= Build transaction ================
         cyclo_contract: AsyncContract = self.flare_provider.w3.eth.contract(
             address=Web3.to_checksum_address(cyclo_address),
-            abi=self.get_cyclo_contract_abi(),
+            abi=load_abi("Cyclo"),
         )
 
         amount = amount_WEI
@@ -158,7 +158,7 @@ class Cyclo:
 
         # ============= Simulate transaction ================
         simulation_ok = await self.flare_provider.eth_call(
-            contract_abi=self.get_cyclo_contract_abi(), call_tx=lock_tx
+            contract_abi=load_abi("Cyclo"), call_tx=lock_tx
         )
         if not simulation_ok:
             logger.warning(
@@ -211,7 +211,7 @@ class Cyclo:
         # ============= Build transaction ================
         cyclo_contract: AsyncContract = self.flare_provider.w3.eth.contract(
             address=Web3.to_checksum_address(cyclo_address),
-            abi=self.get_cyclo_contract_abi(),
+            abi=load_abi("Cyclo"),
         )
 
         # (uint256 shares, address receiver, address owner, uint256 id, bytes receiptInformation)
@@ -232,7 +232,7 @@ class Cyclo:
 
         # ============= Simulate transaction ================
         simulation_ok = await self.flare_provider.eth_call(
-            contract_abi=self.get_cyclo_contract_abi(), call_tx=unlock_tx
+            contract_abi=load_abi("Cyclo"), call_tx=unlock_tx
         )
         if not simulation_ok:
             logger.warning(
@@ -251,94 +251,3 @@ class Cyclo:
         logger.debug(f"https://flarescan.com/tx/0x{unlock_tx_hash}")
 
         return unlock_tx_hash
-
-    def get_cyclo_contract_abi(self) -> list[dict[str, Any]]:
-        """
-        Retrieve the ABI for the Cyclo contract.
-
-        Returns:
-            list: The ABI (Application Binary Interface) for the Cyclo contract, defining the deposit and redeem functions.
-
-        """
-        return [
-            {
-                "inputs": [
-                    {"internalType": "uint256", "name": "assets", "type": "uint256"},
-                    {"internalType": "address", "name": "receiver", "type": "address"},
-                    {
-                        "internalType": "uint256",
-                        "name": "depositMinShareRatio",
-                        "type": "uint256",
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "receiptInformation",
-                        "type": "bytes",
-                    },
-                ],
-                "name": "deposit",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "payable",
-                "type": "function",
-            },
-            {
-                "inputs": [
-                    {"internalType": "uint256", "name": "shares", "type": "uint256"},
-                    {"internalType": "address", "name": "receiver", "type": "address"},
-                    {"internalType": "address", "name": "owner", "type": "address"},
-                    {"internalType": "uint256", "name": "id", "type": "uint256"},
-                    {
-                        "internalType": "bytes",
-                        "name": "receiptInformation",
-                        "type": "bytes",
-                    },
-                ],
-                "name": "redeem",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "nonpayable",
-                "type": "function",
-            },
-            {
-                "anonymous": False,
-                "inputs": [
-                    {
-                        "indexed": False,
-                        "internalType": "address",
-                        "name": "sender",
-                        "type": "address",
-                    },
-                    {
-                        "indexed": False,
-                        "internalType": "address",
-                        "name": "owner",
-                        "type": "address",
-                    },
-                    {
-                        "indexed": False,
-                        "internalType": "uint256",
-                        "name": "assets",
-                        "type": "uint256",
-                    },
-                    {
-                        "indexed": False,
-                        "internalType": "uint256",
-                        "name": "shares",
-                        "type": "uint256",
-                    },
-                    {
-                        "indexed": False,
-                        "internalType": "uint256",
-                        "name": "id",
-                        "type": "uint256",
-                    },
-                    {
-                        "indexed": False,
-                        "internalType": "bytes",
-                        "name": "receiptInformation",
-                        "type": "bytes",
-                    },
-                ],
-                "name": "Deposit",
-                "type": "event",
-            },
-        ]

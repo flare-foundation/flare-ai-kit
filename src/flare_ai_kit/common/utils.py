@@ -3,13 +3,14 @@
 import importlib.resources
 import json
 from functools import cache
+from typing import Any
 
 from flare_ai_kit.common.exceptions import AbiError
 
 
 # Use cache to avoid reloading/reparsing the same ABI repeatedly
 @cache
-def load_abi(abi_name: str) -> list[str]:
+def load_abi(abi_name: str) -> list[dict[str, Any]]:
     """
     Loads and parses a contract ABI JSON file from package resources.
 

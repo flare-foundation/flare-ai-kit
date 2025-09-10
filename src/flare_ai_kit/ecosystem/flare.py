@@ -1,11 +1,13 @@
 """Interactions with Flare blockchain."""
 
 import asyncio
+import ssl
 import statistics
 from collections.abc import Callable
 from functools import wraps
 from typing import Any, TypeVar, cast
 
+import certifi
 import structlog
 from eth_typing import ChecksumAddress
 
@@ -112,10 +114,14 @@ class Flare:
 
         try:
             # Handle injecting PoA middlewares for testnets
+            ssl_context = ssl.create_default_context(cafile=certifi.where())
             self.w3 = AsyncWeb3(
                 AsyncHTTPProvider(
                     self.web3_provider_url,
-                    request_kwargs={"timeout": settings.web3_provider_timeout},
+                    request_kwargs={
+                        "timeout": settings.web3_provider_timeout,
+                        "ssl": ssl_context,
+                    },
                 ),
                 middleware=[ExtraDataToPOAMiddleware] if settings.is_testnet else [],
             )
@@ -412,20 +418,9 @@ class Flare:
         return address
 
     async def erc20_balanceOf(self, wallet_address: str, token_address: str) -> int:
-        # Minimal ABI for balanceOf (you don't need the full ABI for just this call)
-        erc20_abi = [
-            {
-                "constant": True,
-                "inputs": [{"name": "account", "type": "address"}],
-                "name": "balanceOf",
-                "outputs": [{"name": "", "type": "uint256"}],
-                "type": "function",
-            }
-        ]
-
         # Create contract instance
         token_contract = self.w3.eth.contract(
-            address=self.w3.to_checksum_address(token_address), abi=erc20_abi
+            address=self.w3.to_checksum_address(token_address), abi=load_abi("ERC20")
         )
 
         # Call balanceOf
@@ -439,22 +434,9 @@ class Flare:
         token_address: ChecksumAddress,
         spender_address: ChecksumAddress,
     ) -> int:
-        erc20_abi = [
-            {
-                "constant": True,
-                "inputs": [
-                    {"name": "owner", "type": "address"},
-                    {"name": "spender", "type": "address"},
-                ],
-                "name": "allowance",
-                "outputs": [{"name": "remaining", "type": "uint256"}],
-                "type": "function",
-            }
-        ]
-
         # Create contract instance
         token_contract = self.w3.eth.contract(
-            address=self.w3.to_checksum_address(token_address), abi=erc20_abi
+            address=self.w3.to_checksum_address(token_address), abi=load_abi("ERC20")
         )
 
         # Query the allowance
@@ -471,21 +453,8 @@ class Flare:
         amount: int,
         approve_buffer: float = 0.2,
     ) -> str:
-        erc20_abi = [
-            {
-                "constant": False,
-                "inputs": [
-                    {"name": "spender", "type": "address"},
-                    {"name": "value", "type": "uint256"},
-                ],
-                "name": "approve",
-                "outputs": [{"name": "success", "type": "bool"}],
-                "type": "function",
-            }
-        ]
-
         token_contract = self.w3.eth.contract(
-            address=self.w3.to_checksum_address(token_address), abi=erc20_abi
+            address=self.w3.to_checksum_address(token_address), abi=load_abi("ERC20")
         )
         approve_amount = int(amount * (1 + approve_buffer))
         function_call = token_contract.functions.approve(

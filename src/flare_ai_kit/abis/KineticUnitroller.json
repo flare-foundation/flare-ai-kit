@@ -1,0 +1,94 @@
+[
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "internalType": "address[]",
+                "name": "cTokens",
+                "type": "address[]"
+            }
+        ],
+        "name": "enterMarkets",
+        "outputs": [
+            {"internalType": "uint256[]", "name": "", "type": "uint256[]"}
+        ],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "cTokenAddress",
+                "type": "address"
+            }
+        ],
+        "name": "exitMarket",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {"internalType": "uint8", "name": "rewardType", "type": "uint8"},
+            {
+                "internalType": "address payable",
+                "name": "holder",
+                "type": "address"
+            }
+        ],
+        "name": "claimReward",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {"internalType": "uint8", "name": "rewardType", "type": "uint8"},
+            {
+                "internalType": "address payable",
+                "name": "holder",
+                "type": "address"
+            },
+            {
+                "internalType": "contract CToken[]",
+                "name": "cTokens",
+                "type": "address[]"
+            }
+        ],
+        "name": "claimReward",
+        "outputs": [],
+        "payable": false,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "constant": false,
+        "inputs": [
+            {"internalType": "uint8", "name": "rewardType", "type": "uint8"},
+            {
+                "internalType": "address payable[]",
+                "name": "holders",
+                "type": "address[]"
+            },
+            {
+                "internalType": "contract CToken[]",
+                "name": "cTokens",
+                "type": "address[]"
+            },
+            {"internalType": "bool", "name": "borrowers", "type": "bool"},
+            {"internalType": "bool", "name": "suppliers", "type": "bool"}
+        ],
+        "name": "claimReward",
+        "outputs": [],
+        "payable": true,
+        "stateMutability": "payable",
+        "type": "function"
+    }
+]

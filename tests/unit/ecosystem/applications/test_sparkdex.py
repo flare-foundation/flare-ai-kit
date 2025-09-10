@@ -1,5 +1,5 @@
 import warnings
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from hexbytes import HexBytes
@@ -7,11 +7,7 @@ from web3 import AsyncWeb3
 from web3.contract.async_contract import AsyncContract
 
 from flare_ai_kit.ecosystem import Contracts, EcosystemSettings
-from flare_ai_kit.ecosystem.applications.sparkdex import (
-    SparkDEX,
-    get_swaprouter_abi,
-    get_universalrouter_abi,
-)
+from flare_ai_kit.ecosystem.applications.sparkdex import SparkDEX
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.flare import Flare
 
@@ -51,11 +47,7 @@ class TestSparkDEX:
         )
 
     @pytest.mark.asyncio
-    @patch("flare_ai_kit.ecosystem.applications.sparkdex.get_universalrouter_abi")
-    @patch("flare_ai_kit.ecosystem.applications.sparkdex.get_swaprouter_abi")
-    async def test_create(self, mock_swap_abi, mock_univ_abi):
-        mock_univ_abi.return_value = [{"name": "execute"}]
-        mock_swap_abi.return_value = [{"name": "exactInputSingle"}]
+    async def test_create(self):
         univ = MagicMock(spec=AsyncContract)
         swap = MagicMock(spec=AsyncContract)
 
@@ -156,11 +148,3 @@ class TestSparkDEX:
             match="We stop here because the simulated transaction was not sucessfull",
         ):
             await self.sparkdex.swap_erc20_tokens(token_in, token_out, in_w, out_min)
-
-    def test_get_univ_abi(self):
-        abi = get_universalrouter_abi()
-        assert isinstance(abi, list) and len(abi) == 2
-
-    def test_get_swap_abi(self):
-        abi = get_swaprouter_abi()
-        assert isinstance(abi, list) and abi[0]["name"] == "exactInputSingle"

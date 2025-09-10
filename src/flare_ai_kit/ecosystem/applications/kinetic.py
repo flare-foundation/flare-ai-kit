@@ -1,11 +1,10 @@
-from typing import Any
-
 import structlog
 from hexbytes import HexBytes
 from web3 import Web3
 from web3.contract import AsyncContract
 from web3.contract.async_contract import AsyncContract, AsyncContractFunction
 
+from flare_ai_kit.common import load_abi
 from flare_ai_kit.ecosystem import (
     Contracts,
     EcosystemSettings,
@@ -142,7 +141,7 @@ class Kinetic:
         # ============= Build transaction ================
         lending_contract: AsyncContract = self.flare_provider.w3.eth.contract(
             address=Web3.to_checksum_address(lending_address),
-            abi=self.get_lending_contract_abi(),
+            abi=load_abi("KineticLending"),
         )
 
         mint_fn = lending_contract.functions.mint(amount_WEI)
@@ -154,7 +153,7 @@ class Kinetic:
 
         # ============= Simulate transaction ================
         simulation_ok = await self.flare_provider.eth_call(
-            contract_abi=self.get_lending_contract_abi(), call_tx=mint_tx
+            contract_abi=load_abi("KineticLending"), call_tx=mint_tx
         )
         if not simulation_ok:
             logger.warning(
@@ -201,7 +200,7 @@ class Kinetic:
         # ============= Build transaction ================
         lending_contract: AsyncContract = self.flare_provider.w3.eth.contract(
             address=Web3.to_checksum_address(lending_address),
-            abi=self.get_lending_contract_abi(),
+            abi=load_abi("KineticLending"),
         )
 
         withdraw_fn: AsyncContractFunction = (
@@ -215,7 +214,7 @@ class Kinetic:
 
         # ============= Simulate transaction ================
         simulation_ok = await self.flare_provider.eth_call(
-            contract_abi=self.get_lending_contract_abi(), call_tx=withdraw_tx
+            contract_abi=load_abi("KineticLending"), call_tx=withdraw_tx
         )
         if not simulation_ok:
             logger.warning(
@@ -262,7 +261,7 @@ class Kinetic:
         # ============= Build transaction ================
         unitroller_contract = self.flare_provider.w3.eth.contract(
             address=self.contracts.flare.kinetic_Unitroller,
-            abi=self.get_unitroller_contract_abi(),
+            abi=load_abi("KineticUnitroller"),
         )
 
         enable_col_fn = unitroller_contract.functions.enterMarkets([lending_address])
@@ -273,7 +272,7 @@ class Kinetic:
 
         # ============= Simulate transaction ================
         simulation_ok = await self.flare_provider.eth_call(
-            contract_abi=self.get_unitroller_contract_abi(), call_tx=enable_col_tx
+            contract_abi=load_abi("KineticUnitroller"), call_tx=enable_col_tx
         )
         if not simulation_ok:
             logger.warning(
@@ -321,7 +320,7 @@ class Kinetic:
         # ============= Build transaction ================
         unitroller_contract = self.flare_provider.w3.eth.contract(
             address=self.contracts.flare.kinetic_Unitroller,
-            abi=self.get_unitroller_contract_abi(),
+            abi=load_abi("KineticUnitroller"),
         )
 
         disable_col_fn = unitroller_contract.functions.exitMarket(lending_address)
@@ -332,7 +331,7 @@ class Kinetic:
 
         # ============= Simulate transaction ================
         simulation_ok = await self.flare_provider.eth_call(
-            contract_abi=self.get_unitroller_contract_abi(), call_tx=disable_col_tx
+            contract_abi=load_abi("KineticUnitroller"), call_tx=disable_col_tx
         )
         if not simulation_ok:
             logger.warning(
@@ -353,136 +352,3 @@ class Kinetic:
         logger.debug(f"https://flarescan.com/tx/0x{disable_col_tx_hash}")
 
         return disable_col_tx_hash
-
-    def get_unitroller_contract_abi(self) -> list[dict[str, Any]]:
-        """
-        Retrieve the ABI for the Kinetic Unitroller contract.
-
-        Returns:
-            list: The ABI (Application Binary Interface) for the Unitroller contract, defining functions like enterMarkets and exitMarket.
-
-        """
-        return [
-            {
-                "constant": False,
-                "inputs": [
-                    {
-                        "internalType": "address[]",
-                        "name": "cTokens",
-                        "type": "address[]",
-                    }
-                ],
-                "name": "enterMarkets",
-                "outputs": [
-                    {"internalType": "uint256[]", "name": "", "type": "uint256[]"}
-                ],
-                "payable": False,
-                "stateMutability": "nonpayable",
-                "type": "function",
-            },
-            {
-                "constant": False,
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "cTokenAddress",
-                        "type": "address",
-                    }
-                ],
-                "name": "exitMarket",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "payable": False,
-                "stateMutability": "nonpayable",
-                "type": "function",
-            },
-            {
-                "constant": False,
-                "inputs": [
-                    {"internalType": "uint8", "name": "rewardType", "type": "uint8"},
-                    {
-                        "internalType": "address payable",
-                        "name": "holder",
-                        "type": "address",
-                    },
-                ],
-                "name": "claimReward",
-                "outputs": [],
-                "payable": False,
-                "stateMutability": "nonpayable",
-                "type": "function",
-            },
-            {
-                "constant": False,
-                "inputs": [
-                    {"internalType": "uint8", "name": "rewardType", "type": "uint8"},
-                    {
-                        "internalType": "address payable",
-                        "name": "holder",
-                        "type": "address",
-                    },
-                    {
-                        "internalType": "contract CToken[]",
-                        "name": "cTokens",
-                        "type": "address[]",
-                    },
-                ],
-                "name": "claimReward",
-                "outputs": [],
-                "payable": False,
-                "stateMutability": "nonpayable",
-                "type": "function",
-            },
-            {
-                "constant": False,
-                "inputs": [
-                    {"internalType": "uint8", "name": "rewardType", "type": "uint8"},
-                    {
-                        "internalType": "address payable[]",
-                        "name": "holders",
-                        "type": "address[]",
-                    },
-                    {
-                        "internalType": "contract CToken[]",
-                        "name": "cTokens",
-                        "type": "address[]",
-                    },
-                    {"internalType": "bool", "name": "borrowers", "type": "bool"},
-                    {"internalType": "bool", "name": "suppliers", "type": "bool"},
-                ],
-                "name": "claimReward",
-                "outputs": [],
-                "payable": True,
-                "stateMutability": "payable",
-                "type": "function",
-            },
-        ]
-
-    def get_lending_contract_abi(self) -> list[dict[str, Any]]:
-        return [
-            {
-                "constant": False,
-                "inputs": [
-                    {"internalType": "uint256", "name": "mintAmount", "type": "uint256"}
-                ],
-                "name": "mint",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "payable": False,
-                "stateMutability": "nonpayable",
-                "type": "function",
-            },
-            {
-                "constant": False,
-                "inputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "redeemAmount",
-                        "type": "uint256",
-                    }
-                ],
-                "name": "redeemUnderlying",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "payable": False,
-                "stateMutability": "nonpayable",
-                "type": "function",
-            },
-        ]

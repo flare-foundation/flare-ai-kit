@@ -1,0 +1,82 @@
+[
+    {
+        "inputs": [
+            {"internalType": "uint256", "name": "assets", "type": "uint256"},
+            {"internalType": "address", "name": "receiver", "type": "address"},
+            {
+                "internalType": "uint256",
+                "name": "depositMinShareRatio",
+                "type": "uint256"
+            },
+            {
+                "internalType": "bytes",
+                "name": "receiptInformation",
+                "type": "bytes"
+            }
+        ],
+        "name": "deposit",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {"internalType": "uint256", "name": "shares", "type": "uint256"},
+            {"internalType": "address", "name": "receiver", "type": "address"},
+            {"internalType": "address", "name": "owner", "type": "address"},
+            {"internalType": "uint256", "name": "id", "type": "uint256"},
+            {
+                "internalType": "bytes",
+                "name": "receiptInformation",
+                "type": "bytes"
+            }
+        ],
+        "name": "redeem",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "anonymous":  false,
+        "inputs": [
+            {
+                "indexed":  false,
+                "internalType": "address",
+                "name": "sender",
+                "type": "address"
+            },
+            {
+                "indexed":  false,
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "assets",
+                "type": "uint256"
+            },
+            {
+                "indexed":  false,
+                "internalType": "uint256",
+                "name": "shares",
+                "type": "uint256"
+            },
+            {
+                "indexed":  false,
+                "internalType": "uint256",
+                "name": "id",
+                "type": "uint256"
+            },
+            {
+                "indexed":  false,
+                "internalType": "bytes",
+                "name": "receiptInformation",
+                "type": "bytes"
+            }
+        ],
+        "name": "Deposit",
+        "type": "event"
+    }
+]

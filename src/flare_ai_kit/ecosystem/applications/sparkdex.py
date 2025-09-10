@@ -1,10 +1,9 @@
-from typing import Any
-
 import structlog
 from hexbytes import HexBytes
 from web3 import Web3
 from web3.contract.async_contract import AsyncContract
 
+from flare_ai_kit.common import load_abi
 from flare_ai_kit.ecosystem import (
     Contracts,
     EcosystemSettings,
@@ -42,10 +41,11 @@ class SparkDEX:
         """
         universalrouter_contract = flare_provider.w3.eth.contract(
             address=contracts.flare.sparkdex_universal_router,
-            abi=get_universalrouter_abi(),
+            abi=load_abi("SparkDEXUniversalRouter"),
         )
         swaprouter_contract = flare_provider.w3.eth.contract(
-            address=contracts.flare.sparkdex_swap_router, abi=get_swaprouter_abi()
+            address=contracts.flare.sparkdex_swap_router,
+            abi=load_abi("SparkDEXSwapRouter"),
         )
 
         # Create SparkDEX instance
@@ -150,7 +150,7 @@ class SparkDEX:
         # ======================= Simulate swap =========================
 
         simulation_ok = await self.flare_provider.eth_call(
-            contract_abi=get_swaprouter_abi(), call_tx=swap_tx
+            contract_abi=load_abi("SparkDEXSwapRouter"), call_tx=swap_tx
         )
 
         if not simulation_ok:
@@ -168,103 +168,3 @@ class SparkDEX:
         logger.debug(f"Swap transaction mined in block {receipt['blockNumber']}")
         logger.debug(f"https://flarescan.com/tx/0x{swap_tx_hash}")
         return swap_tx_hash
-
-
-def get_universalrouter_abi() -> list[dict[str, Any]]:
-    """
-    Retrieve the ABI for the SparkDEX universal router contract.
-
-    Returns:
-        list[dict]: The ABI (Application Binary Interface) for the universal router contract,
-                    defining the `execute` function for complex transaction execution.
-
-    """
-    return [
-        {
-            "inputs": [
-                {"internalType": "bytes", "name": "commands", "type": "bytes"},
-                {"internalType": "bytes[]", "name": "inputs", "type": "bytes[]"},
-            ],
-            "name": "execute",
-            "outputs": [],
-            "stateMutability": "payable",
-            "type": "function",
-        },
-        {
-            "inputs": [
-                {"internalType": "bytes", "name": "commands", "type": "bytes"},
-                {"internalType": "bytes[]", "name": "inputs", "type": "bytes[]"},
-                {"internalType": "uint256", "name": "deadline", "type": "uint256"},
-            ],
-            "name": "execute",
-            "outputs": [],
-            "stateMutability": "payable",
-            "type": "function",
-        },
-    ]
-
-
-def get_swaprouter_abi() -> list[dict[str, Any]]:
-    """
-    Retrieve the ABI for the SparkDEX swap router contract.
-
-    Returns:
-        list[dict]: The ABI (Application Binary Interface) for the swap router contract,
-                    defining the `exactInputSingle` function for single-path token swaps.
-
-    """
-    return [
-        {
-            "inputs": [
-                {
-                    "components": [
-                        {
-                            "internalType": "address",
-                            "name": "tokenIn",
-                            "type": "address",
-                        },
-                        {
-                            "internalType": "address",
-                            "name": "tokenOut",
-                            "type": "address",
-                        },
-                        {"internalType": "uint24", "name": "fee", "type": "uint24"},
-                        {
-                            "internalType": "address",
-                            "name": "recipient",
-                            "type": "address",
-                        },
-                        {
-                            "internalType": "uint256",
-                            "name": "deadline",
-                            "type": "uint256",
-                        },
-                        {
-                            "internalType": "uint256",
-                            "name": "amountIn",
-                            "type": "uint256",
-                        },
-                        {
-                            "internalType": "uint256",
-                            "name": "amountOutMinimum",
-                            "type": "uint256",
-                        },
-                        {
-                            "internalType": "uint160",
-                            "name": "sqrtPriceLimitX96",
-                            "type": "uint160",
-                        },
-                    ],
-                    "internalType": "struct ISwapRouter.ExactInputSingleParams",
-                    "name": "params",
-                    "type": "tuple",
-                }
-            ],
-            "name": "exactInputSingle",
-            "outputs": [
-                {"internalType": "uint256", "name": "amountOut", "type": "uint256"}
-            ],
-            "stateMutability": "payable",
-            "type": "function",
-        }
-    ]

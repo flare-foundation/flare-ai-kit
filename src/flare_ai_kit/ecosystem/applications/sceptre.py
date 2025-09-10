@@ -3,6 +3,7 @@ from typing import cast
 import structlog
 from web3.types import TxParams
 
+from flare_ai_kit.common import load_abi
 from flare_ai_kit.ecosystem import Contracts, EcosystemSettings
 from flare_ai_kit.ecosystem.explorer import BlockExplorer
 from flare_ai_kit.ecosystem.flare import Flare
@@ -85,21 +86,12 @@ class Sceptre:
         if self.flare_provider.address is None:
             raise ValueError("Wallet address cannot be None.")
 
-        stake_abi = [
-            {
-                "inputs": [],
-                "name": "submit",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "payable",
-                "type": "function",
-            }
-        ]
-
         if amount_WEI <= 0:
             raise ValueError("Amount to stake must be positive")
 
         impl_contract = self.flare_provider.w3.eth.contract(
-            address=self.contracts.flare.sflr, abi=stake_abi
+            address=self.contracts.flare.sflr,
+            abi=load_abi("Sceptre"),  # Torkel
         )
         stake_fn = impl_contract.functions.submit()
         stake_tx = await self.flare_provider.build_transaction(
@@ -111,7 +103,8 @@ class Sceptre:
         logger.debug("Stake FLR to sFLR", tx=stake_tx)
 
         simulation_ok = await self.flare_provider.eth_call(
-            contract_abi=stake_abi, call_tx=stake_tx
+            contract_abi=load_abi("Sceptre"),
+            call_tx=stake_tx,  # Torkel
         )
         if not simulation_ok:
             logger.warning(
@@ -152,27 +145,12 @@ class Sceptre:
         if self.flare_provider.address is None:
             raise ValueError("Wallet address cannot be None.")
 
-        unstake_abi = [
-            {
-                "inputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "shareAmount",
-                        "type": "uint256",
-                    }
-                ],
-                "name": "requestUnlock",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function",
-            }
-        ]
-
         if amount_WEI <= 0:
             raise ValueError("Amount to unstake must be positive")
 
         impl_contract = self.flare_provider.w3.eth.contract(
-            address=self.contracts.flare.sflr, abi=unstake_abi
+            address=self.contracts.flare.sflr,
+            abi=load_abi("Sceptre"),  # Torkel
         )
         stake_fn = impl_contract.functions.requestUnlock(amount_WEI)
         stake_tx = await self.flare_provider.build_transaction(
@@ -182,7 +160,8 @@ class Sceptre:
         logger.debug("Unstake sFLR to FLR", tx=stake_tx)
 
         simulation_ok = await self.flare_provider.eth_call(
-            contract_abi=unstake_abi, call_tx=stake_tx
+            contract_abi=load_abi("Sceptre"),
+            call_tx=stake_tx,  # Torkel
         )
         if not simulation_ok:
             logger.warning(

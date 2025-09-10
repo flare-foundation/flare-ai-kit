@@ -369,16 +369,6 @@ class TestOpenOcean(unittest.IsolatedAsyncioTestCase):
             await self.open_ocean.execute_swap(data)
         self.assertEqual(str(cm.exception), "Gas estimation failed")
 
-    ### Test get_abi ###
-    def test_get_abi(self):
-        """
-        Test get_abi returns the expected ABI structure.
-        """
-        abi = self.open_ocean.get_abi()
-        self.assertIsInstance(abi, list)
-        self.assertEqual(abi[0]["name"], "swap")
-        self.assertEqual(len(abi[0]["inputs"]), 3)
-
 
 if __name__ == "__main__":
     unittest.main()
