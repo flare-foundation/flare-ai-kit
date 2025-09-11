@@ -107,10 +107,36 @@ uv run ruff format && uv run ruff check --fix && uv run pyright && uv run pytest
 
 ## 🐳 Docker
 
+### Parametric Script Containers
+
+Run individual scripts in optimized containers with only required dependencies:
+
+```bash
+# Quick start with Make
+make run-pdf-ingestion      # PDF processing
+make run-rag-vector-demo    # RAG with vector embeddings
+make run-ftso-price         # FTSO price fetching
+make run-a2a-collaboration  # Agent-to-Agent collaboration
+
+# Or build/run manually
+docker build -t fai-script-pdf \
+  --build-arg EXTRAS=pdf \
+  --build-arg SCRIPT=pdf_ingestion .
+
+docker run --rm -it \
+  --env-file .env \
+  -v "$PWD/data:/app/scripts/data" \
+  fai-script-pdf
+```
+
+### Full Application Container
+
 ```bash
 docker build -t flare-ai-kit .
 docker run --rm --env-file .env flare-ai-kit
 ```
+
+📖 **See [docs/docker-scripts.md](docs/docker-scripts.md) for complete Docker scripts documentation.**
 
 ## ☁️ Deploy to Confidential Space
 
