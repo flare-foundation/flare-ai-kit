@@ -13,9 +13,10 @@ def __getattr__(name: str):
     """Lazy import for ingestion components."""
     if name == "GithubIngestor":
         from .github_ingestor import GithubIngestor
+
         return GithubIngestor
-    elif name == "PDFProcessor":
+    if name == "PDFProcessor":
         from .pdf_processor import PDFProcessor
+
         return PDFProcessor
-    else:
-        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

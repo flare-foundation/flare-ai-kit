@@ -31,7 +31,7 @@ async def main() -> None:
     For a full list of feeds: https://dev.flare.network/ftso/feeds
     """
     print("🔍 Initializing Flare AI Kit for FTSO price fetching...")
-    
+
     # Initialize the Flare AI Kit
     kit = FlareAIKit(AppSettings())
 

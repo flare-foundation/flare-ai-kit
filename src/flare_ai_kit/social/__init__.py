@@ -15,9 +15,10 @@ def __getattr__(name: str):
     """Lazy import for social components."""
     if name == "TelegramClient":
         from .telegram import TelegramClient
+
         return TelegramClient
-    elif name == "XClient":
+    if name == "XClient":
         from .x import XClient
+
         return XClient
-    else:
-        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

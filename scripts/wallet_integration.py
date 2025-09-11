@@ -30,43 +30,43 @@ async def demonstrate_wallet_operations():
     """Demonstrate wallet operations."""
     print("🔐 Wallet Integration Demo")
     print("=" * 50)
-    
+
     # Initialize the Flare AI Kit
     kit = FlareAIKit(AppSettings())
-    
+
     try:
         print("🔧 Initializing wallet integration...")
-        
+
         # This would typically involve:
         # 1. Setting up Turnkey wallet connection
         # 2. Creating or accessing wallet accounts
         # 3. Signing transactions securely
         # 4. Managing keys through Turnkey's infrastructure
-        
+
         print("✅ Wallet integration initialized")
         print("ℹ️  This is a demonstration script.")
         print("   Actual wallet operations would require:")
         print("   - Valid Turnkey API credentials")
         print("   - Proper wallet setup and configuration")
         print("   - Network connectivity to Turnkey services")
-        
+
         # Example operations that would be available:
         operations = [
             "Create new wallet account",
             "Sign transactions securely",
             "Manage multiple accounts",
             "Integrate with Flare blockchain",
-            "Handle private key operations safely"
+            "Handle private key operations safely",
         ]
-        
+
         print("\n🛠️  Available wallet operations:")
         for i, op in enumerate(operations, 1):
             print(f"   {i}. {op}")
-        
+
         print("\n💡 For full implementation, see:")
         print("   - docs/turnkey_wallet_readme.md")
         print("   - examples/06_turnkey_wallet_integration.py")
-        
+
     except Exception as e:
         print(f"❌ Error with wallet operations: {e}")
         return

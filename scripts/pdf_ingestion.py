@@ -104,8 +104,8 @@ async def parse_pdf_to_template_json(
 def create_sample_invoice_and_template() -> tuple[Path, PDFTemplateSettings]:
     """Create a sample invoice PDF and corresponding template for demo purposes."""
     # This is a simplified version - in practice you'd use the actual create_sample_invoice
-    import sys
     import importlib.util
+    import sys
     from pathlib import Path
 
     # Load the module directly from the file path
@@ -126,7 +126,7 @@ def create_sample_invoice_and_template() -> tuple[Path, PDFTemplateSettings]:
 async def main() -> None:
     """Main function demonstrating PDF ingestion workflow."""
     print("🔍 Initializing PDF Ingestion Script...")
-    
+
     # Create PDF and save it
     try:
         pdf_path, template = create_sample_invoice_and_template()
@@ -191,7 +191,9 @@ async def main() -> None:
                 new_callable=AsyncMock,
                 return_value=MOCK_TX_HASH,
             ) as mock_post,
-            patch("flare_ai_kit.onchain.contract_poster.open", mock_open(read_data="[]")),
+            patch(
+                "flare_ai_kit.onchain.contract_poster.open", mock_open(read_data="[]")
+            ),
         ):
             kit = FlareAIKit(config=app_settings)
             tx_hash = await kit.pdf_processor.ingest_and_post(

@@ -10,12 +10,10 @@ from .config import AppSettings
 from .ecosystem import BlockExplorer, FAssets, Flare, FtsoV2
 from .onchain.contract_poster import ContractPoster
 
-
-
 if TYPE_CHECKING:
     from .ingestion import GithubIngestor
     from .ingestion.pdf_processor import PDFProcessor
-    from .rag.vector import VectorRAGPipeline, create_vector_rag_pipeline
+    from .rag.vector import VectorRAGPipeline
     from .social import TelegramClient, XClient
 
 logger = structlog.get_logger(__name__)
@@ -44,11 +42,11 @@ class FlareAIKit:
         self._block_explorer: BlockExplorer | None = None
         self._ftso: FtsoV2 | None = None
         self._fassets: FAssets | None = None
-        self._vector_rag: "VectorRAGPipeline | None" = None
-        self._telegram: "TelegramClient | None" = None
-        self._github_ingestor: "GithubIngestor | None" = None
-        self._x_client: "XClient | None" = None
-        self._pdf_processor: "PDFProcessor | None" = None
+        self._vector_rag: VectorRAGPipeline | None = None
+        self._telegram: TelegramClient | None = None
+        self._github_ingestor: GithubIngestor | None = None
+        self._x_client: XClient | None = None
+        self._pdf_processor: PDFProcessor | None = None
         self._a2a_client: A2AClient | None = None
 
     # Ecosystem Interaction Methods
@@ -87,6 +85,7 @@ class FlareAIKit:
         """Access Telegram client methods."""
         if self._telegram is None:
             from .social import TelegramClient
+
             self._telegram = TelegramClient(self.settings.social)
         return self._telegram
 
@@ -95,6 +94,7 @@ class FlareAIKit:
         """Access X (formerly Twitter) client methods."""
         if self._x_client is None:
             from .social import XClient
+
             self._x_client = XClient(self.settings.social)
         return self._x_client
 
@@ -104,6 +104,7 @@ class FlareAIKit:
         """Access the RAG retriever."""
         if self._vector_rag is None:
             from .rag.vector import create_vector_rag_pipeline
+
             self._vector_rag = create_vector_rag_pipeline(
                 vector_db_settings=self.settings.vector_db,
                 agent_settings=self.settings.agent,
@@ -115,6 +116,7 @@ class FlareAIKit:
         """Access the GitHub ingestor methods."""
         if self._github_ingestor is None:
             from .ingestion import GithubIngestor
+
             self._github_ingestor = GithubIngestor(self.settings.ingestion)
         return self._github_ingestor
 
@@ -131,6 +133,7 @@ class FlareAIKit:
                 ecosystem_settings=self.settings.ecosystem,
             )
             from .ingestion.pdf_processor import PDFProcessor
+
             self._pdf_processor = PDFProcessor(
                 settings=self.settings.ingestion.pdf_ingestion,
                 contract_poster=contract_poster,

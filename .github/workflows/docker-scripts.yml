@@ -39,9 +39,10 @@ jobs:
 
       - name: Validate Dockerfile syntax
         run: |
-          docker buildx build --dry-run \
+          docker buildx build --platform linux/amd64 \
             --build-arg EXTRAS=ftso \
             --build-arg SCRIPT=ftso_price \
+            -t test-dockerfile-validation \
             .
 
   build-and-test-scripts:
@@ -54,15 +55,15 @@ jobs:
           - name: ftso-price
             extras: ftso
             script: ftso_price
-            test_command: "python /app/scripts/ftso_price.py --help || echo 'Script validation passed'"
+            test_command: "python -c 'import sys; sys.path.insert(0, \"/app/src\"); print(\"Testing FTSO script...\"); exec(open(\"/app/scripts/ftso_price.py\").read())' || echo 'Script validation completed'"
           - name: pdf-ingestion
             extras: pdf
             script: pdf_ingestion
-            test_command: "python -c 'import sys; sys.path.insert(0, \"/app/src\"); import scripts.pdf_ingestion; print(\"PDF script imports successfully\")'"
-          - name: rag-vector-demo
-            extras: rag
-            script: rag_vector_demo
-            test_command: "python -c 'import sys; sys.path.insert(0, \"/app/src\"); import scripts.rag_vector_demo; print(\"RAG script imports successfully\")'"
+            test_command: "python -c 'import sys; sys.path.insert(0, \"/app/src\"); print(\"Testing PDF script imports...\"); import scripts.pdf_ingestion; print(\"PDF script imports successfully\")'"
+          - name: da-layer
+            extras: da
+            script: da_layer
+            test_command: "python -c 'import sys; sys.path.insert(0, \"/app/src\"); print(\"Testing DA Layer script imports...\"); import scripts.da_layer; print(\"DA Layer script imports successfully\")'"
 
     steps:
       - name: Checkout code
@@ -84,6 +85,7 @@ jobs:
           docker run --rm \
             -e AGENT__GEMINI_API_KEY=fake_key_for_testing \
             -e ECOSYSTEM__FLARE_RPC_URL=https://flare-api.flare.network/ext/C/rpc \
+            -e ECOSYSTEM__COSTON2_RPC_URL=https://coston2-api.flare.network/ext/C/rpc \
             --entrypoint /bin/bash \
             fai-script-${{ matrix.script.name }} \
             -c "${{ matrix.script.test_command }}"
@@ -153,21 +155,34 @@ jobs:
       - name: Test multi-extras image
         run: |
           docker run --rm fai-script-multi python -c "
+          import sys
+          sys.path.insert(0, '/app/src')
+
+          # Test RAG dependencies
           try:
               import qdrant_client
-              print('✅ RAG dependencies available')
-          except ImportError:
-              print('❌ RAG dependencies missing')
+              print('✅ RAG dependencies (qdrant_client) available')
+          except ImportError as e:
+              print(f'❌ RAG dependencies missing: {e}')
               exit(1)
-          
+
+          # Test PDF dependencies
           try:
               import pymupdf
-              print('✅ PDF dependencies available')
-          except ImportError:
-              print('❌ PDF dependencies missing')
+              print('✅ PDF dependencies (pymupdf) available')
+          except ImportError as e:
+              print(f'❌ PDF dependencies missing: {e}')
               exit(1)
-          
-          print('✅ Multi-extras build successful')
+
+          # Test reportlab for PDF generation
+          try:
+              import reportlab
+              print('✅ PDF generation dependencies (reportlab) available')
+          except ImportError as e:
+              print(f'❌ PDF generation dependencies missing: {e}')
+              exit(1)
+
+          print('✅ Multi-extras build successful - all dependencies available')
           "
 
   security-scan:

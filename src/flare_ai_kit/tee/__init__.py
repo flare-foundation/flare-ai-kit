@@ -13,9 +13,10 @@ def __getattr__(name: str):
     """Lazy import for TEE components."""
     if name == "VtpmAttestation":
         from .attestation import VtpmAttestation
+
         return VtpmAttestation
-    elif name == "VtpmValidation":
+    if name == "VtpmValidation":
         from .validation import VtpmValidation
+
         return VtpmValidation
-    else:
-        raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

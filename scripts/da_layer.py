@@ -21,7 +21,6 @@ from pathlib import Path
 # Add src to path for local development
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from flare_ai_kit.config import AppSettings
 from flare_ai_kit.ecosystem.protocols.da_layer import DataAvailabilityLayer
 from flare_ai_kit.ecosystem.settings import EcosystemSettings
 
@@ -45,14 +44,16 @@ async def list_feeds(dal: DataAvailabilityLayer) -> None:
         feeds = await dal.list_feeds()
         print(f"✅ Found {len(feeds)} feeds:")
         for i, feed in enumerate(feeds[:5]):  # Show first 5 feeds
-            print(f"   {i+1}. {feed}")
+            print(f"   {i + 1}. {feed}")
         if len(feeds) > 5:
             print(f"   ... and {len(feeds) - 5} more feeds")
     except Exception as e:
         print(f"❌ Error listing feeds: {e}")
 
 
-async def fetch_feeds_with_proof(dal: DataAvailabilityLayer, voting_round: int, feed_ids: list[str]) -> None:
+async def fetch_feeds_with_proof(
+    dal: DataAvailabilityLayer, voting_round: int, feed_ids: list[str]
+) -> None:
     """Fetch feeds with proof for a specific voting round."""
     print(f"🔍 Fetching feeds with proof for round {voting_round}...")
     try:
@@ -69,7 +70,7 @@ async def fetch_feeds_with_proof(dal: DataAvailabilityLayer, voting_round: int, 
 async def main() -> None:
     """Main function demonstrating Data Availability Layer usage."""
     print("🔍 Initializing Data Availability Layer...")
-    
+
     # Demo inputs (change as needed)
     feed_ids = [
         "0x01464c522f55534400000000000000000000000000",  # FLR/USD
@@ -78,7 +79,7 @@ async def main() -> None:
 
     settings = EcosystemSettings()  # typically reads env vars
     dal = await DataAvailabilityLayer.create(settings)
-    
+
     try:
         latest_round = await voting_round(dal)
         await list_feeds(dal)

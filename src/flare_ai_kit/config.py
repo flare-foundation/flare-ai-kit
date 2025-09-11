@@ -19,48 +19,56 @@ if TYPE_CHECKING:
 def _get_agent_settings():
     """Lazy import for AgentSettings."""
     from flare_ai_kit.agent.settings import AgentSettings
+
     return AgentSettings()
 
 
 def _get_ecosystem_settings():
     """Lazy import for EcosystemSettings."""
     from flare_ai_kit.ecosystem.settings import EcosystemSettings
+
     return EcosystemSettings()
 
 
 def _get_vector_db_settings():
     """Lazy import for VectorDbSettings."""
     from flare_ai_kit.rag.vector.settings import VectorDbSettings
+
     return VectorDbSettings()
 
 
 def _get_graph_db_settings():
     """Lazy import for GraphDbSettings."""
     from flare_ai_kit.rag.graph.settings import GraphDbSettings
+
     return GraphDbSettings()
 
 
 def _get_social_settings():
     """Lazy import for SocialSettings."""
     from flare_ai_kit.social.settings import SocialSettings
+
     return SocialSettings()
 
 
 def _get_tee_settings():
     """Lazy import for TeeSettings."""
     from flare_ai_kit.tee.settings import TeeSettings
+
     return TeeSettings()
 
 
 def _get_ingestion_settings():
     """Lazy import for IngestionSettings."""
     from flare_ai_kit.ingestion.settings import IngestionSettings
+
     return IngestionSettings()
 
 
 def _get_a2a_settings():
     """Lazy import for A2ASettings."""
     from flare_ai_kit.a2a.settings import A2ASettings
+
     return A2ASettings()
 
 
@@ -93,16 +101,9 @@ class AppSettings(BaseSettings):
 def _rebuild_app_settings():
     """Rebuild AppSettings model with all required imports."""
     # Import all the settings classes to make them available for model_rebuild
-    from flare_ai_kit.agent.settings import AgentSettings
-    from flare_ai_kit.ecosystem.settings import EcosystemSettings
-    from flare_ai_kit.rag.vector.settings import VectorDbSettings
-    from flare_ai_kit.rag.graph.settings import GraphDbSettings
-    from flare_ai_kit.social.settings import SocialSettings
-    from flare_ai_kit.tee.settings import TeeSettings
-    from flare_ai_kit.ingestion.settings import IngestionSettings
-    from flare_ai_kit.a2a.settings import A2ASettings
 
     AppSettings.model_rebuild()
+
 
 # Call rebuild function to ensure model is properly configured
 _rebuild_app_settings()
