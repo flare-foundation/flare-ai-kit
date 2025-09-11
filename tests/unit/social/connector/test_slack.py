@@ -47,7 +47,10 @@ async def test_fetch_mentions_handles_error(monkeypatch):
     monkeypatch.setenv("SLACK_CHANNEL_ID", "fake-channel")
 
     mock_client = MagicMock()
-    mock_client.conversations_history.side_effect = SlackApiError("fail")
+    # Create a mock response object for SlackApiError
+    mock_response = MagicMock()
+    mock_response.status_code = 500
+    mock_client.conversations_history.side_effect = SlackApiError("fail", mock_response)
 
     connector = SlackConnector(client=mock_client)
     results = await connector.fetch_mentions("flare")

@@ -169,6 +169,8 @@ class VtpmValidation:
 
         # Verify and decode the token using the public RSA key
         try:
+            import jwt  # Lazy import for optional dependency
+
             validated_token = jwt.decode(
                 token, rsa_key, algorithms=[ALGO], options={"verify_aud": False}
             )
@@ -177,14 +179,18 @@ class VtpmValidation:
                 issuer=self.expected_issuer,
                 public_numbers=rsa_key.public_numbers,
             )
-        except jwt.ExpiredSignatureError as e:
-            msg = "Token has expired"
-            logger.exception("token_expired", error=e)
-            raise SignatureValidationError(msg) from e
-        except jwt.InvalidTokenError as e:
-            msg = "Token is invalid"
-            logger.exception("invalid_token", error=e)
-            raise VtpmValidationError(msg) from e
+        except Exception as e:
+            # Check if it's a JWT-related error (lazy import)
+            if e.__class__.__name__ == "ExpiredSignatureError":
+                msg = "Token has expired"
+                logger.exception("token_expired", error=e)
+                raise SignatureValidationError(msg) from e
+            elif e.__class__.__name__ == "InvalidTokenError":
+                msg = "Token is invalid"
+                logger.exception("invalid_token", error=e)
+                raise VtpmValidationError(msg) from e
+            else:
+                raise
         except Exception as e:
             msg = "Unexpected error during validation"
             logger.exception("unexpected_error", error=e)

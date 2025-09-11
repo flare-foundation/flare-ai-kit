@@ -181,7 +181,6 @@ async def main() -> None:
         # Perform semantic search
         await perform_semantic_search(embedding_model, qdrant_client, vector_db)
 
-
     except Exception:
         raise
     finally:

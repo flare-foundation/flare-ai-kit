@@ -114,9 +114,7 @@ async def demonstrate_minting_workflow(fassets: FAssets) -> None:
 
         agent_address = agents[0]
         # Get available lots
-        await fassets.get_available_lots(
-            FAssetType.FXRP, agent_address
-        )
+        await fassets.get_available_lots(FAssetType.FXRP, agent_address)
 
         # Step 1: Reserve collateral for minting
         executor = fassets.address or Web3.to_checksum_address(
@@ -165,9 +163,7 @@ async def perform_redemption_operations(fassets: FAssets) -> None:
         # Get redemption request details
         request_id = int(redemption_id)
         if request_id > 0:
-            await fassets.get_redemption_request(
-                FAssetType.FXRP, request_id
-            )
+            await fassets.get_redemption_request(FAssetType.FXRP, request_id)
 
     except Exception:
         pass
@@ -218,7 +214,6 @@ async def main() -> None:
 
             except Exception:
                 pass
-
 
     except Exception:
         pass

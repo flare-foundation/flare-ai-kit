@@ -19,6 +19,7 @@ async def test_fetch_mentions_success():
     mock_response = MagicMock()
     mock_response.data = [mock_tweet]
 
+    connector.client = MagicMock()
     with patch.object(
         connector.client,
         "search_recent_tweets",
@@ -42,6 +43,9 @@ def test_post_tweet_success():
     mock_tweet.text = "Test tweet"
     mock_tweet.created_at.isoformat.return_value = "2024-01-01T00:00:00"
 
+    connector.sync_client = MagicMock()
+    # Mock the _initialize_clients method to prevent import errors
+    connector._initialize_clients = MagicMock()
     with patch.object(connector.sync_client, "update_status", return_value=mock_tweet):
         result = connector.post_tweet("Test tweet")
 

@@ -11,8 +11,6 @@ if TYPE_CHECKING:
     from telegram import Update
     from telegram.ext import ContextTypes
 
-from telegram.ext import MessageHandler, filters
-
 from flare_ai_kit.config import AppSettings
 from flare_ai_kit.social.connector import SocialConnector
 
@@ -39,13 +37,15 @@ class TelegramConnector(SocialConnector):
 
         self.is_configured = False
         self._messages: list[dict[str, Any]] = []
+        self.app = None
 
-        # Lazy import and initialization of Telegram application
-        from telegram.ext import Application
-        self.app = Application
-
-        if self.token:
+    def _initialize_app(self) -> None:
+        """Initialize Telegram application with lazy import."""
+        if self.app is None and self.token:
             try:
+                # Lazy import and initialization of Telegram application
+                from telegram.ext import Application, MessageHandler, filters
+
                 self.app = Application.builder().token(self.token).build()
                 self.is_configured = True
                 self.app.add_handler(
@@ -54,7 +54,7 @@ class TelegramConnector(SocialConnector):
                 logger.info("TelegramClient initialized and configured.")
             except Exception as e:
                 logger.exception("Failed to initialize Telegram Application", error=e)
-        else:
+        elif not self.token:
             logger.warning(
                 "TelegramClient is not configured due to missing API token. "
                 "API calls will be simulated."

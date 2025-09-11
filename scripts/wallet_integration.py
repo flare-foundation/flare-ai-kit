@@ -32,13 +32,11 @@ async def demonstrate_wallet_operations() -> None:
     FlareAIKit(AppSettings())
 
     try:
-
         # This would typically involve:
         # 1. Setting up Turnkey wallet connection
         # 2. Creating or accessing wallet accounts
         # 3. Signing transactions securely
         # 4. Managing keys through Turnkey's infrastructure
-
 
         # Example operations that would be available:
         operations = [
@@ -52,10 +50,8 @@ async def demonstrate_wallet_operations() -> None:
         for _i, _op in enumerate(operations, 1):
             pass
 
-
     except Exception:
         return
-
 
 
 async def main() -> None:

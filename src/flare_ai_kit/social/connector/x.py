@@ -5,8 +5,6 @@ from __future__ import annotations
 # pyright: reportMissingTypeStubs=false
 from typing import Any, cast
 
-from tweepy.errors import TweepyException
-
 from flare_ai_kit.config import AppSettings
 from flare_ai_kit.social.connector import SocialConnector
 
@@ -21,26 +19,37 @@ class XConnector(SocialConnector):
             settings.x_api_key.get_secret_value() if settings.x_api_key else ""
         )
 
-        # Lazy import and initialization of Twitter/X clients
-        from tweepy import API, OAuth1UserHandler
-        from tweepy.asynchronous import AsyncClient
+        # Store settings for lazy initialization
+        self.settings = settings
+        self.client = None
+        self.auth = None
+        self.sync_client = None
 
-        self.client = AsyncClient(bearer_token=self.bearer_token)  # type: ignore[reportGeneralTypeIssues]
+    def _initialize_clients(self) -> None:
+        """Initialize Twitter/X clients with lazy import."""
+        if self.client is None:
+            # Lazy import and initialization of Twitter/X clients
+            from tweepy import API, OAuth1UserHandler
+            from tweepy.asynchronous import AsyncClient
 
-        self.auth = OAuth1UserHandler(
-            settings.x_api_key.get_secret_value() if settings.x_api_key else "",
-            settings.x_api_key_secret.get_secret_value()
-            if settings.x_api_key_secret
-            else "",
-            settings.x_access_token.get_secret_value()
-            if settings.x_access_token
-            else "",
-            settings.x_access_token_secret.get_secret_value()
-            if settings.x_access_token_secret
-            else "",
-        )
+            self.client = AsyncClient(bearer_token=self.bearer_token)  # type: ignore[reportGeneralTypeIssues]
 
-        self.sync_client = API(self.auth)  # type: ignore[reportGeneralTypeIssues]
+            self.auth = OAuth1UserHandler(
+                self.settings.x_api_key.get_secret_value()
+                if self.settings.x_api_key
+                else "",
+                self.settings.x_api_key_secret.get_secret_value()
+                if self.settings.x_api_key_secret
+                else "",
+                self.settings.x_access_token.get_secret_value()
+                if self.settings.x_access_token
+                else "",
+                self.settings.x_access_token_secret.get_secret_value()
+                if self.settings.x_access_token_secret
+                else "",
+            )
+
+            self.sync_client = API(self.auth)  # type: ignore[reportGeneralTypeIssues]
 
     @property
     def platform(self) -> str:
@@ -50,6 +59,7 @@ class XConnector(SocialConnector):
     async def fetch_mentions(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
         """Fetch recent tweets matching the query."""
         try:
+            self._initialize_clients()
             raw_response = await self.client.search_recent_tweets(  # type: ignore[reportGeneralTypeIssues]
                 query=query,
                 max_results=limit,
@@ -73,12 +83,16 @@ class XConnector(SocialConnector):
                 for tweet in tweets
             ]
 
-        except TweepyException:
-            return []
+        except Exception as e:
+            # Check if it's a TweepyException (lazy import)
+            if e.__class__.__name__ == "TweepyException":
+                return []
+            raise
 
     def post_tweet(self, content: str) -> dict[str, Any]:
         """Post a new tweet (synchronous)."""
         try:
+            self._initialize_clients()
             client: Any = self.sync_client
             tweet = client.update_status(status=content)
             return {
@@ -90,12 +104,16 @@ class XConnector(SocialConnector):
                     else None
                 ),
             }
-        except TweepyException:
-            return {}
+        except Exception as e:
+            # Check if it's a TweepyException (lazy import)
+            if e.__class__.__name__ == "TweepyException":
+                return {}
+            raise
 
     def reply_to_tweet(self, tweet_id: int, reply_text: str) -> dict[str, Any]:
         """Reply to a tweet by ID."""
         try:
+            self._initialize_clients()
             client: Any = self.sync_client
             tweet = client.update_status(
                 status=reply_text,
@@ -107,5 +125,8 @@ class XConnector(SocialConnector):
                 "content": str(getattr(tweet, "text", "")),
                 "created_at": getattr(tweet, "created_at", ""),
             }
-        except TweepyException:
-            return {}
+        except Exception as e:
+            # Check if it's a TweepyException (lazy import)
+            if e.__class__.__name__ == "TweepyException":
+                return {}
+            raise

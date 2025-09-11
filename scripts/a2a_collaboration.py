@@ -168,7 +168,9 @@ class PriceAnalysisAgent:
 class OrchestratorAgent:
     """Agent that coordinates between FTSO and analysis agents."""
 
-    def __init__(self, ftso_agent: FTSOAgent, analysis_agent: PriceAnalysisAgent) -> None:
+    def __init__(
+        self, ftso_agent: FTSOAgent, analysis_agent: PriceAnalysisAgent
+    ) -> None:
         self.ftso_agent = ftso_agent
         self.analysis_agent = analysis_agent
         self.agent_id = str(uuid4())
@@ -236,13 +238,9 @@ async def run_collaboration_demo() -> None:
         "How is FLR performing compared to historical data?",
     ]
 
-
     for _i, query in enumerate(queries, 1):
-
         with contextlib.suppress(Exception):
             await orchestrator.handle_complex_query(query)
-
-
 
 
 async def main() -> None:

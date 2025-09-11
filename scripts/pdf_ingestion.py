@@ -194,10 +194,7 @@ async def main() -> None:
             )
 
         # Agent PDF parsing
-        await parse_pdf_to_template_json(
-            pdf_agent, pdf_path, template, max_pages=1
-        )
-
+        await parse_pdf_to_template_json(pdf_agent, pdf_path, template, max_pages=1)
 
     except Exception:
         raise

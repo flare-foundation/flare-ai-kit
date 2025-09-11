@@ -113,6 +113,7 @@ def _rebuild_app_settings() -> None:
         from flare_ai_kit.rag.vector.settings import VectorDbSettings
         from flare_ai_kit.social.settings import SocialSettings
         from flare_ai_kit.tee.settings import TeeSettings
+
         current_module = sys.modules[__name__]
         current_module.AgentSettings = AgentSettings
         current_module.EcosystemSettings = EcosystemSettings

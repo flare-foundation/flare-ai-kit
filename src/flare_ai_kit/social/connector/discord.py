@@ -6,9 +6,7 @@ import asyncio
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from discord import Client, Message
-
-from discord import TextChannel
+    from discord import Message
 
 from flare_ai_kit.config import AppSettings
 from flare_ai_kit.social.connector import SocialConnector
@@ -30,15 +28,22 @@ class DiscordConnector(SocialConnector):
             if settings.discord_channel_id
             else 0
         )
-        # Lazy import and initialization of Discord client
-        from discord import Client, Intents
-        self.client: Client = Client(intents=Intents.default())
+        # Initialize client attributes without importing discord
+        self.client = None
         self._ready_event: asyncio.Event = asyncio.Event()
         self._messages: list[dict[str, Any]] = []
 
-        # Explicitly register event handlers
-        self.client.event(self._on_ready)
-        self.client.event(self._on_message)
+    def _initialize_client(self) -> None:
+        """Initialize Discord client with lazy import."""
+        if self.client is None:
+            # Lazy import and initialization of Discord client
+            from discord import Client, Intents
+
+            self.client = Client(intents=Intents.default())
+
+            # Explicitly register event handlers
+            self.client.event(self._on_ready)
+            self.client.event(self._on_message)
 
     async def _on_ready(self) -> None:
         """Handle bot ready event."""
@@ -46,6 +51,7 @@ class DiscordConnector(SocialConnector):
 
     async def _on_message(self, message: Message) -> None:
         """Handle new messages."""
+        self._initialize_client()
         if message.author == self.client.user:
             return
 
@@ -64,6 +70,7 @@ class DiscordConnector(SocialConnector):
         return "discord"
 
     async def _start_if_needed(self) -> None:
+        self._initialize_client()
         if not self.client.is_ready():
             self._client_task = asyncio.create_task(self.client.start(self.token))
             await self._ready_event.wait()
@@ -87,7 +94,8 @@ class DiscordConnector(SocialConnector):
         """Post a message to the Discord channel."""
         await self._start_if_needed()
         channel = self.client.get_channel(self.channel_id)
-        if isinstance(channel, TextChannel):
+        # Check if channel is a TextChannel (lazy import)
+        if channel and hasattr(channel, "send"):
             message = await channel.send(content)
             return {
                 "platform": "discord",
