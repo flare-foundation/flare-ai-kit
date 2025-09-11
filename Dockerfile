@@ -32,7 +32,11 @@ COPY uv.lock pyproject.toml README.md ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     if [ -n "$EXTRAS" ]; then \
         echo "Installing with extras: $EXTRAS" && \
-        uv sync --locked --no-install-project --extra="$EXTRAS" --no-dev --no-editable; \
+        EXTRA_FLAGS="" && \
+        for extra in $(echo "$EXTRAS" | tr ',' ' '); do \
+            EXTRA_FLAGS="$EXTRA_FLAGS --extra=$extra"; \
+        done && \
+        uv sync --locked --no-install-project $EXTRA_FLAGS --no-dev --no-editable; \
     else \
         echo "Installing base dependencies only" && \
         uv sync --locked --no-install-project --no-dev --no-editable; \
