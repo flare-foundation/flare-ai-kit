@@ -19,4 +19,5 @@ def __getattr__(name: str):
         from .validation import VtpmValidation
 
         return VtpmValidation
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    msg = f"module '{__name__}' has no attribute '{name}'"
+    raise AttributeError(msg)

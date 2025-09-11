@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Agent-to-Agent (A2A) Collaboration Script
+Agent-to-Agent (A2A) Collaboration Script.
 
 This script demonstrates A2A collaboration between multiple AI agents.
 It includes an orchestrator agent that coordinates with FTSO and price analysis agents.
@@ -23,6 +23,8 @@ from uuid import uuid4
 
 # Add src to path for local development
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+import contextlib
 
 from dotenv import load_dotenv
 from pydantic import BaseModel
@@ -55,7 +57,7 @@ class AgentDependencies(BaseModel):
 class FTSOAgent:
     """Agent that fetches cryptocurrency prices using FTSO."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.kit = FlareAIKit()
         self.agent_id = str(uuid4())
         self.name = "FTSO Price Agent"
@@ -98,7 +100,7 @@ class FTSOAgent:
 class PriceAnalysisAgent:
     """Agent that analyzes price data against historical trends."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.agent_id = str(uuid4())
         self.name = "Price Analysis Agent"
 
@@ -166,7 +168,7 @@ class PriceAnalysisAgent:
 class OrchestratorAgent:
     """Agent that coordinates between FTSO and analysis agents."""
 
-    def __init__(self, ftso_agent: FTSOAgent, analysis_agent: PriceAnalysisAgent):
+    def __init__(self, ftso_agent: FTSOAgent, analysis_agent: PriceAnalysisAgent) -> None:
         self.ftso_agent = ftso_agent
         self.analysis_agent = analysis_agent
         self.agent_id = str(uuid4())
@@ -174,12 +176,8 @@ class OrchestratorAgent:
 
     async def handle_complex_query(self, query: str) -> str:
         """Handle complex queries by coordinating between agents."""
-        print(f"🎯 Orchestrator processing: {query}")
-
         # Step 1: Get current price from FTSO agent
-        print("📊 Fetching current price...")
         price_response = await self.ftso_agent.handle_message(query)
-        print(f"💰 Price data: {price_response}")
 
         # Step 2: Extract price and symbol for analysis
         # This is a simplified extraction - in practice you'd use more sophisticated parsing
@@ -202,23 +200,20 @@ class OrchestratorAgent:
                 current_price = float(price_str)
 
                 # Step 3: Get analysis
-                print("📈 Performing price analysis...")
                 analysis_query = (
                     f"Analyze the current price of {symbol} at ${current_price}"
                 )
                 analysis_response = await self.analysis_agent.handle_message(
                     analysis_query
                 )
-                print(f"📊 Analysis: {analysis_response}")
 
                 # Step 4: Combine results
-                combined_response = (
+                return (
                     f"🔍 Complete Market Analysis:\n\n"
                     f"Current Market Data:\n{price_response}\n\n"
                     f"Historical Analysis:\n{analysis_response}\n\n"
                     f"💡 This analysis combines real-time FTSO data with historical trends."
                 )
-                return combined_response
             return (
                 f"Price data: {price_response}\nCould not extract price for analysis."
             )
@@ -227,12 +222,9 @@ class OrchestratorAgent:
             return f"Price data: {price_response}\nAnalysis error: {e!s}"
 
 
-async def run_collaboration_demo():
+async def run_collaboration_demo() -> None:
     """Run the A2A collaboration demo."""
-    print("🚀 Starting A2A Collaboration Demo...")
-
     # Initialize agents
-    print("🤖 Initializing agents...")
     ftso_agent = FTSOAgent()
     analysis_agent = PriceAnalysisAgent()
     orchestrator = OrchestratorAgent(ftso_agent, analysis_agent)
@@ -244,31 +236,20 @@ async def run_collaboration_demo():
         "How is FLR performing compared to historical data?",
     ]
 
-    print("\n" + "=" * 60)
-    print("🎭 A2A COLLABORATION DEMONSTRATION")
-    print("=" * 60)
 
-    for i, query in enumerate(queries, 1):
-        print(f"\n🔍 Query {i}: {query}")
-        print("-" * 50)
+    for _i, query in enumerate(queries, 1):
 
-        try:
-            response = await orchestrator.handle_complex_query(query)
-            print(f"✅ Response:\n{response}")
-        except Exception as e:
-            print(f"❌ Error: {e}")
-
-        print("\n" + "=" * 60)
-
-    print("🎉 A2A Collaboration Demo completed!")
+        with contextlib.suppress(Exception):
+            await orchestrator.handle_complex_query(query)
 
 
-async def main():
+
+
+async def main() -> None:
     """Main function."""
     try:
         await run_collaboration_demo()
-    except Exception as e:
-        print(f"❌ Demo failed: {e}")
+    except Exception:
         raise
 
 

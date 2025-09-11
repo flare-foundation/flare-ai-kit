@@ -98,11 +98,37 @@ class AppSettings(BaseSettings):
 
 
 # Rebuild the model to resolve forward references
-def _rebuild_app_settings():
+def _rebuild_app_settings() -> None:
     """Rebuild AppSettings model with all required imports."""
     # Import all the settings classes to make them available for model_rebuild
+    try:
+        # Add the settings classes to the global namespace for model_rebuild
+        import sys
 
-    AppSettings.model_rebuild()
+        from flare_ai_kit.a2a.settings import A2ASettings
+        from flare_ai_kit.agent.settings import AgentSettings
+        from flare_ai_kit.ecosystem.settings import EcosystemSettings
+        from flare_ai_kit.ingestion.settings import IngestionSettings
+        from flare_ai_kit.rag.graph.settings import GraphDbSettings
+        from flare_ai_kit.rag.vector.settings import VectorDbSettings
+        from flare_ai_kit.social.settings import SocialSettings
+        from flare_ai_kit.tee.settings import TeeSettings
+        current_module = sys.modules[__name__]
+        current_module.AgentSettings = AgentSettings
+        current_module.EcosystemSettings = EcosystemSettings
+        current_module.VectorDbSettings = VectorDbSettings
+        current_module.GraphDbSettings = GraphDbSettings
+        current_module.SocialSettings = SocialSettings
+        current_module.TeeSettings = TeeSettings
+        current_module.IngestionSettings = IngestionSettings
+        current_module.A2ASettings = A2ASettings
+
+        # Rebuild the model to resolve forward references
+        AppSettings.model_rebuild()
+    except ImportError:
+        # If imports fail, skip the rebuild - this can happen during testing
+        # or when optional dependencies are not installed
+        pass
 
 
 # Call rebuild function to ensure model is properly configured

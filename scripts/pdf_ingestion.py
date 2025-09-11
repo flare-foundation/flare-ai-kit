@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PDF Ingestion Script
+PDF Ingestion Script.
 
 This script demonstrates PDF ingestion and processing using the Flare AI Kit.
 It includes PDF text extraction, template-based parsing, and on-chain posting.
@@ -90,7 +90,6 @@ async def parse_pdf_to_template_json(
         role="user", parts=[types.Part(text=_prompt(pdf, template, max_pages))]
     )
     final_text = None
-    print(f"📋 Calling {agent.name} using model: {agent.model}")
     async for ev in runner.run_async(user_id="u", session_id="s", new_message=msg):
         if ev.is_final_response() and ev.content and ev.content.parts:
             final_text = ev.content.parts[0].text
@@ -125,15 +124,10 @@ def create_sample_invoice_and_template() -> tuple[Path, PDFTemplateSettings]:
 
 async def main() -> None:
     """Main function demonstrating PDF ingestion workflow."""
-    print("🔍 Initializing PDF Ingestion Script...")
-
     # Create PDF and save it
     try:
         pdf_path, template = create_sample_invoice_and_template()
-        print(f"📄 Created sample PDF: {pdf_path}")
-        print(f"📋 Using template: {template.template_name}")
-    except Exception as e:
-        print(f"❌ Error creating sample PDF: {e}")
+    except Exception:
         return
 
     # Add template to global settings
@@ -184,36 +178,28 @@ async def main() -> None:
 
     try:
         # Mock onchain contract posting for demo
-        print("📤 Processing PDF with on-chain posting (mocked)...")
         with (
             patch(
                 "flare_ai_kit.onchain.contract_poster.ContractPoster.post_data",
                 new_callable=AsyncMock,
                 return_value=MOCK_TX_HASH,
-            ) as mock_post,
+            ),
             patch(
                 "flare_ai_kit.onchain.contract_poster.open", mock_open(read_data="[]")
             ),
         ):
             kit = FlareAIKit(config=app_settings)
-            tx_hash = await kit.pdf_processor.ingest_and_post(
+            await kit.pdf_processor.ingest_and_post(
                 file_path=str(pdf_path), template_name=template.template_name
             )
-            print(f"✅ On-chain transaction: {tx_hash}")
-            print(f"📊 Extracted data: {mock_post.call_args[0][0]}")
 
         # Agent PDF parsing
-        print("🤖 Processing PDF with AI agent...")
-        structured = await parse_pdf_to_template_json(
+        await parse_pdf_to_template_json(
             pdf_agent, pdf_path, template, max_pages=1
         )
-        print("✅ Agent JSON output:")
-        print(json.dumps(structured, indent=2))
 
-        print("🎉 PDF ingestion completed successfully!")
 
-    except Exception as e:
-        print(f"❌ Error during PDF processing: {e}")
+    except Exception:
         raise
 
 

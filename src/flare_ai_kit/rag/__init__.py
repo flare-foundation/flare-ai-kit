@@ -90,4 +90,5 @@ def __getattr__(name: str):
         from .vector import upsert_to_qdrant
 
         return upsert_to_qdrant
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    msg = f"module '{__name__}' has no attribute '{name}'"
+    raise AttributeError(msg)

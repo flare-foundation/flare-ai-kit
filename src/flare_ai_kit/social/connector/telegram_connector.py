@@ -1,11 +1,17 @@
 """Telegram Connector for Flare AI Kit."""
 
+from __future__ import annotations
+
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
-from telegram import Update
-from telegram.ext import Application, ContextTypes, MessageHandler, filters
+
+if TYPE_CHECKING:
+    from telegram import Update
+    from telegram.ext import ContextTypes
+
+from telegram.ext import MessageHandler, filters
 
 from flare_ai_kit.config import AppSettings
 from flare_ai_kit.social.connector import SocialConnector
@@ -33,6 +39,9 @@ class TelegramConnector(SocialConnector):
 
         self.is_configured = False
         self._messages: list[dict[str, Any]] = []
+
+        # Lazy import and initialization of Telegram application
+        from telegram.ext import Application
         self.app = Application
 
         if self.token:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-RAG Vector Demo Script
+RAG Vector Demo Script.
 
 This script demonstrates Retrieval-Augmented Generation (RAG) using vector embeddings.
 It shows how to chunk, embed, store, and search text using Qdrant vector database.
@@ -38,8 +38,6 @@ from flare_ai_kit.rag.vector.settings import VectorDbSettings
 
 async def setup_demo_data() -> Path:
     """Create sample text data for the RAG demo."""
-    print("📁 Setting up demo data...")
-
     # 1. Prepare a sample text file in a dedicated directory
     demo_dir = Path("demo_data")
     demo_dir.mkdir(parents=True, exist_ok=True)
@@ -64,7 +62,6 @@ async def setup_demo_data() -> Path:
     with tmp_file.open("w", encoding="utf-8") as f:
         f.write(sample_text)
 
-    print(f"✅ Created demo file: {tmp_file}")
     return demo_dir
 
 
@@ -72,8 +69,6 @@ async def setup_rag_components() -> tuple[
     FixedSizeChunker, LocalFileIndexer, GeminiEmbedding, QdrantClient
 ]:
     """Initialize RAG components."""
-    print("🔧 Setting up RAG components...")
-
     agent = AgentSettings()  # pyright: ignore[reportCallIssue]
     vector_db = VectorDbSettings(qdrant_batch_size=8)
 
@@ -90,7 +85,6 @@ async def setup_rag_components() -> tuple[
     # 4. Set up Qdrant client
     qdrant_client = QdrantClient(url=vector_db.qdrant_url)
 
-    print("✅ RAG components initialized")
     return chunker, embedding_model, qdrant_client, vector_db
 
 
@@ -102,8 +96,6 @@ async def ingest_documents(
     vector_db: VectorDbSettings,
 ) -> None:
     """Ingest and embed documents into Qdrant."""
-    print("📚 Ingesting documents...")
-
     # Set up indexer to only index the demo_data directory
     indexer = LocalFileIndexer(
         root_dir=str(demo_dir), chunker=chunker, allowed_extensions={".txt"}
@@ -111,7 +103,6 @@ async def ingest_documents(
 
     # 5. Ingest and embed documents
     chunks = await ingest_and_embed(indexer, embedding_model)
-    print(f"📄 Generated {len(chunks)} text chunks")
 
     # 6. Upsert chunks to Qdrant
     await upsert_to_qdrant(
@@ -121,9 +112,6 @@ async def ingest_documents(
         vector_size=vector_db.embeddings_output_dimensionality,
         batch_size=vector_db.qdrant_batch_size,
     )
-    print(
-        f"✅ Uploaded {len(chunks)} chunks to Qdrant collection '{vector_db.collection_name}'"
-    )
 
 
 async def perform_semantic_search(
@@ -132,8 +120,6 @@ async def perform_semantic_search(
     vector_db: VectorDbSettings,
 ) -> None:
     """Perform semantic search queries."""
-    print("🔍 Performing semantic search...")
-
     # 7. Set up retriever for semantic search
     retriever = QdrantRetriever(
         client=qdrant_client,
@@ -151,37 +137,29 @@ async def perform_semantic_search(
     ]
 
     for query in queries:
-        print(f"\n🔎 Query: '{query}'")
         try:
             results = await retriever.search(query)
-            print(f"📊 Found {len(results)} relevant chunks:")
 
-            for i, result in enumerate(results, 1):
-                print(f"   {i}. Score: {result.score:.4f}")
-                print(f"      Text: {result.chunk.text[:100]}...")
-                print(f"      Source: {result.chunk.metadata.source}")
+            for _i, _result in enumerate(results, 1):
+                pass
 
-        except Exception as e:
-            print(f"❌ Search failed for query '{query}': {e}")
+        except Exception:
+            pass
 
 
 async def cleanup_demo_data(demo_dir: Path) -> None:
     """Clean up demo data."""
-    print("🧹 Cleaning up demo data...")
     try:
         import shutil
 
         if demo_dir.exists():
             shutil.rmtree(demo_dir)
-            print("✅ Demo data cleaned up")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not clean up demo data: {e}")
+    except Exception:
+        pass
 
 
 async def main() -> None:
     """Main function demonstrating RAG vector operations."""
-    print("🔍 Starting RAG Vector Demo...")
-
     demo_dir = None
     try:
         # Setup demo data
@@ -203,11 +181,8 @@ async def main() -> None:
         # Perform semantic search
         await perform_semantic_search(embedding_model, qdrant_client, vector_db)
 
-        print("\n🎉 RAG Vector Demo completed successfully!")
-        print("💡 Try modifying the sample text or queries to experiment further!")
 
-    except Exception as e:
-        print(f"❌ Demo failed: {e}")
+    except Exception:
         raise
     finally:
         # Cleanup

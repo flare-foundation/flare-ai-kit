@@ -7,7 +7,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Final
 
-import jwt
+# jwt import moved to lazy import in methods that use it
 import requests
 import structlog
 from cryptography import x509
@@ -15,9 +15,9 @@ from cryptography.exceptions import InvalidKey
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from OpenSSL.crypto import X509, X509Store, X509StoreContext
-from OpenSSL.crypto import Error as OpenSSLError
 
+# OpenSSL imports moved to lazy imports in methods that use them
+# OpenSSL Error import moved to lazy imports in methods that use it
 from flare_ai_kit.common import (
     CertificateParsingError,
     InvalidCertificateChainError,
@@ -111,6 +111,8 @@ class VtpmValidation:
             CertificateParsingError: If certificates cannot be parsed
 
         """
+        import jwt  # Lazy import for optional dependency
+
         unverified_header = jwt.get_unverified_header(token)
         logger.info("token", unverified_header=unverified_header)
 
@@ -227,6 +229,8 @@ class VtpmValidation:
             self._compare_root_certificates(certs.root_cert, root_cert)
             self._check_certificate_validity(certs)
             self._verify_certificate_chain(certs)
+
+            import jwt  # Lazy import for optional dependency
 
             public_key = certs.leaf_cert.public_key()
             public_pem = public_key.public_bytes(
@@ -442,6 +446,8 @@ class VtpmValidation:
 
         """
         try:
+            from OpenSSL.crypto import X509, X509Store, X509StoreContext  # Lazy import
+
             store = X509Store()
             store.add_cert(X509.from_cryptography(certificates.root_cert))
             store.add_cert(X509.from_cryptography(certificates.intermediate_cert))
@@ -451,7 +457,7 @@ class VtpmValidation:
             )
             store_ctx.verify_certificate()
 
-        except OpenSSLError as e:
+        except Exception as e:  # Catch OpenSSLError and other exceptions
             msg = f"Certificate chain verification failed: {e}"
             raise InvalidCertificateChainError(msg) from e
 

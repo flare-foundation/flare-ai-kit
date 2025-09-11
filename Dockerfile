@@ -45,8 +45,15 @@ COPY scripts/ ./scripts/
 # Install the project itself
 RUN --mount=type=cache,target=/root/.cache/uv \
     if [ -n "$EXTRAS" ]; then \
-        uv sync --locked --extra="$EXTRAS" --no-dev --no-editable; \
+        echo "Installing with extras: $EXTRAS" && \
+        # Handle multiple extras by converting comma-separated to multiple --extra flags
+        EXTRA_FLAGS="" && \
+        for extra in $(echo "$EXTRAS" | tr ',' ' '); do \
+            EXTRA_FLAGS="$EXTRA_FLAGS --extra=$extra"; \
+        done && \
+        uv sync --locked $EXTRA_FLAGS --no-dev --no-editable; \
     else \
+        echo "Installing base dependencies only" && \
         uv sync --locked --no-dev --no-editable; \
     fi
 

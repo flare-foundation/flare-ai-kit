@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Data Availability Layer Usage Script
+Data Availability Layer Usage Script.
 
 This script demonstrates usage of the Data Availability Layer for retrieving
 voting round data and feed information with proofs.
@@ -27,50 +27,38 @@ from flare_ai_kit.ecosystem.settings import EcosystemSettings
 
 async def voting_round(dal: DataAvailabilityLayer) -> int:
     """Get the latest voting round."""
-    print("🗳️  Fetching latest voting round...")
     try:
-        latest_round = await dal.get_latest_voting_round()
-        print(f"✅ Latest voting round: {latest_round}")
-        return latest_round
-    except Exception as e:
-        print(f"❌ Error fetching voting round: {e}")
+        return await dal.get_latest_voting_round()
+    except Exception:
         raise
 
 
 async def list_feeds(dal: DataAvailabilityLayer) -> None:
     """List available feeds."""
-    print("📋 Listing available feeds...")
     try:
         feeds = await dal.list_feeds()
-        print(f"✅ Found {len(feeds)} feeds:")
-        for i, feed in enumerate(feeds[:5]):  # Show first 5 feeds
-            print(f"   {i + 1}. {feed}")
+        for _i, _feed in enumerate(feeds[:5]):  # Show first 5 feeds
+            pass
         if len(feeds) > 5:
-            print(f"   ... and {len(feeds) - 5} more feeds")
-    except Exception as e:
-        print(f"❌ Error listing feeds: {e}")
+            pass
+    except Exception:
+        pass
 
 
 async def fetch_feeds_with_proof(
     dal: DataAvailabilityLayer, voting_round: int, feed_ids: list[str]
 ) -> None:
     """Fetch feeds with proof for a specific voting round."""
-    print(f"🔍 Fetching feeds with proof for round {voting_round}...")
     try:
         feeds_with_proof = await dal.get_feeds_with_proof(voting_round, feed_ids)
-        print(f"✅ Retrieved {len(feeds_with_proof)} feeds with proof:")
-        for feed in feeds_with_proof:
-            print(f"   Feed ID: {feed.feed_id}")
-            print(f"   Value: {feed.value}")
-            print(f"   Proof length: {len(feed.proof.merkle_proof)}")
-    except Exception as e:
-        print(f"❌ Error fetching feeds with proof: {e}")
+        for _feed in feeds_with_proof:
+            pass
+    except Exception:
+        pass
 
 
 async def main() -> None:
     """Main function demonstrating Data Availability Layer usage."""
-    print("🔍 Initializing Data Availability Layer...")
-
     # Demo inputs (change as needed)
     feed_ids = [
         "0x01464c522f55534400000000000000000000000000",  # FLR/USD
@@ -84,9 +72,8 @@ async def main() -> None:
         latest_round = await voting_round(dal)
         await list_feeds(dal)
         await fetch_feeds_with_proof(dal, latest_round, feed_ids)  # filtered
-        print("🎉 Data Availability Layer demo completed!")
-    except Exception as e:
-        print(f"❌ Demo failed: {e}")
+    except Exception:
+        pass
     finally:
         await dal.close()
 

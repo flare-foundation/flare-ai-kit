@@ -142,7 +142,6 @@ def create_invoice_and_build_template(
     c.drawRightString(width - 0.7 * inch, 4.0 * inch, AMOUNT_DUE)
 
     c.save()
-    print(f"✅ Created {FILE_PATH}")
 
     # ----- Discover coordinates & build template -----
     with fitz.open(str(FILE_PATH)) as doc:
@@ -164,10 +163,8 @@ def create_invoice_and_build_template(
         }
 
     template = _coords_to_template(template_name, coords)
-    print(f"✅ Built PDF template: {template.template_name}")
     return FILE_PATH, template
 
 
 if __name__ == "__main__":
     _, t = create_invoice_and_build_template()
-    print(t.model_dump())

@@ -21,4 +21,5 @@ def __getattr__(name: str):
         from .x import XClient
 
         return XClient
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    msg = f"module '{__name__}' has no attribute '{name}'"
+    raise AttributeError(msg)

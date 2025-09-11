@@ -1,9 +1,14 @@
 """Discord Connector for Flare AI Kit."""
 
-import asyncio
-from typing import Any
+from __future__ import annotations
 
-from discord import Client, Intents, Message, TextChannel
+import asyncio
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from discord import Client, Message
+
+from discord import TextChannel
 
 from flare_ai_kit.config import AppSettings
 from flare_ai_kit.social.connector import SocialConnector
@@ -25,6 +30,8 @@ class DiscordConnector(SocialConnector):
             if settings.discord_channel_id
             else 0
         )
+        # Lazy import and initialization of Discord client
+        from discord import Client, Intents
         self.client: Client = Client(intents=Intents.default())
         self._ready_event: asyncio.Event = asyncio.Event()
         self._messages: list[dict[str, Any]] = []

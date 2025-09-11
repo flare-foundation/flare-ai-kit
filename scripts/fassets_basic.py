@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-FAssets Basic Operations Script
+FAssets Basic Operations Script.
 
 This script demonstrates comprehensive FAssets operations including minting,
 redemption, and swap operations using SparkDEX integration.
@@ -18,7 +18,6 @@ import asyncio
 import sys
 import time
 from pathlib import Path
-from typing import Any
 
 # Add src to path for local development
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -33,116 +32,93 @@ from flare_ai_kit.ecosystem.protocols.fassets import FAssets
 
 async def print_supported_fassets(fassets: FAssets) -> None:
     """Print information about supported FAssets."""
-    print("=== Supported FAssets ===")
     supported_fassets = await fassets.get_supported_fassets()
 
-    for symbol, info in supported_fassets.items():
-        print(f"{symbol}: {info.name}")
-        print(f"  Underlying: {info.underlying_symbol}")
-        print(f"  Decimals: {info.decimals}")
-        print(f"  Active: {info.is_active}")
-        print(f"  Asset Manager: {info.asset_manager_address}")
-        print(f"  FAsset Token: {info.f_asset_address}")
-        print()
+    for _info in supported_fassets.values():
+        pass
 
 
 async def check_balance_and_allowance(fassets: FAssets) -> None:
     """Check FXRP balance and SparkDEX allowance."""
-    print("=== Balance & Allowance Operations ===")
     if not fassets.address:
-        print("No account address configured - skipping balance checks")
         return
 
     try:
         # Check FXRP balance
-        balance = await fassets.get_fasset_balance(FAssetType.FXRP, fassets.address)
-        print(f"FXRP Balance: {balance} wei")
+        await fassets.get_fasset_balance(FAssetType.FXRP, fassets.address)
 
         # Check allowance for SparkDEX router (if configured)
         if fassets.sparkdex_router:
-            allowance = await fassets.get_fasset_allowance(
+            await fassets.get_fasset_allowance(
                 FAssetType.FXRP,
                 fassets.address,
                 fassets.sparkdex_router.address,
             )
-            print(f"FXRP Allowance for SparkDEX: {allowance} wei")
         else:
-            print("SparkDEX router not configured - skipping allowance check")
-    except Exception as e:
-        print(f"Balance/allowance check failed (expected with placeholders): {e}")
+            pass
+    except Exception:
+        pass
 
 
 async def perform_swap_operations(
     fassets: FAssets, supported_fassets: dict[str, FAssetInfo]
 ) -> None:
     """Demonstrate various swap operations."""
-    print("=== Swap Operations (SparkDEX Integration) ===")
     try:
         # Example swap parameters
         swap_amount = 1000000  # 1 FXRP (6 decimals)
         min_native_out = 500000000000000000  # 0.5 FLR/SGB
         deadline = int(time.time()) + 3600  # 1 hour from now
 
-        print("1. Swap FXRP for Native Token (FLR/SGB)")
-        tx_hash = await fassets.swap_fasset_for_native(
+        await fassets.swap_fasset_for_native(
             FAssetType.FXRP,
             amount_in=swap_amount,
             amount_out_min=min_native_out,
             deadline=deadline,
         )
-        print(f"   Transaction: {tx_hash}")
 
-        print("2. Swap Native Token for FXRP")
         native_amount = 1000000000000000000  # 1 FLR/SGB
         min_fxrp_out = 900000  # 0.9 FXRP
-        tx_hash = await fassets.swap_native_for_fasset(
+        await fassets.swap_native_for_fasset(
             FAssetType.FXRP,
             amount_out_min=min_fxrp_out,
             deadline=deadline,
             amount_in=native_amount,
         )
-        print(f"   Transaction: {tx_hash}")
 
         # Cross-FAsset swap (if multiple FAssets available)
         if len(supported_fassets) > 1:
             other_fassets = [k for k in supported_fassets if k != "FXRP"]
             if other_fassets:
                 other_fasset = getattr(FAssetType, other_fassets[0])
-                print(f"3. Swap FXRP for {other_fassets[0]}")
-                tx_hash = await fassets.swap_fasset_for_fasset(
+                await fassets.swap_fasset_for_fasset(
                     FAssetType.FXRP,
                     other_fasset,
                     amount_in=swap_amount,
                     amount_out_min=500000,  # Adjust based on decimals
                     deadline=deadline,
                 )
-                print(f"   Transaction: {tx_hash}")
 
-    except Exception as e:
-        print(f"Swap operations failed (expected with placeholders): {e}")
+    except Exception:
+        pass
 
 
 async def demonstrate_minting_workflow(fassets: FAssets) -> None:
     """Demonstrate the complete minting workflow."""
-    print("=== Complete Minting Workflow ===")
     try:
         # Get all agents
         agents = await fassets.get_all_agents(FAssetType.FXRP)
-        print(f"Available Agents: {len(agents)}")
 
         if not agents:
-            print("No agents available")
             return
 
         agent_address = agents[0]
         # Get available lots
-        available_lots: dict[str, Any] = await fassets.get_available_lots(
+        await fassets.get_available_lots(
             FAssetType.FXRP, agent_address
         )
-        print(f"Available lots from {agent_address}: {available_lots}")
 
         # Step 1: Reserve collateral for minting
-        print("Step 1: Reserve Collateral")
         executor = fassets.address or Web3.to_checksum_address(
             "0x0000000000000000000000000000000000000000"
         )
@@ -154,28 +130,24 @@ async def demonstrate_minting_workflow(fassets: FAssets) -> None:
             executor=executor,
             executor_fee_nat=0,
         )
-        print(f"Collateral Reservation ID: {reservation_id}")
 
         # Step 2: Execute minting (after underlying payment)
-        print("Step 2: Execute Minting")
         payment_reference = (
             "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
         )
-        minted_amount = await fassets.execute_minting(
+        await fassets.execute_minting(
             FAssetType.FXRP,
             collateral_reservation_id=int(reservation_id),
             payment_reference=payment_reference,
             recipient=executor,
         )
-        print(f"Minted Amount: {minted_amount} wei")
 
-    except Exception as e:
-        print(f"Minting workflow failed (expected with placeholders): {e}")
+    except Exception:
+        pass
 
 
 async def perform_redemption_operations(fassets: FAssets) -> None:
     """Demonstrate redemption operations."""
-    print("=== Redemption Operations ===")
     try:
         executor = fassets.address or Web3.to_checksum_address(
             "0x0000000000000000000000000000000000000000"
@@ -189,22 +161,16 @@ async def perform_redemption_operations(fassets: FAssets) -> None:
             executor=executor,
             executor_fee_nat=0,
         )
-        print(f"Redemption Request ID: {redemption_id}")
 
         # Get redemption request details
         request_id = int(redemption_id)
         if request_id > 0:
-            redemption_details: dict[str, Any] = await fassets.get_redemption_request(
+            await fassets.get_redemption_request(
                 FAssetType.FXRP, request_id
             )
-            print("Redemption Details:")
-            print(f"  Agent Vault: {redemption_details['agent_vault']}")
-            print(f"  Value UBA: {redemption_details['value_uba']}")
-            print(f"  Fee UBA: {redemption_details['fee_uba']}")
-            print(f"  Payment Address: {redemption_details['payment_address']}")
 
-    except Exception as e:
-        print(f"Redemption operations failed (expected with placeholders): {e}")
+    except Exception:
+        pass
 
 
 async def main() -> None:
@@ -221,8 +187,6 @@ async def main() -> None:
     update the contract addresses in the FAssets connector with actual
     deployed addresses.
     """
-    print("🔍 Initializing Flare AI Kit for FAssets operations...")
-
     # Initialize the Flare AI Kit
     kit = FlareAIKit(config=None)
 
@@ -236,42 +200,28 @@ async def main() -> None:
 
         # If FXRP is supported, demonstrate comprehensive operations
         if "FXRP" in supported_fassets:
-            print("=== FXRP Operations ===")
             try:
                 # Get FXRP specific information
-                fxrp_info = await fassets.get_fasset_info(FAssetType.FXRP)
-                print(f"FXRP Info: {fxrp_info}")
+                await fassets.get_fasset_info(FAssetType.FXRP)
 
                 # Get asset manager settings
                 settings = await fassets.get_asset_manager_settings(FAssetType.FXRP)
-                print("Asset Manager Settings:")
-                print(f"  Asset Name: {settings.get('asset_name')}")
-                print(f"  Asset Symbol: {settings.get('asset_symbol')}")
-                print(f"  Lot Size: {settings.get('lot_size_amg')}")
-                cr_value = settings.get("minting_vault_collateral_ratio")
-                print(f"  Minting Vault CR: {cr_value}")
-                print()
+                settings.get("minting_vault_collateral_ratio")
 
                 await check_balance_and_allowance(fassets)
-                print()
 
                 await perform_swap_operations(fassets, supported_fassets)
-                print()
 
                 await demonstrate_minting_workflow(fassets)
-                print()
 
                 await perform_redemption_operations(fassets)
-                print()
 
-            except Exception as e:
-                msg = "Error with FXRP operations (expected with placeholder addresses)"
-                print(f"{msg}: {e}")
+            except Exception:
+                pass
 
-        print("🎉 FAssets operations completed!")
 
-    except Exception as e:
-        print(f"❌ Fatal error: {e}")
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

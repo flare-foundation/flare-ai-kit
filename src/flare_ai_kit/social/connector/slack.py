@@ -1,9 +1,13 @@
 """Slack Connector for Flare AI Kit."""
 
-import logging
-from typing import Any
+from __future__ import annotations
 
-from slack_sdk import WebClient
+import logging
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from slack_sdk import WebClient
+
 from slack_sdk.errors import SlackApiError
 
 from flare_ai_kit.config import AppSettings
@@ -16,7 +20,7 @@ logger.setLevel(logging.INFO)
 class SlackConnector(SocialConnector):
     """Slack Connector for Flare AI Kit."""
 
-    def __init__(self, client: WebClient | None) -> None:
+    def __init__(self, client: WebClient | None = None) -> None:
         """Initialize the SlackConnector with API token and channel ID."""
         settings = AppSettings().social
         self.token = (
@@ -29,7 +33,12 @@ class SlackConnector(SocialConnector):
             if settings.slack_channel_id
             else ""
         )
-        self.client: WebClient = client or WebClient(token=self.token)
+        # Lazy import and initialization of Slack client
+        if client is None:
+            from slack_sdk import WebClient
+            self.client: WebClient = WebClient(token=self.token)
+        else:
+            self.client = client
 
     @property
     def platform(self) -> str:

@@ -1,11 +1,10 @@
 """Connector for Flare AI Kit."""
 
-# pyright: reportMissingTypeStubs=false
+from __future__ import annotations
 
+# pyright: reportMissingTypeStubs=false
 from typing import Any, cast
 
-from tweepy import API, OAuth1UserHandler
-from tweepy.asynchronous import AsyncClient
 from tweepy.errors import TweepyException
 
 from flare_ai_kit.config import AppSettings
@@ -21,6 +20,10 @@ class XConnector(SocialConnector):
         self.bearer_token = (
             settings.x_api_key.get_secret_value() if settings.x_api_key else ""
         )
+
+        # Lazy import and initialization of Twitter/X clients
+        from tweepy import API, OAuth1UserHandler
+        from tweepy.asynchronous import AsyncClient
 
         self.client = AsyncClient(bearer_token=self.bearer_token)  # type: ignore[reportGeneralTypeIssues]
 

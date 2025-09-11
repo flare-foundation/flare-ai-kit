@@ -19,4 +19,5 @@ def __getattr__(name: str):
         from .pdf_processor import PDFProcessor
 
         return PDFProcessor
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    msg = f"module '{__name__}' has no attribute '{name}'"
+    raise AttributeError(msg)
