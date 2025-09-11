@@ -129,11 +129,8 @@ async def main() -> None:
         tools=[read_pdf_text_tool],
         instruction=pdf_agent_instruction,
         generate_content_config=types.GenerateContentConfig(
-            temperature=0.0,
-            top_k=1,
-            top_p=0.3,
-            candidate_count=1
-        )
+            temperature=0.0, top_k=1, top_p=0.3, candidate_count=1
+        ),
     )
 
     # Mock onchain contract posting
