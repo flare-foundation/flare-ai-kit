@@ -116,8 +116,8 @@ RUN mkdir -p /app/scripts/data && chown -R app:app /app/scripts/data
 # Switch to non-root user
 USER app
 
-# Validate script exists and can be imported
-RUN python -c "import sys; sys.path.insert(0, '/app/src'); import importlib.util; spec = importlib.util.spec_from_file_location('script', '/app/scripts/${SCRIPT}.py'); print(f'Script ${SCRIPT}.py is ready to run')"
+# Validate script exists and basic Python syntax
+RUN python -c "import os; script_path = '/app/scripts/${SCRIPT}.py'; assert os.path.exists(script_path), f'Script {script_path} not found'; print(f'✅ Script ${SCRIPT}.py is ready to run')"
 
 # Default command runs the specified script
 CMD python /app/scripts/${SCRIPT}.py

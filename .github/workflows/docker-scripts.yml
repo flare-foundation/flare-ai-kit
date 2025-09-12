@@ -30,6 +30,7 @@ jobs:
   validate-dockerfile:
     name: Validate Dockerfile Syntax
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,13 +38,31 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Validate Dockerfile syntax
+      - name: Free up disk space
         run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          docker system prune -af
+
+      - name: Validate Dockerfile syntax
+        timeout-minutes: 8
+        run: |
+          echo "Building minimal Docker image for validation"
           docker buildx build --platform linux/amd64 \
             --build-arg EXTRAS=ftso \
             --build-arg SCRIPT=ftso_price \
+            --progress=plain \
+            --load \
             -t test-dockerfile-validation \
-            .
+            . || {
+              echo "❌ Docker build validation failed"
+              echo "Docker system info:"
+              docker system df
+              docker system info
+              exit 1
+            }
 
   build-and-test-scripts:
     name: Build and Test Scripts
@@ -70,6 +89,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          docker system prune -af
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -80,10 +107,11 @@ jobs:
         timeout-minutes: 10
         run: |
           echo "Building Docker image for ${{ matrix.script.name }} with extras: ${{ matrix.script.extras }}"
-          docker build \
+          docker buildx build \
             --build-arg EXTRAS=${{ matrix.script.extras }} \
             --build-arg SCRIPT=${{ matrix.script.script }} \
             --progress=plain \
+            --load \
             -t fai-script-${{ matrix.script.name }} \
             . || {
               echo "❌ Docker build failed for ${{ matrix.script.name }}"
@@ -140,6 +168,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          docker system prune -af
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -185,6 +221,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          docker system prune -af
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -195,10 +239,11 @@ jobs:
         timeout-minutes: 15
         run: |
           echo "Building multi-extras image with pdf,rag extras"
-          docker build \
+          docker buildx build \
             --build-arg EXTRAS="pdf,rag" \
             --build-arg SCRIPT=ftso_price \
             --progress=plain \
+            --load \
             -t fai-script-multi \
             . || {
               echo "❌ Multi-extras Docker build failed"
