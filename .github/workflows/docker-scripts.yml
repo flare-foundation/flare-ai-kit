@@ -75,15 +75,12 @@ jobs:
           - name: ftso-price
             extras: ftso
             script: ftso_price
-            test_command: "python -c 'import sys; sys.path.insert(0, \"/app/src\"); print(\"Testing FTSO script imports...\"); import scripts.ftso_price; print(\"FTSO script imports successfully\")'"
           - name: pdf-ingestion
             extras: pdf
             script: pdf_ingestion
-            test_command: "python -c 'import sys; sys.path.insert(0, \"/app/src\"); print(\"Testing PDF script imports...\"); import scripts.pdf_ingestion; print(\"PDF script imports successfully\")'"
           - name: da-layer
             extras: da
             script: da_layer
-            test_command: "python -c 'import sys; sys.path.insert(0, \"/app/src\"); print(\"Testing DA Layer script imports...\"); import scripts.da_layer; print(\"DA Layer script imports successfully\")'"
 
     steps:
       - name: Checkout code
@@ -129,9 +126,8 @@ jobs:
             -e AGENT__GEMINI_API_KEY=fake_key_for_testing \
             -e ECOSYSTEM__FLARE_RPC_URL=https://flare-api.flare.network/ext/C/rpc \
             -e ECOSYSTEM__COSTON2_RPC_URL=https://coston2-api.flare.network/ext/C/rpc \
-            --entrypoint /bin/bash \
             fai-script-${{ matrix.script.name }} \
-            -c "${{ matrix.script.test_command }}" || {
+            python -c "import sys; sys.path.insert(0, '/app/src'); print('Testing ${{ matrix.script.script }} script imports...'); import scripts.${{ matrix.script.script }}; print('✅ ${{ matrix.script.script }} script imports successfully')" || {
               echo "❌ Script import test failed for ${{ matrix.script.name }}"
               echo "Container logs:"
               docker run --rm fai-script-${{ matrix.script.name }} ls -la /app/scripts/
