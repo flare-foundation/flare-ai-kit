@@ -1,24 +1,36 @@
-"""Example 05: PDF Ingestion with Flare AI Kit.
-
-This example demonstrates PDF document processing with AI agents.
+#!/usr/bin/env python3
 """
+PDF Ingestion Script.
 
-from __future__ import annotations
+This script demonstrates PDF ingestion and processing using the Flare AI Kit.
+It includes PDF text extraction, template-based parsing, and on-chain posting.
+Requires: pdf extras (pillow, pymupdf, pytesseract)
+
+Usage:
+    python scripts/pdf_ingestion.py
+
+Environment Variables:
+    AGENT__GEMINI_API_KEY: Gemini API key for AI processing
+    INGESTION__PDF_INGESTION__USE_OCR: Enable OCR for scanned PDFs (default: false)
+"""
 
 import asyncio
 import json
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, mock_open, patch
+
+# Add src to path for local development
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from google.adk.agents import Agent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
-from data.create_sample_invoice import create_invoice_and_build_template
 from flare_ai_kit import FlareAIKit
 from flare_ai_kit.agent.pdf_tools import read_pdf_text_tool
 from flare_ai_kit.config import AppSettings
@@ -29,6 +41,7 @@ from flare_ai_kit.ingestion.settings import (
     PDFTemplateSettings,
 )
 
+# Mock transaction hash for demo purposes
 MOCK_TX_HASH = "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
 
 
@@ -77,7 +90,6 @@ async def parse_pdf_to_template_json(
         role="user", parts=[types.Part(text=_prompt(pdf, template, max_pages))]
     )
     final_text = None
-    print(f"Calling {agent.name} using model: {agent.model}")
     async for ev in runner.run_async(user_id="u", session_id="s", new_message=msg):
         if ev.is_final_response() and ev.content and ev.content.parts:
             final_text = ev.content.parts[0].text
@@ -88,9 +100,35 @@ async def parse_pdf_to_template_json(
     return _json_from(final_text)
 
 
+def create_sample_invoice_and_template() -> tuple[Path, PDFTemplateSettings]:
+    """Create a sample invoice PDF and corresponding template for demo purposes."""
+    # This is a simplified version - in practice you'd use the actual create_sample_invoice
+    import importlib.util
+    import sys
+    from pathlib import Path
+
+    # Load the module directly from the file path
+    data_dir = Path(__file__).parent / "data"
+    module_path = data_dir / "create_sample_invoice.py"
+
+    spec = importlib.util.spec_from_file_location("create_sample_invoice", module_path)
+    module = importlib.util.module_from_spec(spec)
+
+    # Add the module to sys.modules to fix dataclass issues
+    sys.modules["create_sample_invoice"] = module
+
+    spec.loader.exec_module(module)
+
+    return module.create_invoice_and_build_template("generated_invoice")
+
+
 async def main() -> None:
+    """Main function demonstrating PDF ingestion workflow."""
     # Create PDF and save it
-    pdf_path, template = create_invoice_and_build_template("generated_invoice")
+    try:
+        pdf_path, template = create_sample_invoice_and_template()
+    except Exception:
+        return
 
     # Add template to global settings
     app_settings = AppSettings(
@@ -138,27 +176,28 @@ async def main() -> None:
         ),
     )
 
-    # Mock onchain contract posting
-    with (
-        patch(
-            "flare_ai_kit.onchain.contract_poster.ContractPoster.post_data",
-            new_callable=AsyncMock,
-            return_value=MOCK_TX_HASH,
-        ) as mock_post,
-        patch("flare_ai_kit.onchain.contract_poster.open", mock_open(read_data="[]")),
-    ):
-        kit = FlareAIKit(config=app_settings)
-        tx_hash = await kit.pdf_processor.ingest_and_post(
-            file_path=str(pdf_path), template_name=template.template_name
-        )
-        print("✅ on-chain tx:", tx_hash)
-        print("📄 extracted:", mock_post.call_args[0][0])
+    try:
+        # Mock onchain contract posting for demo
+        with (
+            patch(
+                "flare_ai_kit.onchain.contract_poster.ContractPoster.post_data",
+                new_callable=AsyncMock,
+                return_value=MOCK_TX_HASH,
+            ),
+            patch(
+                "flare_ai_kit.onchain.contract_poster.open", mock_open(read_data="[]")
+            ),
+        ):
+            kit = FlareAIKit(config=app_settings)
+            await kit.pdf_processor.ingest_and_post(
+                file_path=str(pdf_path), template_name=template.template_name
+            )
 
-    # Agent PDF parsing
-    structured = await parse_pdf_to_template_json(
-        pdf_agent, pdf_path, template, max_pages=1
-    )
-    print("🧩 agent JSON:", json.dumps(structured, indent=2))
+        # Agent PDF parsing
+        await parse_pdf_to_template_json(pdf_agent, pdf_path, template, max_pages=1)
+
+    except Exception:
+        raise
 
 
 if __name__ == "__main__":

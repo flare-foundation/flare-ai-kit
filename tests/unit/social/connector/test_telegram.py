@@ -46,6 +46,9 @@ async def test_fetch_mentions_filters_and_limits(monkeypatch):
     ]
 
     # Mock methods to skip actual Telegram API calls
+    from unittest.mock import MagicMock
+
+    connector.app = MagicMock()
     monkeypatch.setattr(connector.app, "initialize", AsyncMock())
     monkeypatch.setattr(connector.app, "start", AsyncMock())
     monkeypatch.setattr(connector.app, "stop", AsyncMock())

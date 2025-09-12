@@ -1,17 +1,20 @@
 """Entry point for Flare AI Kit SDK."""
 
 import asyncio
+from typing import TYPE_CHECKING
 
 import structlog
 
 from .a2a import A2AClient
 from .config import AppSettings
 from .ecosystem import BlockExplorer, FAssets, Flare, FtsoV2
-from .ingestion import GithubIngestor
-from .ingestion.pdf_processor import PDFProcessor
 from .onchain.contract_poster import ContractPoster
-from .rag.vector import VectorRAGPipeline, create_vector_rag_pipeline
-from .social import TelegramClient, XClient
+
+if TYPE_CHECKING:
+    from .ingestion import GithubIngestor
+    from .ingestion.pdf_processor import PDFProcessor
+    from .rag.vector import VectorRAGPipeline
+    from .social import TelegramClient, XClient
 
 logger = structlog.get_logger(__name__)
 
@@ -78,24 +81,30 @@ class FlareAIKit:
 
     # Social Media Interaction Methods
     @property
-    def telegram(self) -> TelegramClient:
+    def telegram(self) -> "TelegramClient":
         """Access Telegram client methods."""
         if self._telegram is None:
+            from .social import TelegramClient
+
             self._telegram = TelegramClient(self.settings.social)
         return self._telegram
 
     @property
-    def x_client(self) -> XClient:
+    def x_client(self) -> "XClient":
         """Access X (formerly Twitter) client methods."""
         if self._x_client is None:
+            from .social import XClient
+
             self._x_client = XClient(self.settings.social)
         return self._x_client
 
     # RAG and Ingestion Methods
     @property
-    def vector_rag(self) -> VectorRAGPipeline:
+    def vector_rag(self) -> "VectorRAGPipeline":
         """Access the RAG retriever."""
         if self._vector_rag is None:
+            from .rag.vector import create_vector_rag_pipeline
+
             self._vector_rag = create_vector_rag_pipeline(
                 vector_db_settings=self.settings.vector_db,
                 agent_settings=self.settings.agent,
@@ -103,14 +112,16 @@ class FlareAIKit:
         return self._vector_rag
 
     @property
-    def github_ingestor(self) -> GithubIngestor:
+    def github_ingestor(self) -> "GithubIngestor":
         """Access the GitHub ingestor methods."""
         if self._github_ingestor is None:
+            from .ingestion import GithubIngestor
+
             self._github_ingestor = GithubIngestor(self.settings.ingestion)
         return self._github_ingestor
 
     @property
-    def pdf_processor(self) -> PDFProcessor:
+    def pdf_processor(self) -> "PDFProcessor":
         """Access the PDF ingestion and on-chain posting service."""
         if self._pdf_processor is None:
             if not self.settings.ingestion or not self.settings.ingestion.pdf_ingestion:
@@ -121,6 +132,8 @@ class FlareAIKit:
                 contract_settings=self.settings.ingestion.pdf_ingestion.contract_settings,
                 ecosystem_settings=self.settings.ecosystem,
             )
+            from .ingestion.pdf_processor import PDFProcessor
+
             self._pdf_processor = PDFProcessor(
                 settings=self.settings.ingestion.pdf_ingestion,
                 contract_poster=contract_poster,

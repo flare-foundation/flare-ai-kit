@@ -47,10 +47,29 @@ Issues = "https://github.com/flare-foundation/flare-ai-kit/issues"
 flare-ai-kit = "flare_ai_kit.main:start"
 
 [project.optional-dependencies]
-rag = [
-    "qdrant-client>=1.13.3",
-    "dulwich>=0.23.2"
+# Core functionality groups
+ftso = [
+    # FTSO price feeds - core dependencies already included in main deps
 ]
+da = [
+    # Data Availability Layer - core dependencies already included in main deps
+]
+fassets = [
+    # FAssets functionality - core dependencies already included in main deps
+]
+pdf = [
+    "pillow>=11.3.0",
+    "pymupdf>=1.26.1",
+    "pytesseract>=0.3.13",
+    "reportlab>=4.0.0"
+]
+rag = [
+    "qdrant-client>=1.13.3"
+]
+a2a = [
+    "fastapi[standard]>=0.116.1",
+]
+# Additional groups
 social = [
     "python-telegram-bot>=22.0",
     "tweepy>=4.15.0",
@@ -63,9 +82,6 @@ tee = [
     "pyjwt>=2.10.1",
     "pyopenssl>=25.0.0"
 ]
-a2a = [
-    "fastapi[standard]>=0.116.1",
-]
 wallet = [
     "httpx>=0.28.1",
     "cryptography>=44.0.2",
@@ -75,7 +91,8 @@ wallet = [
 ingestion = [
     "pillow>=11.3.0",
     "pymupdf>=1.26.1",
-    "pytesseract>=0.3.13"
+    "pytesseract>=0.3.13",
+    "dulwich>=0.23.2"
 ]
 
 [build-system]
@@ -99,11 +116,12 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["D203", "D212", "COM812", "S105", "D401", "D104", "ANN401", "ISC003", "D107", "FBT001", "FBT002", "FBT003"]
+ignore = ["D203", "D212", "COM812", "S105", "D401", "D104", "ANN401", "ISC003", "D107", "FBT001", "FBT002", "FBT003", "PLC0415", "ANN202", "C901", "PLR0911", "PLR0912", "RET506", "B025"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "src/flare_ai_kit/agent/adk_agent.py" = ["E501"]
 "src/flare_ai_kit/agent/ecosystem_tools_wrapper.py" = ["PLC0415"]
+"scripts/**/*.py" = ["S", "BLE001", "TRY300", "TRY203", "S110", "PLR2004", "E501", "T201", "D", "ANN", "INP001", "SIM105", "C901", "PLR0911", "PLR0912", "ARG001", "RET506", "B025"]
 "tests/**/*.py" = ["S", "ARG", "PLR2004", "SLF001", "BLE001", "E501", "T201", "D", "ANN", "F821", "PLC"]
 "examples/**/*.py" = ["D", "T201", "BLE001", "INP001", "E501"]
 

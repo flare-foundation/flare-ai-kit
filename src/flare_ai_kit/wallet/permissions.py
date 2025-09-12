@@ -148,7 +148,7 @@ class PermissionEngine:
 
         return most_restrictive_action, violations
 
-    async def _evaluate_policy(  # noqa: C901
+    async def _evaluate_policy(
         self, transaction: TransactionRequest, policy: TransactionPolicy, wallet_id: str
     ) -> list[PolicyViolation]:
         """Evaluate a transaction against a single policy."""

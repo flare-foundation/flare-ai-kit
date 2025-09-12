@@ -30,7 +30,10 @@ async def test_fetch_mentions_filters_query(monkeypatch):
         },
     ]
 
-    # Patch client.is_ready to return True
+    # Mock client and patch client.is_ready to return True
+    from unittest.mock import MagicMock
+
+    connector.client = MagicMock()
     monkeypatch.setattr(connector.client, "is_ready", lambda: True)
 
     results = await connector.fetch_mentions(query="flare")
@@ -62,6 +65,9 @@ async def test_fetch_mentions_limit(monkeypatch):
         },
     ]
 
+    from unittest.mock import MagicMock
+
+    connector.client = MagicMock()
     monkeypatch.setattr(connector.client, "is_ready", lambda: True)
 
     results = await connector.fetch_mentions(query="flare", limit=2)
@@ -71,6 +77,9 @@ async def test_fetch_mentions_limit(monkeypatch):
 @pytest.mark.asyncio
 async def test_start_if_needed_triggers_client(monkeypatch):
     connector = DiscordConnector()
+    from unittest.mock import MagicMock
+
+    connector.client = MagicMock()
     monkeypatch.setattr(connector.client, "is_ready", lambda: False)
     monkeypatch.setattr(connector.client, "start", AsyncMock())
     monkeypatch.setattr(connector._ready_event, "wait", AsyncMock())
@@ -83,7 +92,12 @@ async def test_start_if_needed_triggers_client(monkeypatch):
 async def test_post_message_wrong_channel_id(monkeypatch):
     connector = DiscordConnector()
     connector._messages = []
+    from unittest.mock import MagicMock
+
+    connector.client = MagicMock()
     monkeypatch.setattr(connector.client, "is_ready", lambda: True)
+    # Mock get_channel to return None (channel not found)
+    monkeypatch.setattr(connector.client, "get_channel", lambda _: None)
 
     results = await connector.post_message(content="hello flare")
     assert results == {

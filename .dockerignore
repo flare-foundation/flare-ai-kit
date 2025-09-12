@@ -16,8 +16,24 @@ dist/
 wheels/
 *.egg-info
 
-# Other folders
+# Development and CI files
 .github
+.git
+.gitignore
+CONTRIBUTING.md
+# README.md is needed for package build
+# LICENSE is needed for package build
+
+# Documentation and examples (we use scripts/ instead)
 docs/
 examples/
 tests/
+
+# Demo data (will be created at runtime)
+demo_data/
+generated_invoice*
+
+# Other development files
+Makefile
+gcloud-deploy.sh
+flare-vtpm-attestation/

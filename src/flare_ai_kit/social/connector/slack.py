@@ -1,10 +1,12 @@
 """Slack Connector for Flare AI Kit."""
 
-import logging
-from typing import Any
+from __future__ import annotations
 
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
+import logging
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from slack_sdk import WebClient
 
 from flare_ai_kit.config import AppSettings
 from flare_ai_kit.social.connector import SocialConnector
@@ -16,7 +18,7 @@ logger.setLevel(logging.INFO)
 class SlackConnector(SocialConnector):
     """Slack Connector for Flare AI Kit."""
 
-    def __init__(self, client: WebClient | None) -> None:
+    def __init__(self, client: WebClient | None = None) -> None:
         """Initialize the SlackConnector with API token and channel ID."""
         settings = AppSettings().social
         self.token = (
@@ -29,7 +31,13 @@ class SlackConnector(SocialConnector):
             if settings.slack_channel_id
             else ""
         )
-        self.client: WebClient = client or WebClient(token=self.token)
+        # Lazy import and initialization of Slack client
+        if client is None:
+            from slack_sdk import WebClient
+
+            self.client: WebClient = WebClient(token=self.token)
+        else:
+            self.client = client
 
     @property
     def platform(self) -> str:
@@ -62,8 +70,12 @@ class SlackConnector(SocialConnector):
             ]
 
             return results[-limit:]
-        except SlackApiError:
-            logger.exception("Slack connector error: %s")
+        except Exception as e:
+            # Check if it's a SlackApiError (lazy import)
+            if e.__class__.__name__ == "SlackApiError":
+                logger.exception("Slack connector error: %s")
+            else:
+                logger.exception("Unexpected error in Slack connector: %s")
             return []
 
     def post_message(self, content: str) -> dict[str, Any]:
@@ -77,5 +89,9 @@ class SlackConnector(SocialConnector):
                 "message_ts": result["ts"],
                 "content": content,
             }
-        except SlackApiError as e:
+        except Exception as e:
+            # Check if it's a SlackApiError (lazy import)
+            if e.__class__.__name__ == "SlackApiError":
+                return {"error": str(e)}
+            logger.exception("Unexpected error in Slack post_message: %s")
             return {"error": str(e)}

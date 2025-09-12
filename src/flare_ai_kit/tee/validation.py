@@ -7,7 +7,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Final
 
-import jwt
+# jwt import moved to lazy import in methods that use it
 import requests
 import structlog
 from cryptography import x509
@@ -15,9 +15,9 @@ from cryptography.exceptions import InvalidKey
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from OpenSSL.crypto import X509, X509Store, X509StoreContext
-from OpenSSL.crypto import Error as OpenSSLError
 
+# OpenSSL imports moved to lazy imports in methods that use them
+# OpenSSL Error import moved to lazy imports in methods that use it
 from flare_ai_kit.common import (
     CertificateParsingError,
     InvalidCertificateChainError,
@@ -111,6 +111,8 @@ class VtpmValidation:
             CertificateParsingError: If certificates cannot be parsed
 
         """
+        import jwt  # Lazy import for optional dependency
+
         unverified_header = jwt.get_unverified_header(token)
         logger.info("token", unverified_header=unverified_header)
 
@@ -167,6 +169,8 @@ class VtpmValidation:
 
         # Verify and decode the token using the public RSA key
         try:
+            import jwt  # Lazy import for optional dependency
+
             validated_token = jwt.decode(
                 token, rsa_key, algorithms=[ALGO], options={"verify_aud": False}
             )
@@ -175,14 +179,18 @@ class VtpmValidation:
                 issuer=self.expected_issuer,
                 public_numbers=rsa_key.public_numbers,
             )
-        except jwt.ExpiredSignatureError as e:
-            msg = "Token has expired"
-            logger.exception("token_expired", error=e)
-            raise SignatureValidationError(msg) from e
-        except jwt.InvalidTokenError as e:
-            msg = "Token is invalid"
-            logger.exception("invalid_token", error=e)
-            raise VtpmValidationError(msg) from e
+        except Exception as e:
+            # Check if it's a JWT-related error (lazy import)
+            if e.__class__.__name__ == "ExpiredSignatureError":
+                msg = "Token has expired"
+                logger.exception("token_expired", error=e)
+                raise SignatureValidationError(msg) from e
+            elif e.__class__.__name__ == "InvalidTokenError":
+                msg = "Token is invalid"
+                logger.exception("invalid_token", error=e)
+                raise VtpmValidationError(msg) from e
+            else:
+                raise
         except Exception as e:
             msg = "Unexpected error during validation"
             logger.exception("unexpected_error", error=e)
@@ -227,6 +235,8 @@ class VtpmValidation:
             self._compare_root_certificates(certs.root_cert, root_cert)
             self._check_certificate_validity(certs)
             self._verify_certificate_chain(certs)
+
+            import jwt  # Lazy import for optional dependency
 
             public_key = certs.leaf_cert.public_key()
             public_pem = public_key.public_bytes(
@@ -442,6 +452,8 @@ class VtpmValidation:
 
         """
         try:
+            from OpenSSL.crypto import X509, X509Store, X509StoreContext  # Lazy import
+
             store = X509Store()
             store.add_cert(X509.from_cryptography(certificates.root_cert))
             store.add_cert(X509.from_cryptography(certificates.intermediate_cert))
@@ -451,7 +463,7 @@ class VtpmValidation:
             )
             store_ctx.verify_certificate()
 
-        except OpenSSLError as e:
+        except Exception as e:  # Catch OpenSSLError and other exceptions
             msg = f"Certificate chain verification failed: {e}"
             raise InvalidCertificateChainError(msg) from e
 

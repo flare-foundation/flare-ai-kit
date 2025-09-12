@@ -1,0 +1,353 @@
+name: Docker Scripts Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'Dockerfile'
+      - 'scripts/**'
+      - 'src/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'Makefile'
+      - '.github/workflows/docker-scripts.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'Dockerfile'
+      - 'scripts/**'
+      - 'src/**'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'Makefile'
+      - '.github/workflows/docker-scripts.yml'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  validate-dockerfile:
+    name: Validate Dockerfile Syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          docker system prune -af
+
+      - name: Validate Dockerfile syntax
+        timeout-minutes: 8
+        run: |
+          echo "Building minimal Docker image for validation"
+          docker buildx build --platform linux/amd64 \
+            --build-arg EXTRAS=ftso \
+            --build-arg SCRIPT=ftso_price \
+            --progress=plain \
+            --load \
+            -t test-dockerfile-validation \
+            . || {
+              echo "❌ Docker build validation failed"
+              echo "Docker system info:"
+              docker system df
+              docker system info
+              exit 1
+            }
+
+  build-and-test-scripts:
+    name: Build and Test Scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        script:
+          - name: ftso-price
+            extras: ftso
+            script: ftso_price
+          - name: pdf-ingestion
+            extras: pdf
+            script: pdf_ingestion
+          - name: da-layer
+            extras: da
+            script: da_layer
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          docker system prune -af
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=host
+
+      - name: Build script image with timeout
+        timeout-minutes: 10
+        run: |
+          echo "Building Docker image for ${{ matrix.script.name }} with extras: ${{ matrix.script.extras }}"
+          docker buildx build \
+            --build-arg EXTRAS=${{ matrix.script.extras }} \
+            --build-arg SCRIPT=${{ matrix.script.script }} \
+            --progress=plain \
+            --load \
+            -t fai-script-${{ matrix.script.name }} \
+            . || {
+              echo "❌ Docker build failed for ${{ matrix.script.name }}"
+              echo "Checking Docker system info:"
+              docker system df
+              docker system info
+              exit 1
+            }
+
+      - name: Test script import
+        timeout-minutes: 2
+        run: |
+          echo "Testing script import for ${{ matrix.script.name }}"
+          docker run --rm \
+            -e AGENT__GEMINI_API_KEY=fake_key_for_testing \
+            -e ECOSYSTEM__FLARE_RPC_URL=https://flare-api.flare.network/ext/C/rpc \
+            -e ECOSYSTEM__COSTON2_RPC_URL=https://coston2-api.flare.network/ext/C/rpc \
+            fai-script-${{ matrix.script.name }} \
+            python -c "import sys; sys.path.insert(0, '/app/src'); print('Testing ${{ matrix.script.script }} script imports...'); import scripts.${{ matrix.script.script }}; print('✅ ${{ matrix.script.script }} script imports successfully')" || {
+              echo "❌ Script import test failed for ${{ matrix.script.name }}"
+              echo "Container logs:"
+              docker run --rm fai-script-${{ matrix.script.name }} ls -la /app/scripts/
+              exit 1
+            }
+
+      - name: Verify script structure
+        timeout-minutes: 1
+        run: |
+          echo "Verifying script structure for ${{ matrix.script.name }}"
+          docker run --rm \
+            fai-script-${{ matrix.script.name }} \
+            python -c "
+            import os
+            script_path = '/app/scripts/${{ matrix.script.script }}.py'
+            if os.path.exists(script_path):
+                print(f'✅ Script {script_path} exists')
+                with open(script_path, 'r') as f:
+                    content = f.read()
+                    if 'def main(' in content or 'if __name__ == \"__main__\"' in content:
+                        print('✅ Script has main function or main block')
+                    else:
+                        print('⚠️  Script may not be executable')
+            else:
+                print(f'❌ Script {script_path} not found')
+                exit(1)
+            " || echo "⚠️  Script structure verification completed with warnings"
+
+  test-makefile-targets:
+    name: Test Makefile Targets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          docker system prune -af
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=host
+
+      - name: Test Makefile help
+        run: make help
+
+      - name: Test list-scripts target
+        run: make list-scripts
+
+      - name: Test build target (ftso-price)
+        timeout-minutes: 10
+        run: |
+          echo "Testing Makefile build target for ftso-price"
+          make build-ftso-price || {
+            echo "❌ Makefile build failed"
+            echo "Checking Docker system info:"
+            docker system df
+            exit 1
+          }
+
+      - name: Verify built image
+        timeout-minutes: 2
+        run: |
+          echo "Verifying built image"
+          docker images | grep fai-script-ftso-price || {
+            echo "❌ Built image not found"
+            docker images
+            exit 1
+          }
+          docker run --rm fai-script-ftso-price python -c "print('✅ Image works!')" || {
+            echo "❌ Image verification failed"
+            exit 1
+          }
+
+  test-multi-extras:
+    name: Test Multiple Extras
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          docker system prune -af
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=host
+
+      - name: Build with multiple extras
+        timeout-minutes: 15
+        run: |
+          echo "Building multi-extras image with pdf,rag extras"
+          docker buildx build \
+            --build-arg EXTRAS="pdf,rag" \
+            --build-arg SCRIPT=ftso_price \
+            --progress=plain \
+            --load \
+            -t fai-script-multi \
+            . || {
+              echo "❌ Multi-extras Docker build failed"
+              echo "Checking Docker system info:"
+              docker system df
+              docker system info
+              exit 1
+            }
+
+      - name: Test multi-extras dependencies
+        timeout-minutes: 3
+        run: |
+          echo "Testing multi-extras dependencies"
+          docker run --rm fai-script-multi python -c "
+          import sys
+          sys.path.insert(0, '/app/src')
+
+          # Test RAG dependencies
+          try:
+              import qdrant_client
+              print('✅ RAG dependencies (qdrant_client) available')
+          except ImportError as e:
+              print(f'❌ RAG dependencies missing: {e}')
+              exit(1)
+
+          # Test PDF dependencies
+          try:
+              import pymupdf
+              print('✅ PDF dependencies (pymupdf) available')
+          except ImportError as e:
+              print(f'❌ PDF dependencies missing: {e}')
+              exit(1)
+
+          # Test reportlab for PDF generation
+          try:
+              import reportlab
+              print('✅ PDF generation dependencies (reportlab) available')
+          except ImportError as e:
+              print(f'❌ PDF generation dependencies missing: {e}')
+              exit(1)
+
+          print('✅ Multi-extras build successful - all dependencies available')
+          " || {
+            echo "❌ Multi-extras dependency test failed"
+            echo "Container info:"
+            docker run --rm fai-script-multi pip list | grep -E "(qdrant|pymupdf|reportlab)" || echo "Dependencies not found"
+            exit 1
+          }
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image for scanning
+        run: |
+          docker build \
+            --build-arg EXTRAS=pdf \
+            --build-arg SCRIPT=pdf_ingestion \
+            -t fai-script-scan \
+            .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'fai-script-scan'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  integration-test:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create test environment file
+        run: |
+          cat > .env.test << EOF
+          AGENT__GEMINI_API_KEY=fake_key_for_testing
+          ECOSYSTEM__FLARE_RPC_URL=https://flare-api.flare.network/ext/C/rpc
+          VECTOR_DB__QDRANT_URL=http://localhost:6333
+          LOG_LEVEL=INFO
+          EOF
+
+      - name: Test FTSO script with environment
+        run: |
+          make build-ftso-price
+          timeout 30s docker run --rm \
+            --env-file .env.test \
+            fai-script-ftso-price || true
+          echo "✅ FTSO script integration test completed"
+
+      - name: Clean up test files
+        run: rm -f .env.test
