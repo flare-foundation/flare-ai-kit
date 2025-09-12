@@ -1,4 +1,7 @@
-"""Example 05: PDF Ingestion with Flare AI Kit."""
+"""Example 05: PDF Ingestion with Flare AI Kit.
+
+This example demonstrates PDF document processing with AI agents.
+"""
 
 from __future__ import annotations
 
