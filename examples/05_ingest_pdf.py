@@ -1,4 +1,5 @@
 """Example 05: PDF Ingestion with Flare AI Kit."""
+
 from __future__ import annotations
 
 import asyncio
