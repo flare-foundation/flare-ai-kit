@@ -34,11 +34,10 @@ COPY uv.lock pyproject.toml ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     if [ -n "$EXTRAS" ]; then \
         echo "Installing with extras: $EXTRAS"; \
-        # Split extras by comma and install each one
-        for extra in $(echo "$EXTRAS" | tr ',' ' '); do \
-            echo "Installing extra: $extra"; \
-            uv sync --locked --no-install-project --extra "$extra" --no-dev --no-editable; \
-        done; \
+        # Convert comma-separated extras to space-separated for uv
+        EXTRAS_ARGS=$(echo "$EXTRAS" | sed 's/,/ --extra /g'); \
+        echo "Installing extras: $EXTRAS_ARGS"; \
+        uv sync --locked --no-install-project --extra $EXTRAS_ARGS --no-dev --no-editable; \
     else \
         echo "Installing base dependencies only"; \
         uv sync --locked --no-install-project --no-dev --no-editable; \
@@ -50,11 +49,10 @@ COPY . /app
 # Install the project itself
 RUN --mount=type=cache,target=/root/.cache/uv \
     if [ -n "$EXTRAS" ]; then \
-        # Split extras by comma and install each one
-        for extra in $(echo "$EXTRAS" | tr ',' ' '); do \
-            echo "Installing project with extra: $extra"; \
-            uv sync --locked --extra "$extra" --no-dev --no-editable; \
-        done; \
+        # Convert comma-separated extras to space-separated for uv
+        EXTRAS_ARGS=$(echo "$EXTRAS" | sed 's/,/ --extra /g'); \
+        echo "Installing project with extras: $EXTRAS_ARGS"; \
+        uv sync --locked --extra $EXTRAS_ARGS --no-dev --no-editable; \
     else \
         uv sync --locked --no-dev --no-editable; \
     fi

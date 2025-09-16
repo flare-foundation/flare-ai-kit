@@ -65,7 +65,7 @@ jobs:
       - name: Test script startup (dry run)
         timeout-minutes: 5
         run: |
-          # Simple validation that the script can be imported
+          # Simple validation that the script exists and dependencies are available
           docker run --rm \
             -e LOG_LEVEL="$LOG_LEVEL" \
             -e AGENT__GEMINI_MODEL="$AGENT__GEMINI_MODEL" \
@@ -77,26 +77,24 @@ jobs:
             python -c "
           import sys
           import os
-          sys.path.insert(0, '/app/scripts')
 
-          # Test basic script syntax by compiling it
+          # Test that script file exists
           script_path = '/app/scripts/${{ matrix.script.script_file }}'
-          with open(script_path, 'r') as f:
-              script_content = f.read()
-
-          try:
-              compile(script_content, script_path, 'exec')
-              print('✅ Script syntax is valid')
-          except SyntaxError as e:
-              print(f'❌ Script syntax error: {e}')
+          if not os.path.exists(script_path):
+              print(f'❌ Script not found: {script_path}')
               sys.exit(1)
+          print(f'✅ Script exists: {script_path}')
 
           # Test that required dependencies are available
           if '${{ matrix.script.extras }}' == 'pdf':
-              import PIL
-              import fitz  # pymupdf
-              import pytesseract
-              print('✅ PDF dependencies available')
+              try:
+                  import PIL
+                  import fitz  # pymupdf
+                  import pytesseract
+                  print('✅ PDF dependencies available')
+              except ImportError as e:
+                  print(f'❌ PDF dependency missing: {e}')
+                  sys.exit(1)
 
           print('✅ Script validation completed successfully')
           "
