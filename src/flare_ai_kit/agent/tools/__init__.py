@@ -1,18 +1,24 @@
+"""Generic for ADK tools."""
+
 import inspect
 from collections.abc import Callable
 from functools import wraps
 from typing import Any, TypeVar, cast
 
+import structlog
 from google.adk.tools import FunctionTool, LongRunningFunctionTool
 
+logger = structlog.get_logger(__name__)
+
+
 RT = TypeVar("RT")  # Return type
-# ToolUnion = FunctionTool
 TOOL_REGISTRY: list[Any] = []
 
 
-def tool(func: Callable[..., RT]) -> Callable[..., RT]:
+def adk_tool(func: Callable[..., RT]) -> Callable[..., RT]:  # noqa: UP047
     """
     Decorator to register a function as a Gemini-compatible ADK tool.
+
     Automatically wraps async functions using LongRunningFunctionTool,
     and sync functions using FunctionTool.
     """
@@ -20,10 +26,9 @@ def tool(func: Callable[..., RT]) -> Callable[..., RT]:
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        print(f"[ADK TOOL] Calling {func.__name__} with args={args}, kwargs={kwargs}")
+        logger.info("adk_tool", func=func.__name__, args=args, kwargs=kwargs)
         return func(*args, **kwargs)
 
-    # Choose appropriate wrapper
     tool_obj = (
         LongRunningFunctionTool(func=func) if is_async else FunctionTool(func=func)
     )

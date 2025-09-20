@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Literal, override
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # --- Schemas for Text Chunking and Embeddings ---
@@ -227,6 +227,13 @@ class AttestationData(BaseModel):
     proof: MerkleProof
 
 
+class VotingRound(BaseModel):
+    """Voting round id and timestamp."""
+
+    voting_round_id: int
+    start_timestamp: int
+
+
 class VotingRoundData(BaseModel):
     """Data for a specific voting round."""
 
@@ -240,26 +247,22 @@ class VotingRoundData(BaseModel):
 class FTSOAnchorFeed(BaseModel):
     """FTSO anchor feed data structure."""
 
-    id: str
-    name: str
-    decimals: int
-    category: str
-    description: str
+    feed_id: str
+    feed_name: str
 
 
-class FTSOAnchorFeedValue(BaseModel):
-    """FTSO anchor feed value with proof."""
+class FTSOAnchorFeedBody(BaseModel):
+    """FTSO anchor feed values."""
 
-    id: str
+    voting_round_id: int = Field(alias="votingRoundId")
+    feed_id: str = Field(alias="id")
     value: int
-    timestamp: int
+    turnout_bips: int = Field(alias="turnoutBIPS")
     decimals: int
-    proof: MerkleProof
 
 
 class FTSOAnchorFeedsWithProof(BaseModel):
     """FTSO anchor feeds with proof for a specific voting round."""
 
-    voting_round: int
-    merkle_root: str
-    feeds: list[FTSOAnchorFeedValue]
+    body: FTSOAnchorFeedBody
+    proof: list[str]

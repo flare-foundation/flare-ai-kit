@@ -1,6 +1,6 @@
 """Settings for Vector RAG."""
 
-from pydantic import Field, FilePath, PositiveInt, model_validator
+from pydantic import Field, PositiveInt, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_ALLOWED_EXTENSIONS = {
@@ -64,13 +64,22 @@ class PDFFieldExtractionSettings(BaseSettings):
     """Specifies fields to extract from a PDF and their locations."""
 
     field_name: str = Field(description="The name of the field to extract.")
-    x0: int = Field(description="The starting x-coordinate of the bounding box.")
-    y0: int = Field(description="The starting y-coordinate of the bounding box.")
-    x1: int = Field(description="The ending x-coordinate of the bounding box.")
-    y1: int = Field(description="The ending y-coordinate of the bounding box.")
     data_type: str = Field(
         "string",
         description="The data type of the field (e.g., 'string', 'integer', 'date').",
+    )
+    # For deterministic extraction pipeline
+    x0: int | None = Field(
+        default=None, description="The starting x-coordinate of the bounding box."
+    )
+    y0: int | None = Field(
+        default=None, description="The starting y-coordinate of the bounding box."
+    )
+    x1: int | None = Field(
+        default=None, description="The ending x-coordinate of the bounding box."
+    )
+    y1: int | None = Field(
+        default=None, description="The ending y-coordinate of the bounding box."
     )
 
 
@@ -89,8 +98,8 @@ class OnchainContractSettings(BaseSettings):
     contract_address: str = Field(
         description="The address of the OnchainDataRegistry smart contract."
     )
-    abi_path: FilePath = Field(
-        description="The path to the ABI file for the smart contract."
+    abi_name: str = Field(
+        description="ABI file name for the smart contract (under flare-ai-kit/abi/)."
     )
     function_name: str = Field(
         "registerDocument",
@@ -119,27 +128,27 @@ class IngestionSettings(BaseSettings):
         extra="ignore",
     )
     chunk_size: PositiveInt = Field(
-        5000,
+        default=5000,
         description="Target size for text chunks before embedding (in characters).",
         gt=0,  # Ensure chunk size is positive
     )
     chunk_overlap: PositiveInt = Field(
-        500,
+        default=500,
         description="Overlap between consecutive text chunks (in characters).",
         ge=0,  # Ensure overlap is non-negative
     )
     github_allowed_extensions: set[str] = Field(
-        DEFAULT_ALLOWED_EXTENSIONS,
+        default=DEFAULT_ALLOWED_EXTENSIONS,
         description="File extensions indexed by the indexer.",
     )
     github_ignored_dirs: set[str] = Field(
-        DEFAULT_IGNORED_DIRS, description="Directories ignored by the indexer."
+        default=DEFAULT_IGNORED_DIRS, description="Directories ignored by the indexer."
     )
     github_ignored_files: set[str] = Field(
-        DEFAULT_IGNORED_FILES, description="Files ignored by the indexer."
+        default=DEFAULT_IGNORED_FILES, description="Files ignored by the indexer."
     )
     pdf_ingestion: PDFIngestionSettings | None = Field(
-        None, description="Settings for PDF ingestion."
+        default=None, description="Settings for PDF ingestion."
     )
 
     @model_validator(mode="after")

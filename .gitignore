@@ -19,6 +19,10 @@ venv/
 
 # sqlite
 *.db
+
 simple_gemini_test.py
 test_agent_framework.py
 test_gemini_real.py
+=======
+*.pdf
+

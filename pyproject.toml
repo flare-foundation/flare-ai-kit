@@ -33,7 +33,8 @@ dependencies = [
     "pillow>=11.3.0",
     "pymupdf>=1.26.1",
     "pytesseract>=0.3.13",
-    "google-adk>=1.8.0"
+    "gitpython>=3.1.45",
+    "google-adk>=1.9.0",
 ]
 
 [project.urls]
@@ -65,6 +66,12 @@ tee = [
 a2a = [
     "fastapi[standard]>=0.116.1",
 ]
+wallet = [
+    "httpx>=0.28.1",
+    "cryptography>=44.0.2",
+    "eth-account>=0.13.0",
+    "pyjwt>=2.10.1",
+]
 ingestion = [
     "pillow>=11.3.0",
     "pymupdf>=1.26.1",
@@ -84,6 +91,7 @@ dev = [
     "ruff>=0.11.2",
     "settings-doc>=4.3.2",
     "reportlab>=4.2.0",
+    "gitpython>=3.1.45",
 ]
 
 [tool.ruff]
@@ -94,8 +102,10 @@ select = ["ALL"]
 ignore = ["D203", "D212", "COM812", "S105", "D401", "D104", "ANN401", "ISC003", "D107", "FBT001", "FBT002", "FBT003"]
 
 [tool.ruff.lint.extend-per-file-ignores]
-"tests/**/*.py" = ["S101", "ARG", "PLR2004", "SLF001", "BLE001", "E501", "T201", "D", "ANN001", "ANN201", "F821"]
-"examples/**/*.py" = ["T201", "BLE001", "D415", "D100", "INP001"]
+"src/flare_ai_kit/agent/adk_agent.py" = ["E501"]
+"src/flare_ai_kit/agent/ecosystem_tools_wrapper.py" = ["PLC0415"]
+"tests/**/*.py" = ["S", "ARG", "PLR2004", "SLF001", "BLE001", "E501", "T201", "D", "ANN", "F821", "PLC"]
+"examples/**/*.py" = ["D", "T201", "BLE001", "INP001", "E501"]
 
 [tool.pyright]
 pythonVersion = "3.12"
