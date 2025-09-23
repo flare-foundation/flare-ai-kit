@@ -44,14 +44,12 @@ async def flare(settings):
         mock_w3.is_connected = AsyncMock(return_value=True)
         mock_w3.eth = MagicMock()
         mock_w3.eth.get_transaction_count = AsyncMock(return_value=1)
-        mock_w3.eth.gas_price = asyncio.Future()
-        mock_w3.eth.gas_price = set_value(100)
-        mock_w3.eth.max_priority_fee = asyncio.Future()
-        mock_w3.eth.max_priority_fee.set_result(2)
+        mock_w3.eth.gas_price = AsyncMock(return_value=100)
+        mock_w3.eth.max_priority_fee = AsyncMock(return_value=2)
         mock_w3.eth.get_balance = AsyncMock(return_value=10**18)
         mock_w3.eth.wait_for_transaction_receipt = AsyncMock(return_value={"status": 1})
         mock_w3.eth.chain_id = asyncio.Future()
-        mock_w3.eth.chain_id.set_result(1234)
+        mock_w3.eth.chain_id = AsyncMock(return_value=1234)
         mock_w3.eth.send_raw_transaction = AsyncMock(return_value=b"\x12" * 32)
 
         # Sync helpers/properties
