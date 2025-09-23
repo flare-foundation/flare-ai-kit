@@ -83,17 +83,20 @@ def create_app(service: A2AService, agent_card: AgentCard | None = None) -> Fast
 
     @app.get("/", response_class=HTMLResponse)
     def read_root() -> HTMLResponse:
+        """Root endpoint returning agent name."""
         agent_name = agent_card.name if agent_card else "A2A agent"
         return HTMLResponse(f'<p style="font-size:40px">{agent_name}</p>')
 
     @app.get("/.well-known/agent.json")
     def agent_card_route() -> AgentCard:
+        """Endpoint to return agent card information."""
         return service.agent_card
 
     @app.post("/")
     async def handle_rpc(
         request_data: SendMessageRequest,
     ) -> JSONRPCResponse | Any:
+        """Handle RPC requests."""
         return await handler.handle_rpc(request_data)
 
     return app

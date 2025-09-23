@@ -72,10 +72,15 @@ class ContractPoster(Flare):
                 msg = "Account address not configured"
                 raise FlareTxError(msg)  # noqa: TRY301
 
-            tx_params: TxParams = await self.build_transaction(
+            tx_params_result = await self.build_transaction(
                 function_call,
                 self.address,
             )
+            if tx_params_result is None:
+                msg = "Failed to build transaction parameters"
+                raise FlareTxError(msg)  # noqa: TRY301
+
+            tx_params: TxParams = tx_params_result
             tx_hash = await self.sign_and_send_transaction(tx_params)
         except Exception as e:
             logger.exception("Failed to post data to contract", error=e)

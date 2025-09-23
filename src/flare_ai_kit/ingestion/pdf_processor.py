@@ -72,8 +72,19 @@ class PDFProcessor:
         if use_ocr:
             pix = page.get_pixmap(clip=rect)  # type: ignore[attr-defined]  # fitz missing type stubs
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # type: ignore[attr-defined]  # fitz missing type stubs
-            return str(pytesseract.image_to_string(img).strip())
-        return str(page.get_text("text", clip=rect).strip())
+            ocr_result = pytesseract.image_to_string(img)
+            return (
+                str(ocr_result.strip())
+                if isinstance(ocr_result, str)
+                else str(ocr_result)
+            )
+
+        text_result = page.get_text("text", clip=rect)
+        return (
+            str(text_result.strip())
+            if isinstance(text_result, str)
+            else str(text_result)
+        )
 
     def process_pdf(self, file_path: str, template_name: str) -> dict[str, Any]:
         """

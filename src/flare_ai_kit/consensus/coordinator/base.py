@@ -1,7 +1,12 @@
 """Base coordinator interface for the consensus engine."""
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, TypeVar
+
+from flare_ai_kit.common import AgentRole
+
+# Define a generic type for Agent
+AgentType = TypeVar("AgentType")
 
 try:
     from pydantic_ai import Agent as _PydanticAgent  # type: ignore[import-untyped]
@@ -9,15 +14,12 @@ try:
     Agent = _PydanticAgent
 except ImportError:
     # Fallback for when pydantic_ai is not available
-    class Agent:
+    class Agent:  # type: ignore[misc]  # Optional dependency fallback
         """Fallback Agent when pydantic_ai is not available."""
 
         def __init__(self, **kwargs: Any) -> None:
             for key, value in kwargs.items():
                 setattr(self, key, value)
-
-
-from flare_ai_kit.common import AgentRole
 
 
 class BaseCoordinator(ABC):
