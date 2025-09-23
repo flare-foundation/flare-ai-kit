@@ -70,7 +70,7 @@ class ContractPoster(Flare):
 
             if not self.address:
                 msg = "Account address not configured"
-                raise FlareTxError(msg)
+                raise FlareTxError(msg)  # noqa: TRY301
 
             tx_params: TxParams = await self.build_transaction(
                 function_call,

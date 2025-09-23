@@ -6,6 +6,8 @@ from collections import defaultdict
 from enum import Enum
 from typing import Any
 
+from pydantic import Field
+
 try:
     from pydantic import BaseModel as _PydanticBaseModel
 
@@ -57,14 +59,14 @@ class AgentPerformanceMetrics(BaseModel):  # type: ignore[misc]  # BaseModel fal
     """Performance metrics for an agent in various domains."""
 
     agent_id: str
-    accuracy_history: list[float] = []
+    accuracy_history: list[float] = Field(default_factory=list)
     confidence_calibration: float = 0.5  # How well confidence matches actual accuracy
     response_time_avg: float = 0.0  # Average response time in seconds
     specialization_score: float = 0.0  # How specialized vs generalist the agent is
     collaboration_rating: float = 0.0  # How well the agent works with others
-    bias_indicators: list[str] = []  # Detected bias patterns
-    domain_expertise: dict[str, float] = {}  # noqa: RUF012
-    
+    bias_indicators: list[str] = Field(default_factory=list)  # Detected bias patterns
+    domain_expertise: dict[str, float] = Field(default_factory=dict)
+
     # Additional attributes referenced in the code
     accuracy_score: float = 0.0
     task_count: int = 0
