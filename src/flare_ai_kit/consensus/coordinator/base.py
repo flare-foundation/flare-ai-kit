@@ -6,10 +6,10 @@ from typing import Any
 try:
     from pydantic_ai import Agent as _PydanticAgent  # type: ignore[import-untyped]
 
-    Agent = _PydanticAgent  # type: ignore[misc]
+    Agent = _PydanticAgent
 except ImportError:
     # Fallback for when pydantic_ai is not available
-    class Agent:  # type: ignore[misc]
+    class Agent:
         """Fallback Agent when pydantic_ai is not available."""
 
         def __init__(self, **kwargs: Any) -> None:

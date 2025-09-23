@@ -44,7 +44,7 @@ class SlackConnector(SocialConnector):
             return []
 
         try:
-            response = self.client.conversations_history(  # type: ignore[reportUnknownMemberType]
+            response = self.client.conversations_history(  # type: ignore[attr-defined]  # slack_sdk incomplete typing
                 channel=self.channel_id,
                 limit=100,
             )
@@ -69,7 +69,7 @@ class SlackConnector(SocialConnector):
     def post_message(self, content: str) -> dict[str, Any]:
         """Post a message to the Slack channel."""
         try:
-            result = self.client.chat_postMessage(  # type: ignore[reportUnknownMemberType]
+            result = self.client.chat_postMessage(  # type: ignore[attr-defined]  # slack_sdk incomplete typing
                 channel=self.channel_id, text=content
             )
             return {

@@ -22,7 +22,7 @@ class XConnector(SocialConnector):
             settings.x_api_key.get_secret_value() if settings.x_api_key else ""
         )
 
-        self.client = AsyncClient(bearer_token=self.bearer_token)  # type: ignore[reportGeneralTypeIssues]
+        self.client = AsyncClient(bearer_token=self.bearer_token)  # type: ignore[arg-type]  # tweepy incomplete typing
 
         self.auth = OAuth1UserHandler(
             settings.x_api_key.get_secret_value() if settings.x_api_key else "",
@@ -37,7 +37,7 @@ class XConnector(SocialConnector):
             else "",
         )
 
-        self.sync_client = API(self.auth)  # type: ignore[reportGeneralTypeIssues]
+        self.sync_client = API(self.auth)  # type: ignore[arg-type]  # tweepy incomplete typing
 
     @property
     def platform(self) -> str:
@@ -47,7 +47,7 @@ class XConnector(SocialConnector):
     async def fetch_mentions(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
         """Fetch recent tweets matching the query."""
         try:
-            raw_response = await self.client.search_recent_tweets(  # type: ignore[reportGeneralTypeIssues]
+            raw_response = await self.client.search_recent_tweets(  # type: ignore[attr-defined]  # tweepy async client typing
                 query=query,
                 max_results=limit,
                 tweet_fields=["created_at", "author_id"],

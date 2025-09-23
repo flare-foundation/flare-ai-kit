@@ -85,7 +85,7 @@ class GeminiEmbedding(BaseEmbedding):
 
         response = self.client.models.embed_content(  # pyright: ignore[reportUnknownMemberType]
             model=self.model,
-            contents=contents_list,  # type: ignore[reportArgumentType]
+            contents=contents_list,  # type: ignore[arg-type]  # google-genai client typing
             config=types.EmbedContentConfig(
                 output_dimensionality=self.output_dimensionality,
                 task_type=task_type,

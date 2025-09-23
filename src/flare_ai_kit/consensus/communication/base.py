@@ -8,7 +8,7 @@ from typing import Any
 try:
     from pydantic import BaseModel as _PydanticBaseModel
 
-    class BaseModel(_PydanticBaseModel):  # type: ignore[misc]
+    class BaseModel(_PydanticBaseModel):  # type: ignore[misc]  # Optional pydantic fallback pattern
         """Base model using pydantic."""
 
         class Config:
@@ -18,7 +18,7 @@ try:
 
 except ImportError:
     # Fallback for when pydantic is not available
-    class BaseModel:  # type: ignore[misc]
+    class BaseModel:  # type: ignore[misc]  # Optional pydantic fallback pattern
         """Fallback BaseModel when pydantic is not available."""
 
         def __init__(self, **kwargs: Any) -> None:
@@ -47,7 +47,7 @@ class MessagePriority(str, Enum):
     CRITICAL = "critical"
 
 
-class AgentMessage(BaseModel):  # type: ignore[misc]
+class AgentMessage(BaseModel):  # type: ignore[misc]  # BaseModel fallback pattern
     """Standard message format for inter-agent communication."""
 
     message_id: str

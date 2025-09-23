@@ -82,16 +82,16 @@ def create_app(service: A2AService, agent_card: AgentCard | None = None) -> Fast
     handler = A2ARequestHandler(service)
 
     @app.get("/", response_class=HTMLResponse)
-    def read_root() -> HTMLResponse:  # type: ignore[valid-type]
+    def read_root() -> HTMLResponse:
         agent_name = agent_card.name if agent_card else "A2A agent"
         return HTMLResponse(f'<p style="font-size:40px">{agent_name}</p>')
 
     @app.get("/.well-known/agent.json")
-    def agent_card_route() -> AgentCard:  # type: ignore[valid-type]
+    def agent_card_route() -> AgentCard:
         return service.agent_card
 
     @app.post("/")
-    async def handle_rpc(  # type: ignore[valid-type]
+    async def handle_rpc(
         request_data: SendMessageRequest,
     ) -> JSONRPCResponse | Any:
         return await handler.handle_rpc(request_data)

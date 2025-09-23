@@ -68,9 +68,13 @@ class ContractPoster(Flare):
                 issue_date,
             )
 
+            if not self.address:
+                msg = "Account address not configured"
+                raise FlareTxError(msg)
+
             tx_params: TxParams = await self.build_transaction(
                 function_call,
-                self.w3.to_checksum_address(self.address),  # type: ignore[reportArgumentType]
+                self.address,
             )
             tx_hash = await self.sign_and_send_transaction(tx_params)
         except Exception as e:

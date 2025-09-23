@@ -9,7 +9,7 @@ from typing import Any
 try:
     from pydantic import BaseModel as _PydanticBaseModel
 
-    class BaseModel(_PydanticBaseModel):  # type: ignore[misc]
+    class BaseModel(_PydanticBaseModel):  # type: ignore[misc]  # Optional pydantic fallback pattern
         """Base model using pydantic."""
 
         class Config:
@@ -19,7 +19,7 @@ try:
 
 except ImportError:
     # Fallback for when pydantic is not available
-    class BaseModel:  # type: ignore[misc]
+    class BaseModel:  # type: ignore[misc]  # Optional pydantic fallback pattern
         """Fallback BaseModel when pydantic is not available."""
 
         def __init__(self, **kwargs: Any) -> None:
@@ -53,21 +53,26 @@ class InteractionPattern(str, Enum):
     COMPETITIVE = "competitive"  # Agents compete for best solution
 
 
-class AgentPerformanceMetrics(BaseModel):  # type: ignore[misc]
-    """Performance metrics for individual agents."""
+class AgentPerformanceMetrics(BaseModel):  # type: ignore[misc]  # BaseModel fallback pattern
+    """Performance metrics for an agent in various domains."""
 
     agent_id: str
+    accuracy_history: list[float] = []
+    confidence_calibration: float = 0.5  # How well confidence matches actual accuracy
+    response_time_avg: float = 0.0  # Average response time in seconds
+    specialization_score: float = 0.0  # How specialized vs generalist the agent is
+    collaboration_rating: float = 0.0  # How well the agent works with others
+    bias_indicators: list[str] = []  # Detected bias patterns
+    domain_expertise: dict[str, float] = {}  # noqa: RUF012
+    
+    # Additional attributes referenced in the code
     accuracy_score: float = 0.0
-    consistency_score: float = 0.0
-    response_time_avg: float = 0.0
-    confidence_calibration: float = 0.0  # How well confidence matches actual accuracy
-    collaboration_score: float = 0.0  # How well agent works with others
-    domain_expertise: dict[str, float] = {}  # type: ignore[assignment,misc]  # noqa: RUF012
     task_count: int = 0
     last_active: float = 0.0
+    collaboration_score: float = 0.0
 
 
-class TaskComplexity(BaseModel):  # type: ignore[misc]
+class TaskComplexity(BaseModel):  # type: ignore[misc]  # BaseModel fallback pattern
     """Metadata about task complexity to guide interaction patterns."""
 
     difficulty: float = 0.5  # 0-1 scale
