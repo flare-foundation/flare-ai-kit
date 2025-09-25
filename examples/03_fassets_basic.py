@@ -65,9 +65,9 @@ async def perform_swap_operations(
         print("1. Swap FXRP for Native Token (FLR/SGB)")
         tx_hash = await fassets.swap_fasset_for_native(
             FAssetType.FXRP,
-            amount_in=swap_amount,
-            amount_out_min=min_native_out,
-            deadline=deadline,
+            swap_amount,
+            min_native_out,
+            deadline,
         )
         print(f"   Transaction: {tx_hash}")
 
@@ -76,9 +76,9 @@ async def perform_swap_operations(
         min_fxrp_out = 900000  # 0.9 FXRP
         tx_hash = await fassets.swap_native_for_fasset(
             FAssetType.FXRP,
-            amount_out_min=min_fxrp_out,
-            deadline=deadline,
-            amount_in=native_amount,
+            min_fxrp_out,
+            deadline,
+            native_amount,
         )
         print(f"   Transaction: {tx_hash}")
 
@@ -91,9 +91,9 @@ async def perform_swap_operations(
                 tx_hash = await fassets.swap_fasset_for_fasset(
                     FAssetType.FXRP,
                     other_fasset,
-                    amount_in=swap_amount,
-                    amount_out_min=500000,  # Adjust based on decimals
-                    deadline=deadline,
+                    swap_amount,
+                    500000,  # Adjust based on decimals
+                    deadline,
                 )
                 print(f"   Transaction: {tx_hash}")
 
@@ -127,11 +127,10 @@ async def demonstrate_minting_workflow(fassets: FAssets) -> None:
         )
         reservation_id = await fassets.reserve_collateral(
             FAssetType.FXRP,
-            agent_vault=agent_address,
-            lots=1,
-            max_minting_fee_bips=100,  # 1%
-            executor=executor,
-            executor_fee_nat=0,
+            agent_address,
+            1,
+            100,  # 1%
+            executor,
         )
         print(f"Collateral Reservation ID: {reservation_id}")
 
@@ -142,9 +141,9 @@ async def demonstrate_minting_workflow(fassets: FAssets) -> None:
         )
         minted_amount = await fassets.execute_minting(
             FAssetType.FXRP,
-            collateral_reservation_id=int(reservation_id),
-            payment_reference=payment_reference,
-            recipient=executor,
+            int(reservation_id.get('reservation_id', 0)),
+            payment_reference,
+            executor,
         )
         print(f"Minted Amount: {minted_amount} wei")
 
@@ -162,16 +161,15 @@ async def perform_redemption_operations(fassets: FAssets) -> None:
         # Redeem FAssets back to underlying
         redemption_id = await fassets.redeem_from_agent(
             FAssetType.FXRP,
-            lots=1,
-            max_redemption_fee_bips=100,  # 1%
-            underlying_address="rXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",  # XRP address
-            executor=executor,
-            executor_fee_nat=0,
+            1,
+            100,  # 1%
+            "rXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",  # XRP address
+            executor,
         )
         print(f"Redemption Request ID: {redemption_id}")
 
         # Get redemption request details
-        request_id = int(redemption_id)
+        request_id = int(redemption_id.get('request_id', 0))
         if request_id > 0:
             redemption_details: dict[str, Any] = await fassets.get_redemption_request(
                 FAssetType.FXRP, request_id
@@ -266,8 +264,8 @@ async def main() -> None:
     update the contract addresses in the FAssets connector with actual
     deployed addresses.
     """
-    # Initialize the Flare AI Kit
-    kit = FlareAIKit()
+    # Initialize the Flare AI Kit with default settings
+    kit = FlareAIKit(None)
 
     try:
         # Get the FAssets connector
