@@ -141,7 +141,7 @@ async def demonstrate_minting_workflow(fassets: FAssets) -> None:
         )
         minted_amount = await fassets.execute_minting(
             FAssetType.FXRP,
-            int(reservation_id.get('reservation_id', 0)),
+            int(reservation_id.get("reservation_id", 0)),
             payment_reference,
             executor,
         )
@@ -169,7 +169,7 @@ async def perform_redemption_operations(fassets: FAssets) -> None:
         print(f"Redemption Request ID: {redemption_id}")
 
         # Get redemption request details
-        request_id = int(redemption_id.get('request_id', 0))
+        request_id = int(redemption_id.get("request_id", 0))
         if request_id > 0:
             redemption_details: dict[str, Any] = await fassets.get_redemption_request(
                 FAssetType.FXRP, request_id

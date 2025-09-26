@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 from qdrant_client import QdrantClient
@@ -43,8 +44,8 @@ if __name__ == "__main__":
         print("❌ GEMINI_API_KEY environment variable not set.")
         print("Please set the GEMINI_API_KEY environment variable to run this demo.")
         print("Example: export GEMINI_API_KEY='your_api_key_here'")
-        exit(1)
-    
+        sys.exit(1)
+
     embedding_model = GeminiEmbedding(
         api_key=agent.gemini_api_key.get_secret_value(),
         model=vector_db.embeddings_model,
