@@ -7,6 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flare_ai_kit.a2a.settings import A2ASettings
 from flare_ai_kit.agent.settings import AgentSettings
+from flare_ai_kit.common.logging import configure_logging
 from flare_ai_kit.ecosystem.settings import EcosystemSettings
 from flare_ai_kit.ingestion.settings import IngestionSettings
 from flare_ai_kit.rag.graph.settings import GraphDbSettings
@@ -37,4 +38,36 @@ class AppSettings(BaseSettings):
     social: SocialSettings = Field(default_factory=SocialSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
     tee: TeeSettings = Field(default_factory=TeeSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
     ingestion: IngestionSettings = Field(default_factory=IngestionSettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
-    a2a: A2ASettings = Field(default_factory=A2ASettings)  # pyright: ignore[reportArgumentType,reportUnknownVariableType]
+    a2a: A2ASettings = Field(default_factory=A2ASettings)
+
+    def model_post_init(self, __context: object, /) -> None:  # pyright: ignore[reportMissingParameterType]
+        """Initialize logging after settings are loaded."""
+        configure_logging(self.log_level)
+
+
+def initialize_logging(log_level: str = "INFO") -> None:
+    """
+    Initialize structured logging for the Flare AI Kit.
+
+    This function can be called manually if you want to configure logging
+    without using AppSettings, or if you want to change the log level
+    after initialization.
+
+    Args:
+        log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+
+    Example:
+        ```python
+        from flare_ai_kit.config import initialize_logging
+
+        # Initialize logging with custom level
+        initialize_logging("DEBUG")
+
+        # Now all modules will use structured logging
+        from flare_ai_kit.common.logging import get_logger
+        logger = get_logger(__name__)
+        logger.info("This will be structured logging")
+        ```
+
+    """
+    configure_logging(log_level)
