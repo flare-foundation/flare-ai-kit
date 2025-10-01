@@ -11,18 +11,19 @@ from flare_ai_kit.consensus.coordinator.base import BaseCoordinator
 AgentType = TypeVar("AgentType")
 
 try:
-    from pydantic_ai import Agent as _PydanticAgent  # type: ignore[import-untyped]
+    from pydantic_ai import Agent as PydanticAgent
 
-    Agent = _PydanticAgent
+    Agent: Any = PydanticAgent
 except ImportError:
     # Fallback for when pydantic_ai is not available
-    class Agent:  # type: ignore[misc]  # Optional dependency fallback
+    class FallbackAgent:
         """Fallback Agent when pydantic_ai is not available."""
 
         def __init__(self, **kwargs: Any) -> None:
             for key, value in kwargs.items():
                 setattr(self, key, value)
 
+    Agent: Any = FallbackAgent
 
 @dataclass
 class CoordinatorAgent:

@@ -59,7 +59,7 @@ class AgentPerformanceMetrics(BaseModel):  # type: ignore[misc]  # BaseModel fal
     """Performance metrics for an agent in various domains."""
 
     agent_id: str
-    accuracy_history: list[float] = Field(default_factory=list)
+    accuracy_history: list[Any] = Field(default_factory=list)
     confidence_calibration: float = 0.5  # How well confidence matches actual accuracy
     response_time_avg: float = 0.0  # Average response time in seconds
     specialization_score: float = 0.0  # How specialized vs generalist the agent is
