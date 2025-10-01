@@ -5,9 +5,12 @@ from typing import Any, Protocol
 
 from flare_ai_kit.common import AgentRole
 
+
 class AgentProtocol(Protocol):
     """Protocol for Agent objects."""
+
     def __init__(self, **kwargs: Any) -> None: ...
+
 
 try:
     from pydantic_ai import Agent as PydanticAgent
@@ -23,6 +26,7 @@ except ImportError:
                 setattr(self, key, value)
 
     Agent: Any = FallbackAgent
+
 
 class BaseCoordinator(ABC):
     """Base coordinator class."""

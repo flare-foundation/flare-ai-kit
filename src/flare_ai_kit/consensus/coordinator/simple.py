@@ -25,6 +25,7 @@ except ImportError:
 
     Agent: Any = FallbackAgent
 
+
 @dataclass
 class CoordinatorAgent:
     """Represents an agent managed by the coordinator."""

@@ -75,7 +75,7 @@ class PDFProcessor:
             ocr_result = cast(str, pytesseract.image_to_string(img))  # type: ignore[attr-defined]
             return ocr_result.strip()
 
-        text_result = cast(str, page.get_text("text", clip=rect)) # type: ignore[attr-defined]
+        text_result = cast(str, page.get_text("text", clip=rect))  # type: ignore[attr-defined]
         return text_result.strip()
 
     def process_pdf(self, file_path: str, template_name: str) -> dict[str, Any]:
