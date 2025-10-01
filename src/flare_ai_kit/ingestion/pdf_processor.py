@@ -1,6 +1,6 @@
 """Processes PDF files to extract data and post it to a smart contract."""
 
-from typing import Any, cast
+from typing import Any
 
 import fitz  # type: ignore[reportMissingTypeStubs]
 import pytesseract  # type: ignore[reportMissingTypeStubs]
@@ -72,11 +72,19 @@ class PDFProcessor:
         if use_ocr:
             pix = page.get_pixmap(clip=rect)  # type: ignore[attr-defined]  # fitz missing type stubs
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # type: ignore[attr-defined]  # fitz missing type stubs
-            ocr_result = cast(str, pytesseract.image_to_string(img))  # type: ignore[attr-defined]
-            return ocr_result.strip()
+            ocr_result = pytesseract.image_to_string(img)  # type: ignore[attr-defined]
+            return (
+                str(ocr_result.strip())
+                if isinstance(ocr_result, str)
+                else str(ocr_result)
+            )
 
-        text_result = cast(str, page.get_text("text", clip=rect))  # type: ignore[attr-defined]
-        return text_result.strip()
+        text_result = page.get_text("text", clip=rect)  # type: ignore[attr-defined]
+        return (
+            str(text_result.strip())
+            if isinstance(text_result, str)
+            else str(text_result)  # type: ignore[attr-defined]
+        )
 
     def process_pdf(self, file_path: str, template_name: str) -> dict[str, Any]:
         """
