@@ -2,24 +2,28 @@
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, TypeVar
+
+from flare_ai_kit.common import AgentRole, Prediction
+from flare_ai_kit.consensus.coordinator.base import BaseCoordinator
+
+# Define a generic type for Agent
+AgentType = TypeVar("AgentType")
 
 try:
-    from pydantic_ai import Agent as _PydanticAgent  # type: ignore[import-untyped]
+    from pydantic_ai import Agent as PydanticAgent
 
-    Agent = _PydanticAgent  # type: ignore[misc]
+    Agent: Any = PydanticAgent
 except ImportError:
     # Fallback for when pydantic_ai is not available
-    class Agent:  # type: ignore[misc]
+    class FallbackAgent:
         """Fallback Agent when pydantic_ai is not available."""
 
         def __init__(self, **kwargs: Any) -> None:
             for key, value in kwargs.items():
                 setattr(self, key, value)
 
-
-from flare_ai_kit.common import AgentRole, Prediction
-from flare_ai_kit.consensus.coordinator.base import BaseCoordinator
+    Agent: Any = FallbackAgent
 
 
 @dataclass
@@ -34,7 +38,7 @@ class CoordinatorAgent:
     @property
     def status(self) -> str:
         """Returns the status of the agent."""
-        return getattr(self.agent, "status", "unknown")  # type: ignore[arg-type]
+        return str(getattr(self.agent, "status", "unknown"))
 
 
 class SimpleCoordinator(BaseCoordinator):

@@ -140,7 +140,7 @@ class GithubIngestor:
 
         try:
             logger.info("Cloning with Dulwich", url=repo_url, branch=branch)
-            porcelain.clone(  # type: ignore[reportUnknownMemberType]
+            porcelain.clone(  # type: ignore[attr-defined]  # dulwich incomplete type stubs
                 source=repo_url.encode(),
                 target=temp_dir_path,
                 checkout=True,

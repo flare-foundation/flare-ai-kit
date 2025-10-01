@@ -1,30 +1,39 @@
 """Base coordinator interface for the consensus engine."""
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Protocol
+
+from flare_ai_kit.common import AgentRole
+
+
+class AgentProtocol(Protocol):
+    """Protocol for Agent objects."""
+
+    def __init__(self, **kwargs: Any) -> None: ...
+
 
 try:
-    from pydantic_ai import Agent as _PydanticAgent  # type: ignore[import-untyped]
+    from pydantic_ai import Agent as PydanticAgent
 
-    Agent = _PydanticAgent  # type: ignore[misc]
+    Agent: Any = PydanticAgent
 except ImportError:
     # Fallback for when pydantic_ai is not available
-    class Agent:  # type: ignore[misc]
+    class FallbackAgent:
         """Fallback Agent when pydantic_ai is not available."""
 
         def __init__(self, **kwargs: Any) -> None:
             for key, value in kwargs.items():
                 setattr(self, key, value)
 
-
-from flare_ai_kit.common import AgentRole
+    Agent: Any = FallbackAgent
 
 
 class BaseCoordinator(ABC):
     """Base coordinator class."""
 
     @abstractmethod
-    def add_agent(self, agent: Any, role: AgentRole) -> None:
+    def add_agent(self, agent: AgentProtocol, role: AgentRole) -> None:
+        """Add an agent and its role to the pool."""
         """Add an agent and its role to the pool."""
 
     @abstractmethod
