@@ -28,7 +28,7 @@ from flare_ai_kit.common.schemas import (
     FAssetType,
 )
 from flare_ai_kit.ecosystem.protocols.fassets import FAssets
-from flare_ai_kit.ecosystem.settings_models import EcosystemSettingsModel
+from flare_ai_kit.ecosystem.settings import EcosystemSettings
 
 # Add the src directory to the path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -38,14 +38,14 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-def create_test_settings() -> EcosystemSettingsModel:
+def create_test_settings() -> EcosystemSettings:
     """Create test settings for Coston2 network."""
     # Use a test account with no real value
     Account.enable_unaudited_hdwallet_features()
     account = Account.from_mnemonic(
         "test test test test test test test test test test test junk"
     )
-    return EcosystemSettingsModel(
+    return EcosystemSettings(
         is_testnet=True,
         web3_provider_url=HttpUrl("https://coston-api.flare.network/ext/bc/C/rpc"),
         web3_provider_timeout=5,

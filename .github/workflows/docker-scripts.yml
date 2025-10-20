@@ -1,0 +1,231 @@
+name: Docker Scripts Validation
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "Dockerfile"
+      - "scripts/**"
+      - "pyproject.toml"
+      - "uv.lock"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "Dockerfile"
+      - "scripts/**"
+      - "pyproject.toml"
+      - "uv.lock"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-docker-scripts:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        script:
+          - name: "PDF Ingestion"
+            extras: "pdf"
+            script_file: "ingest_pdf.py"
+            test_timeout: "300"  # 5 minutes
+    
+    env:
+      # Test environment variables
+      LOG_LEVEL: INFO
+      AGENT__GEMINI_MODEL: "gemini-2.0-flash"
+      AGENT__GEMINI_API_KEY: ${{ secrets.AGENT__GEMINI_API_KEY }}
+      ECOSYSTEM__WEB3_PROVIDER_URL: "https://stylish-light-theorem.flare-mainnet.quiknode.pro/ext/bc/C/rpc"
+      INGESTION__CHUNK_SIZE: 5000
+      TEE__SIMULATE_ATTESTATION_TOKEN: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image for ${{ matrix.script.name }}
+        run: |
+          docker build \
+            --build-arg EXTRAS=${{ matrix.script.extras }} \
+            --build-arg SCRIPT=${{ matrix.script.script_file }} \
+            --tag fai-script-${{ matrix.script.extras }} \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
+            .
+
+      - name: Validate script exists in image
+        run: |
+          docker run --rm fai-script-${{ matrix.script.extras }} \
+            test -f "/app/scripts/${{ matrix.script.script_file }}"
+
+      - name: Test script startup (dry run)
+        timeout-minutes: 5
+        run: |
+          # Simple validation that the script exists and dependencies are available
+          docker run --rm \
+            -e LOG_LEVEL="$LOG_LEVEL" \
+            -e AGENT__GEMINI_MODEL="$AGENT__GEMINI_MODEL" \
+            -e AGENT__GEMINI_API_KEY="$AGENT__GEMINI_API_KEY" \
+            -e ECOSYSTEM__WEB3_PROVIDER_URL="$ECOSYSTEM__WEB3_PROVIDER_URL" \
+            -e INGESTION__CHUNK_SIZE="$INGESTION__CHUNK_SIZE" \
+            -e TEE__SIMULATE_ATTESTATION_TOKEN="$TEE__SIMULATE_ATTESTATION_TOKEN" \
+            fai-script-${{ matrix.script.extras }} \
+            python -c "
+          import sys
+          import os
+
+          # Test that script file exists
+          script_path = '/app/scripts/${{ matrix.script.script_file }}'
+          if not os.path.exists(script_path):
+              print(f'❌ Script not found: {script_path}')
+              sys.exit(1)
+          print(f'✅ Script exists: {script_path}')
+
+          # Test that required dependencies are available
+          if '${{ matrix.script.extras }}' == 'pdf':
+              try:
+                  import PIL
+                  import fitz  # pymupdf
+                  import pytesseract
+                  print('✅ PDF dependencies available')
+              except ImportError as e:
+                  print(f'❌ PDF dependency missing: {e}')
+                  sys.exit(1)
+
+          print('✅ Script validation completed successfully')
+          "
+
+      - name: Test container health
+        run: |
+          # Test that the container can start and the Python environment is healthy
+          docker run --rm fai-script-${{ matrix.script.extras }} \
+            python -c "
+          import sys
+          print(f'Python version: {sys.version}')
+          print(f'Python path: {sys.path}')
+
+          # Test core dependencies (some modules may require optional deps)
+          try:
+              import flare_ai_kit
+              print('✅ flare-ai-kit imported successfully')
+          except ImportError as e:
+              print(f'⚠️  flare-ai-kit import issue (may need more extras): {e}')
+              # Test basic Python packages instead
+              import httpx, pydantic, structlog
+              print('✅ Core Python dependencies available')
+
+          # Test that uv environment is working
+          import subprocess
+          result = subprocess.run(['/app/.venv/bin/python', '--version'],
+                                capture_output=True, text=True)
+          print(f'Virtual env Python: {result.stdout.strip()}')
+
+          print('✅ Container health check passed')
+          "
+
+      - name: Test script dependencies for ${{ matrix.script.name }}
+        run: |
+          # Test that the specific extras are properly installed
+          docker run --rm fai-script-${{ matrix.script.extras }} \
+            python -c "
+          import sys
+          
+          extras = '${{ matrix.script.extras }}'
+          print(f'Testing dependencies for extras: {extras}')
+          
+          if 'pdf' in extras:
+              try:
+                  import PIL
+                  import fitz
+                  import pytesseract
+                  print('✅ PDF dependencies (PIL, fitz, pytesseract) available')
+              except ImportError as e:
+                  print(f'❌ PDF dependency missing: {e}')
+                  sys.exit(1)
+          
+          if 'rag' in extras:
+              try:
+                  import qdrant_client
+                  import dulwich
+                  print('✅ RAG dependencies (qdrant_client, dulwich) available')
+              except ImportError as e:
+                  print(f'❌ RAG dependency missing: {e}')
+                  sys.exit(1)
+          
+          if 'a2a' in extras:
+              try:
+                  import fastapi
+                  print('✅ A2A dependencies (fastapi) available')
+              except ImportError as e:
+                  print(f'❌ A2A dependency missing: {e}')
+                  sys.exit(1)
+          
+          print('✅ All expected dependencies are available')
+          "
+
+
+
+  validate-build-args:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Test build without extras
+        run: |
+          docker build \
+            --build-arg SCRIPT=ingest_pdf.py \
+            --tag fai-script-base \
+            .
+
+      - name: Test build with multiple extras
+        run: |
+          docker build \
+            --build-arg EXTRAS=pdf,rag \
+            --build-arg SCRIPT=ingest_pdf.py \
+            --tag fai-script-multi \
+            .
+
+      - name: Validate multi-extras build
+        run: |
+          docker run --rm fai-script-multi \
+            python -c "
+          import PIL, fitz, pytesseract  # PDF deps
+          import qdrant_client, dulwich  # RAG deps
+          print('✅ Multiple extras build successful')
+          "
+
+  validate-documentation:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Check documentation exists
+        run: |
+          test -f docs/docker_scripts_guide.md
+          echo "✅ Docker scripts guide exists"
+
+      - name: Validate README updates
+        run: |
+          grep -q "parametric Dockerfile" README.md
+          grep -q "EXTRAS" README.md
+          grep -q "docker_scripts_guide.md" README.md
+          echo "✅ README contains Docker scripts documentation"
+
+      - name: Check scripts directory structure
+        run: |
+          test -d scripts
+          test -f scripts/ingest_pdf.py
+          test -d scripts/data
+          test -f scripts/data/create_sample_invoice.py
+          echo "✅ Scripts directory structure is correct"

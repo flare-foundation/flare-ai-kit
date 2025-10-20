@@ -30,9 +30,6 @@ dependencies = [
     "structlog>=25.2.0",
     "tenacity>=8.2.3,<9.0.0",
     "web3>=7.10.0",
-    "pillow>=11.3.0",
-    "pymupdf>=1.26.1",
-    "pytesseract>=0.3.13",
     "gitpython>=3.1.45",
     "google-adk>=1.9.0",
 ]
@@ -47,10 +44,32 @@ Issues = "https://github.com/flare-foundation/flare-ai-kit/issues"
 flare-ai-kit = "flare_ai_kit.main:start"
 
 [project.optional-dependencies]
+# Core functionality groups
+ftso = [
+    # FTSO functionality uses core dependencies (web3, httpx, pydantic)
+    # No additional dependencies required
+]
+da = [
+    # Data Availability layer functionality uses core dependencies
+    # No additional dependencies required
+]
+fassets = [
+    # FAssets functionality uses core dependencies
+    # No additional dependencies required
+]
+pdf = [
+    "pillow>=11.3.0",
+    "pymupdf>=1.26.1",
+    "pytesseract>=0.3.13"
+]
 rag = [
     "qdrant-client>=1.13.3",
     "dulwich>=0.23.2"
 ]
+a2a = [
+    "fastapi[standard]>=0.116.1",
+]
+# Additional functionality groups
 social = [
     "python-telegram-bot>=22.0",
     "tweepy>=4.15.0",
@@ -62,9 +81,6 @@ tee = [
     "cryptography>=44.0.2",
     "pyjwt>=2.10.1",
     "pyopenssl>=25.0.0"
-]
-a2a = [
-    "fastapi[standard]>=0.116.1",
 ]
 wallet = [
     "httpx>=0.28.1",
@@ -106,6 +122,7 @@ ignore = ["D203", "D212", "COM812", "S105", "D401", "D104", "ANN401", "ISC003", 
 "src/flare_ai_kit/agent/ecosystem_tools_wrapper.py" = ["PLC0415"]
 "tests/**/*.py" = ["S", "ARG", "PLR2004", "SLF001", "BLE001", "E501", "T201", "D", "ANN", "F821", "PLC"]
 "examples/**/*.py" = ["D", "T201", "BLE001", "INP001", "E501"]
+"scripts/**/*.py" = ["D", "T201", "BLE001", "INP001", "E501"]
 
 [tool.pyright]
 pythonVersion = "3.12"
