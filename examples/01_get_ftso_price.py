@@ -1,7 +1,6 @@
 import asyncio
 
 from flare_ai_kit import FlareAIKit
-from flare_ai_kit.config import get_settings
 
 
 async def main() -> None:
@@ -10,8 +9,8 @@ async def main() -> None:
 
     For a full list of feeds: https://dev.flare.network/ftso/feeds
     """
-    # Initialize the Flare AI Kit
-    kit = FlareAIKit(get_settings())
+    # Initialize the Flare AI Kit with default settings
+    kit = FlareAIKit(None)
 
     # Get the latest price for FLR/USD from the FTSOv2 oracle
     try:

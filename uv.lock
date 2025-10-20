@@ -827,11 +827,8 @@ dependencies = [
     { name = "google-adk" },
     { name = "google-genai" },
     { name = "httpx" },
-    { name = "pillow" },
     { name = "pydantic" },
     { name = "pydantic-ai" },
-    { name = "pymupdf" },
-    { name = "pytesseract" },
     { name = "structlog" },
     { name = "tenacity" },
     { name = "web3" },
@@ -842,6 +839,11 @@ a2a = [
     { name = "fastapi", extra = ["standard"] },
 ]
 ingestion = [
+    { name = "pillow" },
+    { name = "pymupdf" },
+    { name = "pytesseract" },
+]
+pdf = [
     { name = "pillow" },
     { name = "pymupdf" },
     { name = "pytesseract" },
@@ -895,17 +897,17 @@ requires-dist = [
     { name = "google-genai", specifier = ">=1.8.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "httpx", marker = "extra == 'wallet'", specifier = ">=0.28.1" },
-    { name = "pillow", specifier = ">=11.3.0" },
     { name = "pillow", marker = "extra == 'ingestion'", specifier = ">=11.3.0" },
+    { name = "pillow", marker = "extra == 'pdf'", specifier = ">=11.3.0" },
     { name = "pydantic", specifier = ">=2.11.1" },
     { name = "pydantic-ai", specifier = ">=0.0.46" },
     { name = "pyjwt", marker = "extra == 'tee'", specifier = ">=2.10.1" },
     { name = "pyjwt", marker = "extra == 'wallet'", specifier = ">=2.10.1" },
-    { name = "pymupdf", specifier = ">=1.26.1" },
     { name = "pymupdf", marker = "extra == 'ingestion'", specifier = ">=1.26.1" },
+    { name = "pymupdf", marker = "extra == 'pdf'", specifier = ">=1.26.1" },
     { name = "pyopenssl", marker = "extra == 'tee'", specifier = ">=25.0.0" },
-    { name = "pytesseract", specifier = ">=0.3.13" },
     { name = "pytesseract", marker = "extra == 'ingestion'", specifier = ">=0.3.13" },
+    { name = "pytesseract", marker = "extra == 'pdf'", specifier = ">=0.3.13" },
     { name = "python-telegram-bot", marker = "extra == 'social'", specifier = ">=22.0" },
     { name = "qdrant-client", marker = "extra == 'rag'", specifier = ">=1.13.3" },
     { name = "slack-sdk", marker = "extra == 'social'", specifier = ">=3.26.2" },
@@ -914,7 +916,7 @@ requires-dist = [
     { name = "tweepy", marker = "extra == 'social'", specifier = ">=4.15.0" },
     { name = "web3", specifier = ">=7.10.0" },
 ]
-provides-extras = ["rag", "social", "tee", "a2a", "wallet", "ingestion"]
+provides-extras = ["ftso", "da", "fassets", "pdf", "rag", "a2a", "social", "tee", "wallet", "ingestion"]
 
 [package.metadata.requires-dev]
 dev = [
