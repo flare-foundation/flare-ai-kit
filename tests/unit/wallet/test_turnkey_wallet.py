@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from cryptography.hazmat.primitives.asymmetric import ec
 
+from flare_ai_kit.common.exceptions import WalletCreationError, WalletNotFoundError
 from flare_ai_kit.wallet.base import TransactionRequest, WalletAddress
 from flare_ai_kit.wallet.permissions import PermissionEngine, PolicyViolation
 from flare_ai_kit.wallet.turnkey_wallet import TurnkeySettings, TurnkeyWallet
@@ -75,7 +76,7 @@ class TestTurnkeyWallet:
                 "_make_authenticated_request",
                 return_value=mock_response,
             ),
-            pytest.raises(RuntimeError, match="Failed to create wallet"),
+            pytest.raises(WalletCreationError),
         ):
             await turnkey_wallet.create_wallet("test_wallet")
 
@@ -125,7 +126,7 @@ class TestTurnkeyWallet:
                 "_make_authenticated_request",
                 return_value=mock_response,
             ),
-            pytest.raises(RuntimeError, match="No account found for derivation path"),
+            pytest.raises(WalletNotFoundError),
         ):
             await turnkey_wallet.get_address("test_wallet_id", "m/44'/60'/0'/0/0")
 

@@ -1,17 +1,22 @@
 """FAssets protocol connector for interacting with FAssets on Flare."""
 
-import logging
 from typing import Any, cast
 
 from web3.contract import Contract
 from web3.exceptions import Web3Exception
 
 from flare_ai_kit.common.exceptions import FAssetsContractError, FAssetsError
+from flare_ai_kit.common.logging import (
+    get_logger,
+    log_operation_failure,
+    log_operation_start,
+    log_operation_success,
+)
 from flare_ai_kit.common.schemas import AgentInfo, FAssetInfo, FAssetType
 from flare_ai_kit.ecosystem.flare import Flare
 from flare_ai_kit.ecosystem.settings import EcosystemSettings
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class FAssets(Flare):
@@ -34,14 +39,38 @@ class FAssets(Flare):
         return instance
 
     def get_contract_abi(self, name: str) -> list[Any]:
-        """Get contract ABI."""
+        """
+        Get contract ABI.
+
+        Args:
+            name: Contract name
+
+        Returns:
+            Contract ABI as list
+
+        Raises:
+            FAssetsContractError: If ABI retrieval fails
+
+        """
+        log_operation_start(logger, "get_contract_abi", {"contract_name": name})
+
         try:
             # This would be implemented in the base class or loaded from a file
-            return []  # Placeholder
+            abi: list[Any] = []  # Placeholder
+            log_operation_success(logger, "get_contract_abi", {"contract_name": name})
+
         except Exception as e:
-            msg = f"Failed to get ABI for {name}"
-            logger.exception(msg)
-            raise FAssetsContractError(msg) from e
+            log_operation_failure(
+                logger, "get_contract_abi", e, {"contract_name": name}
+            )
+            error_message = "Failed to get ABI for " + name
+            raise FAssetsContractError(
+                error_message,
+                context={"contract_name": name},
+                error_code="FASSETS_ABI_RETRIEVAL_FAILED",
+            ) from e
+        else:
+            return abi
 
     async def get_contract(self, name: str, address: str) -> Contract:
         """Get contract instance."""

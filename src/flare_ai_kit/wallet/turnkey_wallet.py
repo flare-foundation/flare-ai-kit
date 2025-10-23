@@ -6,19 +6,29 @@ import time
 from typing import Any
 
 import httpx
-import structlog
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from pydantic import BaseModel, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from web3 import Web3
 
+from flare_ai_kit.common.exceptions import (
+    WalletCreationError,
+    WalletError,
+    WalletNotFoundError,
+)
+from flare_ai_kit.common.logging import (
+    get_logger,
+    log_operation_failure,
+    log_operation_start,
+    log_operation_success,
+)
 from flare_ai_kit.tee.validation import VtpmValidation
 from flare_ai_kit.wallet.permissions import PermissionEngine, PolicyAction
 
 from .base import SignedTransaction, TransactionRequest, WalletAddress, WalletInterface
 
-logger = structlog.get_logger(__name__)
+logger = get_logger(__name__)
 
 # HTTP status codes
 HTTP_OK = 200
@@ -117,51 +127,69 @@ class TurnkeyWallet(WalletInterface):
         Returns:
             Wallet ID (sub-organization ID)
 
+        Raises:
+            WalletCreationError: If wallet creation fails
+
         """
-        logger.info("Creating new wallet", wallet_name=wallet_name)
+        log_operation_start(logger, "wallet_creation", {"wallet_name": wallet_name})
 
-        # Create sub-organization request
-        request_body: dict[str, Any] = {
-            "type": "ACTIVITY_TYPE_CREATE_SUB_ORGANIZATION_V3",
-            "organizationId": self.settings.organization_id,
-            "parameters": {
-                "subOrganizationName": wallet_name,
-                "rootUsers": [],
-                "rootQuorumThreshold": 1,
-                "wallet": {
-                    "walletName": f"{wallet_name}_wallet",
-                    "accounts": [
-                        {
-                            "curve": self.settings.default_curve,
-                            "pathFormat": "PATH_FORMAT_BIP32",
-                            "path": "m/44'/60'/0'/0/0",
-                            "addressFormat": "ADDRESS_FORMAT_ETHEREUM",
-                        },
-                    ],
+        try:
+            # Create sub-organization request
+            request_body: dict[str, Any] = {
+                "type": "ACTIVITY_TYPE_CREATE_SUB_ORGANIZATION_V3",
+                "organizationId": self.settings.organization_id,
+                "parameters": {
+                    "subOrganizationName": wallet_name,
+                    "rootUsers": [],
+                    "rootQuorumThreshold": 1,
+                    "wallet": {
+                        "walletName": f"{wallet_name}_wallet",
+                        "accounts": [
+                            {
+                                "curve": self.settings.default_curve,
+                                "pathFormat": "PATH_FORMAT_BIP32",
+                                "path": "m/44'/60'/0'/0/0",
+                                "addressFormat": "ADDRESS_FORMAT_ETHEREUM",
+                            },
+                        ],
+                    },
                 },
-            },
-            "timestampMs": str(int(time.time() * 1000)),
-        }
+                "timestampMs": str(int(time.time() * 1000)),
+            }
 
-        # Sign and send request
-        response = await self._make_authenticated_request(
-            "POST",
-            "/public/v1/submit/create_sub_organization",
-            request_body,
-        )
+            # Sign and send request
+            response = await self._make_authenticated_request(
+                "POST",
+                "/public/v1/submit/create_sub_organization",
+                request_body,
+            )
 
-        if response.status_code != HTTP_OK:
-            error_msg = f"Failed to create wallet: {response.text}"
-            logger.error("wallet_creation_failed", error=error_msg)
-            raise RuntimeError(error_msg)
+            if response.status_code != HTTP_OK:
+                self._raise_wallet_creation_error(
+                    response.status_code, response.text, wallet_name
+                )
 
-        result = response.json()
-        sub_org_id = result["activity"]["result"]["createSubOrganizationResult"][
-            "subOrganizationId"
-        ]
+            result = response.json()
+            sub_org_id = result["activity"]["result"]["createSubOrganizationResult"][
+                "subOrganizationId"
+            ]
 
-        logger.info("Wallet created successfully", wallet_id=sub_org_id)
-        return sub_org_id
+            log_operation_success(logger, "wallet_creation", {"wallet_id": sub_org_id})
+
+        except WalletCreationError:
+            raise
+        except Exception as e:
+            log_operation_failure(
+                logger, "wallet_creation", e, {"wallet_name": wallet_name}
+            )
+            error_message = "Unexpected error during wallet creation: " + str(e)
+            raise WalletCreationError(
+                error_message,
+                context={"wallet_name": wallet_name},
+                error_code="WALLET_CREATION_UNEXPECTED_ERROR",
+            ) from e
+        else:
+            return sub_org_id
 
     async def get_address(
         self,
@@ -178,40 +206,81 @@ class TurnkeyWallet(WalletInterface):
         Returns:
             WalletAddress object with address and metadata
 
+        Raises:
+            WalletNotFoundError: If wallet is not found
+            WalletError: If address retrieval fails
+
         """
-        logger.info(
-            "Getting wallet address",
-            wallet_id=wallet_id,
-            derivation_path=derivation_path,
+        log_operation_start(
+            logger,
+            "get_wallet_address",
+            {"wallet_id": wallet_id, "derivation_path": derivation_path},
         )
 
-        # Get wallet accounts for the sub-organization
-        response = await self._make_authenticated_request(
-            "POST",
-            "/public/v1/query/list_wallet_accounts",
-            {"organizationId": wallet_id, "timestampMs": str(int(time.time() * 1000))},
-        )
+        try:
+            # Get wallet accounts for the sub-organization
+            response = await self._make_authenticated_request(
+                "POST",
+                "/public/v1/query/list_wallet_accounts",
+                {
+                    "organizationId": wallet_id,
+                    "timestampMs": str(int(time.time() * 1000)),
+                },
+            )
 
-        if response.status_code != HTTP_OK:
-            error_msg = f"Failed to get wallet address: {response.text}"
-            logger.error("get_address_failed", error=error_msg)
-            raise RuntimeError(error_msg)
-
-        result = response.json()
-        accounts = result["walletAccounts"]
-
-        # Find account with matching derivation path
-        for account in accounts:
-            if account["path"] == derivation_path:
-                return WalletAddress(
-                    address=account["address"],
-                    wallet_id=wallet_id,
-                    derivation_path=derivation_path,
-                    chain_id=1,  # Default to Ethereum mainnet, can be configured
+            if response.status_code != HTTP_OK:
+                self._raise_wallet_address_error(
+                    response.status_code,
+                    response.text,
+                    wallet_id,
+                    derivation_path,
                 )
 
-        msg = f"No account found for derivation path {derivation_path}"
-        raise RuntimeError(msg)
+            result = response.json()
+            accounts = result["walletAccounts"]
+
+            # Find account with matching derivation path
+            for account in accounts:
+                if account["path"] == derivation_path:
+                    wallet_address = WalletAddress(
+                        address=account["address"],
+                        wallet_id=wallet_id,
+                        derivation_path=derivation_path,
+                        chain_id=1,  # Default to Ethereum mainnet, can be configured
+                    )
+                    log_operation_success(
+                        logger,
+                        "get_wallet_address",
+                        {"wallet_id": wallet_id, "address": account["address"]},
+                    )
+                    return wallet_address
+            # No account found for the derivation path
+            error_msg = "No account found for derivation path " + derivation_path
+            raise WalletNotFoundError(  # noqa: TRY301
+                error_msg,
+                context={
+                    "wallet_id": wallet_id,
+                    "derivation_path": derivation_path,
+                    "available_paths": [acc["path"] for acc in accounts],
+                },  # type: ignore[arg-type]
+                error_code="WALLET_ACCOUNT_NOT_FOUND",
+            )
+
+        except (WalletError, WalletNotFoundError):
+            raise
+        except Exception as e:
+            log_operation_failure(
+                logger,
+                "get_wallet_address",
+                e,
+                {"wallet_id": wallet_id, "derivation_path": derivation_path},
+            )
+            error_message = "Unexpected error during address retrieval: " + str(e)
+            raise WalletError(
+                error_message,
+                context={"wallet_id": wallet_id, "derivation_path": derivation_path},
+                error_code="WALLET_ADDRESS_UNEXPECTED_ERROR",
+            ) from e
 
     async def sign_transaction(
         self,
@@ -523,3 +592,32 @@ class TurnkeyWallet(WalletInterface):
         else:
             logger.info("TEE attestation validated", claims=claims)
             return True
+
+    def _raise_wallet_creation_error(
+        self, status_code: int, response_text: str, wallet_name: str
+    ) -> None:
+        error_msg = "Failed to create wallet: " + response_text
+        raise WalletCreationError(
+            error_msg,
+            context={
+                "wallet_name": wallet_name,
+                "status_code": str(status_code),
+                "response_text": response_text,
+            },
+            error_code="WALLET_CREATION_FAILED",
+        )
+
+    def _raise_wallet_address_error(
+        self, status_code: int, response_text: str, wallet_id: str, derivation_path: str
+    ) -> None:
+        error_msg = "Failed to get wallet address: " + response_text
+        raise WalletError(
+            error_msg,
+            context={
+                "wallet_id": wallet_id,
+                "derivation_path": derivation_path,
+                "status_code": str(status_code),
+                "response_text": response_text,
+            },
+            error_code="WALLET_ADDRESS_RETRIEVAL_FAILED",
+        )
