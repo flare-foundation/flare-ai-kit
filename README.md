@@ -107,10 +107,32 @@ uv run ruff format && uv run ruff check --fix && uv run pyright && uv run pytest
 
 ## 🐳 Docker
 
+### Running the Full SDK
+
 ```bash
 docker build -t flare-ai-kit .
 docker run --rm --env-file .env flare-ai-kit
 ```
+
+### Running Individual Scripts
+
+The repository includes a parametric Dockerfile for running specific scripts with only the dependencies they need:
+
+```bash
+# Build and run PDF ingestion script
+docker build -t fai-script-pdf \
+  --build-arg EXTRAS=pdf \
+  --build-arg SCRIPT=ingest_pdf.py .
+
+docker run --rm -it \
+  -v "$PWD/scripts/data:/app/scripts/data" \
+  --env-file .env \
+  fai-script-pdf
+```
+
+Available `EXTRAS`: `pdf`, `rag`, `a2a`, `ftso`, `da`, `fassets`, `social`, `tee`, `wallet`, `ingestion`
+
+See [Docker Scripts Guide](docs/docker_scripts_guide.md) for detailed usage instructions.
 
 ## ☁️ Deploy to Confidential Space
 

@@ -330,7 +330,7 @@ async def main() -> None:
         wallet = await setup_turnkey_wallet()
 
         # 2. Create demo wallet
-        wallet_id, wallet_address = await create_demo_wallet(wallet)
+        wallet_id, _wallet_address = await create_demo_wallet(wallet)
 
         # 3. Set up TEE security manager
         tee_manager = TEESecurityManager()
