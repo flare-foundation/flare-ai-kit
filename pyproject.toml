@@ -64,7 +64,7 @@ pdf = [
     "dulwich>=0.24.10"
 ]
 rag = [
-    "qdrant-client==1.15.1",
+    "qdrant-client==1.16.1",
     "dulwich>=0.24.10"
 ]
 a2a = [
