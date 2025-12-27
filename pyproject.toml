@@ -88,6 +88,11 @@ wallet = [
     "eth-account>=0.13.7",
     "pyjwt>=2.10.1",
 ]
+mcp = [
+    # MCP SDK for Model Context Protocol integration
+    # Note: google-adk provides McpToolset, but mcp package needed for StdioServerParameters
+    "mcp>=1.0.0",
+]
 
 [build-system]
 requires = ["hatchling"]
