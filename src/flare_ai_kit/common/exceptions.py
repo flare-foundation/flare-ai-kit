@@ -138,3 +138,12 @@ class A2AClientError(FlareAIKitError):
 # --- PDF Processing Errors ---
 class PdfPostingError(FlareAIKitError):
     """Error class concerned with onchain PDF data posting errors."""
+
+
+# --- Reranker Errors ---
+class RerankerError(FlareAIKitError):
+    """Base exception for reranker errors."""
+
+
+class RerankerParseError(RerankerError):
+    """Raised when LLM response cannot be parsed."""

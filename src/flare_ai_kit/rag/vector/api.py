@@ -10,6 +10,7 @@ from .indexer import (
     ingest_and_embed,
     upsert_to_qdrant,
 )
+from .reranker import BaseReranker, GeminiPointwiseReranker
 from .responder import BaseResponder
 from .retriever import BaseRetriever, QdrantRetriever
 
@@ -17,10 +18,12 @@ __all__ = [
     "BaseChunker",
     "BaseEmbedding",
     "BaseIndexer",
+    "BaseReranker",
     "BaseResponder",
     "BaseRetriever",
     "FixedSizeChunker",
     "GeminiEmbedding",
+    "GeminiPointwiseReranker",
     "LocalFileIndexer",
     "QdrantRetriever",
     "VectorRAGPipeline",
