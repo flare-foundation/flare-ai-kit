@@ -1,6 +1,7 @@
 """Implementation of communication channels for inter-agent communication."""
 
 import asyncio
+import inspect
 import time
 import uuid
 from collections import defaultdict
@@ -89,7 +90,7 @@ class EventBus(BaseEventBus):
         if handlers:
             tasks: list[Any] = []
             for handler in handlers.values():
-                if asyncio.iscoroutinefunction(handler):
+                if inspect.iscoroutinefunction(handler):
                     tasks.append(handler(data))
                 else:
                     # For non-async handlers, run in thread pool
