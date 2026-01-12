@@ -24,8 +24,13 @@ jobs:
           - name: "PDF Ingestion"
             extras: "pdf"
             filename: "ingest_pdf.py"
+<<<<<<< HEAD
             test_timeout: "300" # 5 minutes
 
+=======
+            test_timeout: "300"  # 5 minutes
+    
+>>>>>>> d596503 (fix(actions): workflows and docs)
     env:
       LOG_LEVEL: INFO
       AGENT__GEMINI_MODEL: "gemini-2.0-flash"
@@ -126,7 +131,11 @@ jobs:
           docker run --rm fai-agent-${{ matrix.agent.extras }} \
             python -c "
           import sys
+<<<<<<< HEAD
 
+=======
+          
+>>>>>>> d596503 (fix(actions): workflows and docs)
           extras = '${{ matrix.agent.extras }}'
           print(f'Testing dependencies for extras: {extras}')
 
@@ -218,4 +227,8 @@ jobs:
           test -f agents/ingest_pdf.py
           test -d agents/data
           test -f agents/data/create_sample_invoice.py
+<<<<<<< HEAD
           echo "✅ Agents directory structure is correct"
+=======
+          echo "✅ Agents directory structure is correct"
+>>>>>>> d596503 (fix(actions): workflows and docs)
