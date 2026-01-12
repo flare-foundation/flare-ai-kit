@@ -1,6 +1,7 @@
 """An enhanced implementation of the Coordinator interface."""
 
 import asyncio
+import inspect
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -74,14 +75,14 @@ class SimpleCoordinator(BaseCoordinator):
         """Starts all agents that define a `start()` coroutine."""
         for agent in self.agents.values():
             agent_start = getattr(agent.agent, "start", None)
-            if agent_start is not None and asyncio.iscoroutinefunction(agent_start):
+            if agent_start is not None and inspect.iscoroutinefunction(agent_start):
                 await agent_start()
 
     async def stop_agents(self) -> None:
         """Stops all agents that define a `stop()` coroutine."""
         for agent in self.agents.values():
             agent_stop = getattr(agent.agent, "stop", None)
-            if agent_stop is not None and asyncio.iscoroutinefunction(agent_stop):
+            if agent_stop is not None and inspect.iscoroutinefunction(agent_stop):
                 await agent_stop()
 
     def monitor_agents(self) -> list[dict[str, str | Any]]:

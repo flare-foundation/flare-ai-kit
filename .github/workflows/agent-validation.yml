@@ -1,18 +1,13 @@
-name: Docker Scripts Validation
+name: Agents Validation
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - "Dockerfile"
-      - "scripts/**"
-      - "pyproject.toml"
-      - "uv.lock"
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
     paths:
+      - ".github/workflows/docker-agents.yml"
       - "Dockerfile"
-      - "scripts/**"
+      - "agents/**"
       - "pyproject.toml"
       - "uv.lock"
 
@@ -20,19 +15,17 @@ permissions:
   contents: read
 
 jobs:
-  validate-docker-scripts:
+  validate-docker-agents:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
-        script:
+        agent:
           - name: "PDF Ingestion"
             extras: "pdf"
-            script_file: "ingest_pdf.py"
+            filename: "ingest_pdf.py"
             test_timeout: "300"  # 5 minutes
-    
     env:
-      # Test environment variables
       LOG_LEVEL: INFO
       AGENT__GEMINI_MODEL: "gemini-2.0-flash"
       AGENT__GEMINI_API_KEY: ${{ secrets.AGENT__GEMINI_API_KEY }}
@@ -47,25 +40,25 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image for ${{ matrix.script.name }}
+      - name: Build Docker image for ${{ matrix.agent.name }}
         run: |
           docker build \
-            --build-arg EXTRAS=${{ matrix.script.extras }} \
-            --build-arg SCRIPT=${{ matrix.script.script_file }} \
-            --tag fai-script-${{ matrix.script.extras }} \
+            --build-arg EXTRAS=${{ matrix.agent.extras }} \
+            --build-arg AGENT=${{ matrix.agent.filename }} \
+            --tag fai-agent-${{ matrix.agent.extras }} \
             --cache-from type=gha \
             --cache-to type=gha,mode=max \
             .
 
-      - name: Validate script exists in image
+      - name: Validate agent script exists in image
         run: |
-          docker run --rm fai-script-${{ matrix.script.extras }} \
-            test -f "/app/scripts/${{ matrix.script.script_file }}"
+          docker run --rm fai-agent-${{ matrix.agent.extras }} \
+            test -f "/app/agents/${{ matrix.agent.filename }}"
 
-      - name: Test script startup (dry run)
+      - name: Test agent startup (dry run)
         timeout-minutes: 5
         run: |
-          # Simple validation that the script exists and dependencies are available
+          # Simple validation that the agent exists and dependencies are available
           docker run --rm \
             -e LOG_LEVEL="$LOG_LEVEL" \
             -e AGENT__GEMINI_MODEL="$AGENT__GEMINI_MODEL" \
@@ -73,20 +66,20 @@ jobs:
             -e ECOSYSTEM__WEB3_PROVIDER_URL="$ECOSYSTEM__WEB3_PROVIDER_URL" \
             -e INGESTION__CHUNK_SIZE="$INGESTION__CHUNK_SIZE" \
             -e TEE__SIMULATE_ATTESTATION_TOKEN="$TEE__SIMULATE_ATTESTATION_TOKEN" \
-            fai-script-${{ matrix.script.extras }} \
+            fai-agent-${{ matrix.agent.extras }} \
             python -c "
           import sys
           import os
 
-          # Test that script file exists
-          script_path = '/app/scripts/${{ matrix.script.script_file }}'
-          if not os.path.exists(script_path):
-              print(f'❌ Script not found: {script_path}')
+          # Test that agent file exists
+          agent_path = '/app/agents/${{ matrix.agent.filename }}'
+          if not os.path.exists(agent_path):
+              print(f'❌ Agent not found: {agent_path}')
               sys.exit(1)
-          print(f'✅ Script exists: {script_path}')
+          print(f'✅ Agent exists: {agent_path}')
 
           # Test that required dependencies are available
-          if '${{ matrix.script.extras }}' == 'pdf':
+          if '${{ matrix.agent.extras }}' == 'pdf':
               try:
                   import PIL
                   import fitz  # pymupdf
@@ -96,25 +89,24 @@ jobs:
                   print(f'❌ PDF dependency missing: {e}')
                   sys.exit(1)
 
-          print('✅ Script validation completed successfully')
+          print('✅ Agent validation completed successfully')
           "
 
       - name: Test container health
         run: |
           # Test that the container can start and the Python environment is healthy
-          docker run --rm fai-script-${{ matrix.script.extras }} \
+          docker run --rm fai-agent-${{ matrix.agent.extras }} \
             python -c "
           import sys
           print(f'Python version: {sys.version}')
           print(f'Python path: {sys.path}')
 
-          # Test core dependencies (some modules may require optional deps)
+          # Test core dependencies
           try:
               import flare_ai_kit
               print('✅ flare-ai-kit imported successfully')
           except ImportError as e:
-              print(f'⚠️  flare-ai-kit import issue (may need more extras): {e}')
-              # Test basic Python packages instead
+              print(f'⚠️  flare-ai-kit import issue: {e}')
               import httpx, pydantic, structlog
               print('✅ Core Python dependencies available')
 
@@ -127,16 +119,15 @@ jobs:
           print('✅ Container health check passed')
           "
 
-      - name: Test script dependencies for ${{ matrix.script.name }}
+      - name: Test agent dependencies for ${{ matrix.agent.name }}
         run: |
           # Test that the specific extras are properly installed
-          docker run --rm fai-script-${{ matrix.script.extras }} \
+          docker run --rm fai-agent-${{ matrix.agent.extras }} \
             python -c "
           import sys
-          
-          extras = '${{ matrix.script.extras }}'
+          extras = '${{ matrix.agent.extras }}'
           print(f'Testing dependencies for extras: {extras}')
-          
+
           if 'pdf' in extras:
               try:
                   import PIL
@@ -146,7 +137,7 @@ jobs:
               except ImportError as e:
                   print(f'❌ PDF dependency missing: {e}')
                   sys.exit(1)
-          
+
           if 'rag' in extras:
               try:
                   import qdrant_client
@@ -155,7 +146,7 @@ jobs:
               except ImportError as e:
                   print(f'❌ RAG dependency missing: {e}')
                   sys.exit(1)
-          
+
           if 'a2a' in extras:
               try:
                   import fastapi
@@ -163,15 +154,13 @@ jobs:
               except ImportError as e:
                   print(f'❌ A2A dependency missing: {e}')
                   sys.exit(1)
-          
+
           print('✅ All expected dependencies are available')
           "
 
-
-
   validate-build-args:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -182,21 +171,21 @@ jobs:
       - name: Test build without extras
         run: |
           docker build \
-            --build-arg SCRIPT=ingest_pdf.py \
-            --tag fai-script-base \
+            --build-arg AGENT=ingest_pdf.py \
+            --tag fai-agent-base \
             .
 
       - name: Test build with multiple extras
         run: |
           docker build \
             --build-arg EXTRAS=pdf,rag \
-            --build-arg SCRIPT=ingest_pdf.py \
-            --tag fai-script-multi \
+            --build-arg AGENT=ingest_pdf.py \
+            --tag fai-agent-multi \
             .
 
       - name: Validate multi-extras build
         run: |
-          docker run --rm fai-script-multi \
+          docker run --rm fai-agent-multi \
             python -c "
           import PIL, fitz, pytesseract  # PDF deps
           import qdrant_client, dulwich  # RAG deps
@@ -205,27 +194,27 @@ jobs:
 
   validate-documentation:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
       - name: Check documentation exists
         run: |
-          test -f docs/docker_scripts_guide.md
-          echo "✅ Docker scripts guide exists"
+          test -f docs/docker_agents_guide.md
+          echo "✅ Docker agents guide exists"
 
       - name: Validate README updates
         run: |
           grep -q "parametric Dockerfile" README.md
           grep -q "EXTRAS" README.md
-          grep -q "docker_scripts_guide.md" README.md
-          echo "✅ README contains Docker scripts documentation"
+          echo "✅ README contains Docker agents documentation"
 
-      - name: Check scripts directory structure
+      - name: Check agents directory structure
         run: |
-          test -d scripts
-          test -f scripts/ingest_pdf.py
-          test -d scripts/data
-          test -f scripts/data/create_sample_invoice.py
-          echo "✅ Scripts directory structure is correct"
+          test -d agents
+          test -f agents/ingest_pdf.py
+          test -d agents/data
+          test -f agents/data/create_sample_invoice.py
+
+          echo "✅ Agents directory structure is correct"
