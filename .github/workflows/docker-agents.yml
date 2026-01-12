@@ -25,12 +25,17 @@ jobs:
             extras: "pdf"
             filename: "ingest_pdf.py"
 <<<<<<< HEAD
+<<<<<<< HEAD
             test_timeout: "300" # 5 minutes
 
 =======
             test_timeout: "300"  # 5 minutes
     
 >>>>>>> d596503 (fix(actions): workflows and docs)
+=======
+            test_timeout: "300" # 5 minutes
+
+>>>>>>> 36471ad (fix(actions): update actions yaml)
     env:
       LOG_LEVEL: INFO
       AGENT__GEMINI_MODEL: "gemini-2.0-flash"
@@ -132,10 +137,14 @@ jobs:
             python -c "
           import sys
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
           
 >>>>>>> d596503 (fix(actions): workflows and docs)
+=======
+
+>>>>>>> 36471ad (fix(actions): update actions yaml)
           extras = '${{ matrix.agent.extras }}'
           print(f'Testing dependencies for extras: {extras}')
 
@@ -228,7 +237,11 @@ jobs:
           test -d agents/data
           test -f agents/data/create_sample_invoice.py
 <<<<<<< HEAD
+<<<<<<< HEAD
           echo "✅ Agents directory structure is correct"
 =======
           echo "✅ Agents directory structure is correct"
 >>>>>>> d596503 (fix(actions): workflows and docs)
+=======
+          echo "✅ Agents directory structure is correct"
+>>>>>>> 36471ad (fix(actions): update actions yaml)
