@@ -1,10 +1,9 @@
 name: Lint
 
 on:
-  push:
-    branches: ["main"]
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -21,20 +20,12 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
-
-      # Install dependencies
       - name: Install dependencies
         run: uv sync --frozen --all-extras
-
-      # Format code with ruff
       - name: Format with ruff
         run: uv run ruff format --diff
-
-      # Lint code with ruff
       - name: Lint with ruff
         run: uv run ruff check --diff
         continue-on-error: false
-
-      # Type check with pyright
       - name: Type check with pyright
         run: uv run pyright

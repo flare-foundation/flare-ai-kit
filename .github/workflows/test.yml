@@ -1,10 +1,9 @@
 name: Test
 
 on:
-  push:
-    branches: ["main"]
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -41,15 +40,10 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           version: "latest"
-
-      # Install dependencies
+          enable-cache: true
       - name: Install dependencies
         run: uv sync --frozen --all-extras
-
-      # Run unit tests with pytest
       - name: Run unit tests
         run: uv run pytest tests/unit -v
-
-      # Run integration tests with pytest
       - name: Run integration tests
         run: uv run pytest tests/integration -v

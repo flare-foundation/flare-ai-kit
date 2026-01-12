@@ -1,16 +1,11 @@
 name: Docker Agents Validation
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - "Dockerfile"
-      - "agents/**"
-      - "pyproject.toml"
-      - "uv.lock"
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
     paths:
+      - ".github/workflows/docker-agents.yml"
       - "Dockerfile"
       - "agents/**"
       - "pyproject.toml"
@@ -22,17 +17,16 @@ permissions:
 jobs:
   validate-docker-agents:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         agent:
           - name: "PDF Ingestion"
             extras: "pdf"
             filename: "ingest_pdf.py"
-            test_timeout: "300"  # 5 minutes
-    
+            test_timeout: "300" # 5 minutes
+
     env:
-      # Test environment variables
       LOG_LEVEL: INFO
       AGENT__GEMINI_MODEL: "gemini-2.0-flash"
       AGENT__GEMINI_API_KEY: ${{ secrets.AGENT__GEMINI_API_KEY }}
@@ -132,10 +126,10 @@ jobs:
           docker run --rm fai-agent-${{ matrix.agent.extras }} \
             python -c "
           import sys
-          
+
           extras = '${{ matrix.agent.extras }}'
           print(f'Testing dependencies for extras: {extras}')
-          
+
           if 'pdf' in extras:
               try:
                   import PIL
@@ -145,7 +139,7 @@ jobs:
               except ImportError as e:
                   print(f'❌ PDF dependency missing: {e}')
                   sys.exit(1)
-          
+
           if 'rag' in extras:
               try:
                   import qdrant_client
@@ -154,7 +148,7 @@ jobs:
               except ImportError as e:
                   print(f'❌ RAG dependency missing: {e}')
                   sys.exit(1)
-          
+
           if 'a2a' in extras:
               try:
                   import fastapi
@@ -162,13 +156,13 @@ jobs:
               except ImportError as e:
                   print(f'❌ A2A dependency missing: {e}')
                   sys.exit(1)
-          
+
           print('✅ All expected dependencies are available')
           "
 
   validate-build-args:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -202,7 +196,7 @@ jobs:
 
   validate-documentation:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
