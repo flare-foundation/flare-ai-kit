@@ -5,7 +5,7 @@ from collections.abc import Callable
 
 from flare_ai_kit.common import Prediction
 
-
+# Refer to llm_consensus.py for an example of how to use this class.
 class BaseAggregator(ABC):
     """Base aggregator class."""
 
@@ -20,3 +20,4 @@ class BaseAggregator(ABC):
     async def aggregate(self, predictions: list[Prediction]) -> Prediction:
         """Aggregate predictions using the specified strategy."""
         return self.strategy(predictions)
+
