@@ -62,7 +62,7 @@ FROM python:3.12-slim-bookworm AS runtime
 
 # Pass build args to runtime stage
 ARG EXTRAS
-ARG SCRIPT
+ARG AGENT
 
 # Install runtime system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -73,7 +73,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV PIP_NO_CACHE_DIR=1 \
     UV_PYTHON_DOWNLOADS=0 \
-    SCRIPT_NAME="$SCRIPT" \
+    AGENT_NAME="$AGENT" \
     PYTHONPATH="/app/scripts:/app:$PYTHONPATH"
 
 # Create non-root user
@@ -90,8 +90,8 @@ ENV PATH="/app/.venv/bin:$PATH"
 # Switch to non-root user
 USER app
 
-# Validate that the script exists
-RUN test -f "/app/scripts/$SCRIPT" || (echo "Error: Script /app/scripts/$SCRIPT not found" && exit 1)
+# Validate that the agent exists
+RUN test -f "/app/agents/$AGENT" || (echo "Error: Script /app/agents/$AGENT not found" && exit 1)
 
-# Default command runs the specified script
-CMD ["sh", "-c", "python \"/app/scripts/$SCRIPT_NAME\""]
+# Default command runs the specified agent
+CMD ["sh", "-c", "python \"/app/agents/$AGENT_NAME\""]
