@@ -1,18 +1,18 @@
-# Flare AI Kit - Docker Scripts Makefile
-# Provides convenient targets for building and running Docker scripts
+# Flare AI Kit - Docker Agents Makefile
+# Provides convenient targets for building and running Docker agents
 
 .PHONY: help build-pdf run-pdf build-rag run-rag build-a2a run-a2a build-multi run-multi clean-images list-images
 
 # Default target
 help: ## Show this help message
-	@echo "Flare AI Kit - Docker Scripts"
+	@echo "Flare AI Kit - Docker Agents"
 	@echo "============================="
 	@echo ""
 	@echo "Available targets:"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
 	@echo "Environment variables:"
-	@echo "  DATA_DIR     - Local directory to mount as /app/scripts/data (default: ./scripts/data)"
+	@echo "  DATA_DIR     - Local directory to mount as /app/agents/data (default: ./agents/data)"
 	@echo "  ENV_FILE     - Environment file to use (default: .env)"
 	@echo "  DOCKER_OPTS  - Additional docker run options"
 	@echo ""
@@ -22,7 +22,7 @@ help: ## Show this help message
 	@echo "  make run-pdf DOCKER_OPTS='--rm -it'"
 
 # Configuration
-DATA_DIR ?= ./scripts/data
+DATA_DIR ?= ./agents/data
 ENV_FILE ?= .env
 DOCKER_OPTS ?= --rm -it
 
@@ -31,13 +31,13 @@ build-pdf: ## Build Docker image for PDF processing
 	@echo "Building PDF processing image..."
 	docker build \
 		--build-arg EXTRAS=pdf \
-		--build-arg SCRIPT=ingest_pdf.py \
-		--tag fai-script-pdf \
+		--build-arg AGENT=ingest_pdf.py \
+		--tag fai-agent-pdf \
 		.
-	@echo "✅ PDF image built: fai-script-pdf"
+	@echo "✅ PDF image built: fai-agent-pdf"
 
-run-pdf: build-pdf ## Build and run PDF processing script
-	@echo "Running PDF processing script..."
+run-pdf: build-pdf ## Build and run PDF processing agent
+	@echo "Running PDF processing agent..."
 	@if [ ! -f "$(ENV_FILE)" ]; then \
 		echo "⚠️  Environment file $(ENV_FILE) not found. Creating example..."; \
 		echo "AGENT__GEMINI_API_KEY=your_gemini_api_key_here" > $(ENV_FILE).example; \
@@ -48,21 +48,21 @@ run-pdf: build-pdf ## Build and run PDF processing script
 	@mkdir -p $(DATA_DIR)
 	docker run $(DOCKER_OPTS) \
 		--env-file $(ENV_FILE) \
-		-v "$(shell pwd)/$(DATA_DIR):/app/scripts/data" \
-		fai-script-pdf
+		-v "$(shell pwd)/$(DATA_DIR):/app/agents/data" \
+		fai-agent-pdf
 
 # RAG Processing
 build-rag: ## Build Docker image for RAG processing
 	@echo "Building RAG processing image..."
 	docker build \
 		--build-arg EXTRAS=rag \
-		--build-arg SCRIPT=ingest_pdf.py \
-		--tag fai-script-rag \
+		--build-arg AGENT=ingest_pdf.py \
+		--tag fai-agent-rag \
 		.
-	@echo "✅ RAG image built: fai-script-rag"
+	@echo "✅ RAG image built: fai-agent-rag"
 
-run-rag: build-rag ## Build and run RAG processing script
-	@echo "Running RAG processing script..."
+run-rag: build-rag ## Build and run RAG processing agent
+	@echo "Running RAG processing agent..."
 	@if [ ! -f "$(ENV_FILE)" ]; then \
 		echo "⚠️  Environment file $(ENV_FILE) not found"; \
 		exit 1; \
@@ -70,21 +70,21 @@ run-rag: build-rag ## Build and run RAG processing script
 	@mkdir -p $(DATA_DIR)
 	docker run $(DOCKER_OPTS) \
 		--env-file $(ENV_FILE) \
-		-v "$(shell pwd)/$(DATA_DIR):/app/scripts/data" \
-		fai-script-rag
+		-v "$(shell pwd)/$(DATA_DIR):/app/agents/data" \
+		fai-agent-rag
 
 # A2A Processing
 build-a2a: ## Build Docker image for A2A processing
 	@echo "Building A2A processing image..."
 	docker build \
 		--build-arg EXTRAS=a2a \
-		--build-arg SCRIPT=ingest_pdf.py \
-		--tag fai-script-a2a \
+		--build-arg AGENT=ingest_pdf.py \
+		--tag fai-agent-a2a \
 		.
-	@echo "✅ A2A image built: fai-script-a2a"
+	@echo "✅ A2A image built: fai-agent-a2a"
 
-run-a2a: build-a2a ## Build and run A2A processing script
-	@echo "Running A2A processing script..."
+run-a2a: build-a2a ## Build and run A2A processing agent
+	@echo "Running A2A processing agent..."
 	@if [ ! -f "$(ENV_FILE)" ]; then \
 		echo "⚠️  Environment file $(ENV_FILE) not found"; \
 		exit 1; \
@@ -92,21 +92,21 @@ run-a2a: build-a2a ## Build and run A2A processing script
 	@mkdir -p $(DATA_DIR)
 	docker run $(DOCKER_OPTS) \
 		--env-file $(ENV_FILE) \
-		-v "$(shell pwd)/$(DATA_DIR):/app/scripts/data" \
-		fai-script-a2a
+		-v "$(shell pwd)/$(DATA_DIR):/app/agents/data" \
+		fai-agent-a2a
 
 # Multi-functionality build
 build-multi: ## Build Docker image with multiple extras (pdf,rag,a2a)
 	@echo "Building multi-functionality image..."
 	docker build \
 		--build-arg EXTRAS=pdf,rag,a2a \
-		--build-arg SCRIPT=ingest_pdf.py \
-		--tag fai-script-multi \
+		--build-arg AGENT=ingest_pdf.py \
+		--tag fai-agent-multi \
 		.
-	@echo "✅ Multi image built: fai-script-multi"
+	@echo "✅ Multi image built: fai-agent-multi"
 
-run-multi: build-multi ## Build and run multi-functionality script
-	@echo "Running multi-functionality script..."
+run-multi: build-multi ## Build and run multi-functionality agent
+	@echo "Running multi-functionality agent..."
 	@if [ ! -f "$(ENV_FILE)" ]; then \
 		echo "⚠️  Environment file $(ENV_FILE) not found"; \
 		exit 1; \
@@ -114,31 +114,31 @@ run-multi: build-multi ## Build and run multi-functionality script
 	@mkdir -p $(DATA_DIR)
 	docker run $(DOCKER_OPTS) \
 		--env-file $(ENV_FILE) \
-		-v "$(shell pwd)/$(DATA_DIR):/app/scripts/data" \
-		fai-script-multi
+		-v "$(shell pwd)/$(DATA_DIR):/app/agents/data" \
+		fai-agent-multi
 
 # Custom builds
-build-custom: ## Build custom image (use EXTRAS and SCRIPT env vars)
+build-custom: ## Build custom image (use EXTRAS and AGENT env vars)
 	@if [ -z "$(EXTRAS)" ]; then \
 		echo "❌ EXTRAS environment variable is required"; \
-		echo "Usage: make build-custom EXTRAS=pdf,rag SCRIPT=my_script.py"; \
+		echo "Usage: make build-custom EXTRAS=pdf,rag AGENT=my_agent.py"; \
 		exit 1; \
 	fi
-	@if [ -z "$(SCRIPT)" ]; then \
-		echo "❌ SCRIPT environment variable is required"; \
-		echo "Usage: make build-custom EXTRAS=pdf,rag SCRIPT=my_script.py"; \
+	@if [ -z "$(AGENT)" ]; then \
+		echo "❌ AGENT environment variable is required"; \
+		echo "Usage: make build-custom EXTRAS=pdf,rag AGENT=my_agent.py"; \
 		exit 1; \
 	fi
-	@echo "Building custom image with EXTRAS=$(EXTRAS) SCRIPT=$(SCRIPT)..."
+	@echo "Building custom image with EXTRAS=$(EXTRAS) AGENT=$(AGENT)..."
 	docker build \
 		--build-arg EXTRAS=$(EXTRAS) \
-		--build-arg SCRIPT=$(SCRIPT) \
-		--tag fai-script-custom \
+		--build-arg AGENT=$(AGENT) \
+		--tag fai-agent-custom \
 		.
-	@echo "✅ Custom image built: fai-script-custom"
+	@echo "✅ Custom image built: fai-agent-custom"
 
-run-custom: build-custom ## Build and run custom script (use EXTRAS and SCRIPT env vars)
-	@echo "Running custom script..."
+run-custom: build-custom ## Build and run custom agent (use EXTRAS and AGENT env vars)
+	@echo "Running custom agent..."
 	@if [ ! -f "$(ENV_FILE)" ]; then \
 		echo "⚠️  Environment file $(ENV_FILE) not found"; \
 		exit 1; \
@@ -146,8 +146,8 @@ run-custom: build-custom ## Build and run custom script (use EXTRAS and SCRIPT e
 	@mkdir -p $(DATA_DIR)
 	docker run $(DOCKER_OPTS) \
 		--env-file $(ENV_FILE) \
-		-v "$(shell pwd)/$(DATA_DIR):/app/scripts/data" \
-		fai-script-custom
+		-v "$(shell pwd)/$(DATA_DIR):/app/agents/data" \
+		fai-agent-custom
 
 # Development helpers
 dev-shell: build-pdf ## Start interactive shell in PDF container for development
@@ -155,21 +155,21 @@ dev-shell: build-pdf ## Start interactive shell in PDF container for development
 	@mkdir -p $(DATA_DIR)
 	docker run $(DOCKER_OPTS) \
 		--env-file $(ENV_FILE) \
-		-v "$(shell pwd)/scripts:/app/scripts" \
+		-v "$(shell pwd)/agents:/app/agents" \
 		-v "$(shell pwd)/src:/app/src" \
-		-v "$(shell pwd)/$(DATA_DIR):/app/scripts/data" \
+		-v "$(shell pwd)/$(DATA_DIR):/app/agents/data" \
 		--entrypoint /bin/bash \
-		fai-script-pdf
+		fai-agent-pdf
 
 # Utility targets
-list-images: ## List all fai-script Docker images
-	@echo "Flare AI Kit script images:"
-	@docker images --filter "reference=fai-script-*" --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}"
+list-images: ## List all fai-agent Docker images
+	@echo "Flare AI Kit agent images:"
+	@docker images --filter "reference=fai-agent-*" --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}"
 
-clean-images: ## Remove all fai-script Docker images
-	@echo "Removing all fai-script images..."
-	@docker images --filter "reference=fai-script-*" -q | xargs -r docker rmi -f
-	@echo "✅ Cleaned up fai-script images"
+clean-images: ## Remove all fai-agent Docker images
+	@echo "Removing all fai-agent images..."
+	@docker images --filter "reference=fai-agent-*" -q | xargs -r docker rmi -f
+	@echo "✅ Cleaned up fai-agent images"
 
 # Test targets
 test-build: ## Test building all main image variants
@@ -205,4 +205,4 @@ setup-env: ## Create example environment file
 	fi
 
 # Quick start
-quick-start: setup-env run-pdf ## Quick start: setup environment and run PDF script
+quick-start: setup-env run-pdf ## Quick start: setup environment and run PDF agent

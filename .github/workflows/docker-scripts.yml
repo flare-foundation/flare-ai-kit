@@ -5,14 +5,14 @@ on:
     branches: ["main"]
     paths:
       - "Dockerfile"
-      - "scripts/**"
+      - "agents/**"
       - "pyproject.toml"
       - "uv.lock"
   pull_request:
     branches: ["main"]
     paths:
       - "Dockerfile"
-      - "scripts/**"
+      - "agents/**"
       - "pyproject.toml"
       - "uv.lock"
 
@@ -51,16 +51,16 @@ jobs:
         run: |
           docker build \
             --build-arg EXTRAS=${{ matrix.script.extras }} \
-            --build-arg SCRIPT=${{ matrix.script.script_file }} \
-            --tag fai-script-${{ matrix.script.extras }} \
+            --build-arg AGENT=${{ matrix.script.script_file }} \
+            --tag fai-agent-${{ matrix.script.extras }} \
             --cache-from type=gha \
             --cache-to type=gha,mode=max \
             .
 
       - name: Validate script exists in image
         run: |
-          docker run --rm fai-script-${{ matrix.script.extras }} \
-            test -f "/app/scripts/${{ matrix.script.script_file }}"
+          docker run --rm fai-agent-${{ matrix.script.extras }} \
+            test -f "/app/agents/${{ matrix.script.script_file }}"
 
       - name: Test script startup (dry run)
         timeout-minutes: 5
@@ -73,13 +73,13 @@ jobs:
             -e ECOSYSTEM__WEB3_PROVIDER_URL="$ECOSYSTEM__WEB3_PROVIDER_URL" \
             -e INGESTION__CHUNK_SIZE="$INGESTION__CHUNK_SIZE" \
             -e TEE__SIMULATE_ATTESTATION_TOKEN="$TEE__SIMULATE_ATTESTATION_TOKEN" \
-            fai-script-${{ matrix.script.extras }} \
+            fai-agent-${{ matrix.script.extras }} \
             python -c "
           import sys
           import os
 
           # Test that script file exists
-          script_path = '/app/scripts/${{ matrix.script.script_file }}'
+          script_path = '/app/agents/${{ matrix.script.script_file }}'
           if not os.path.exists(script_path):
               print(f'❌ Script not found: {script_path}')
               sys.exit(1)
@@ -102,7 +102,7 @@ jobs:
       - name: Test container health
         run: |
           # Test that the container can start and the Python environment is healthy
-          docker run --rm fai-script-${{ matrix.script.extras }} \
+          docker run --rm fai-agent-${{ matrix.script.extras }} \
             python -c "
           import sys
           print(f'Python version: {sys.version}')
@@ -130,7 +130,7 @@ jobs:
       - name: Test script dependencies for ${{ matrix.script.name }}
         run: |
           # Test that the specific extras are properly installed
-          docker run --rm fai-script-${{ matrix.script.extras }} \
+          docker run --rm fai-agent-${{ matrix.script.extras }} \
             python -c "
           import sys
           
@@ -182,21 +182,21 @@ jobs:
       - name: Test build without extras
         run: |
           docker build \
-            --build-arg SCRIPT=ingest_pdf.py \
-            --tag fai-script-base \
+            --build-arg AGENT=ingest_pdf.py \
+            --tag fai-agent-base \
             .
 
       - name: Test build with multiple extras
         run: |
           docker build \
             --build-arg EXTRAS=pdf,rag \
-            --build-arg SCRIPT=ingest_pdf.py \
-            --tag fai-script-multi \
+            --build-arg AGENT=ingest_pdf.py \
+            --tag fai-agent-multi \
             .
 
       - name: Validate multi-extras build
         run: |
-          docker run --rm fai-script-multi \
+          docker run --rm fai-agent-multi \
             python -c "
           import PIL, fitz, pytesseract  # PDF deps
           import qdrant_client, dulwich  # RAG deps
@@ -225,7 +225,7 @@ jobs:
       - name: Check scripts directory structure
         run: |
           test -d scripts
-          test -f scripts/ingest_pdf.py
-          test -d scripts/data
-          test -f scripts/data/create_sample_invoice.py
+          test -f agents/ingest_pdf.py
+          test -d agents/data
+          test -f agents/data/create_sample_invoice.py
           echo "✅ Scripts directory structure is correct"

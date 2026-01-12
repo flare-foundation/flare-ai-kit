@@ -114,20 +114,20 @@ docker build -t flare-ai-kit .
 docker run --rm --env-file .env flare-ai-kit
 ```
 
-### Running Individual Scripts
+### Running Individual Agents
 
-The repository includes a parametric Dockerfile for running specific scripts with only the dependencies they need:
+The repository includes a parametric Dockerfile for running specific agents with only the dependencies they need:
 
 ```bash
-# Build and run PDF ingestion script
-docker build -t fai-script-pdf \
+# Build and run PDF agent
+docker build -t fai-agent-pdf \
   --build-arg EXTRAS=pdf \
-  --build-arg SCRIPT=ingest_pdf.py .
+  --build-arg AGENT=ingest_pdf.py .
 
 docker run --rm -it \
-  -v "$PWD/scripts/data:/app/scripts/data" \
+  -v "$PWD/agents/data:/app/agents/data" \
   --env-file .env \
-  fai-script-pdf
+  fai-agent-pdf
 ```
 
 Available `EXTRAS`: `pdf`, `rag`, `a2a`, `ftso`, `da`, `fassets`, `social`, `tee`, `wallet`, `ingestion`
@@ -140,11 +140,11 @@ See [Docker Scripts Guide](docs/docker_scripts_guide.md) for detailed usage inst
 
 1. **Configure GCP:** Set all `GCP__*` variables in your `.env` file.
 
-2. **Deploy:**
+2. **Build, push to Artifacts Registry and Deploy:**
 
    ```bash
-   chmod +x gcloud-deploy.sh
-   ./gcloud-deploy.sh # verbose: ./gcloud-deploy.sh -v
+   chmod +x deploy-tee.sh
+   ./deploy-tee.sh
    ```
 
 ## 🤝 Contributing

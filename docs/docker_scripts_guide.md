@@ -1,12 +1,12 @@
-# Docker Scripts Guide
+# Docker Agents Guide
 
-This guide explains how to use the parametric Dockerfile to run scripts from the `scripts/` directory with specific dependency groups.
+This guide explains how to use the parametric Dockerfile to run agents from the `agents/` directory with specific dependency groups.
 
 ## Overview
 
 The Dockerfile at the repository root is designed to be parametric, allowing you to:
 - Install only the dependencies needed for specific functionality (via `EXTRAS`)
-- Run any script from the `scripts/` directory (via `SCRIPT`)
+- Run any agent from the `agents/` directory (via `AGENT`)
 - Keep images minimal and reproducible using `uv.lock`
 
 ## Build Arguments
@@ -24,23 +24,23 @@ Specifies which optional dependency groups to install. Available options:
 - `wallet` - Wallet functionality (eth-account, cryptography)
 - `ingestion` - General ingestion capabilities
 
-### `SCRIPT`
-Specifies which script to run from the `scripts/` directory. Default: `ingest_pdf.py`
+### `AGENT`
+Specifies which agents to run from the `agents/` directory. Default: `ingest_pdf.py`
 
 ## Basic Usage
 
-### PDF Ingestion Script
+### PDF Ingestion Agent
 
 ```bash
 # Build the image for PDF processing
-docker build -t fai-script-pdf \
+docker build -t fai-agent-pdf \
   --build-arg EXTRAS=pdf \
-  --build-arg SCRIPT=ingest_pdf.py .
+  --build-arg AGENT=ingest_pdf.py .
 
-# Run the script
+# Run the agent
 docker run --rm -it \
-  -v "$PWD/scripts/data:/app/scripts/data" \
-  fai-script-pdf
+  -v "$PWD/agents/data:/app/agents/data" \
+  fai-agent-pdf
 ```
 
 ### With Environment Variables
@@ -51,8 +51,8 @@ docker run --rm -it \
   -e AGENT__GEMINI_API_KEY="your_gemini_api_key" \
   -e ECOSYSTEM__WEB3_PROVIDER_URL="https://flare-api.flare.network/ext/C/rpc" \
   -e LOG_LEVEL="INFO" \
-  -v "$PWD/scripts/data:/app/scripts/data" \
-  fai-script-pdf
+  -v "$PWD/agents/data:/app/agents/data" \
+  fai-agent-pdf
 ```
 
 ### Using Environment File
@@ -68,8 +68,8 @@ EOF
 # Run with environment file
 docker run --rm -it \
   --env-file .env.docker \
-  -v "$PWD/scripts/data:/app/scripts/data" \
-  fai-script-pdf
+  -v "$PWD/agents/data:/app/agents/data" \
+  fai-agent-pdf
 ```
 
 ## Advanced Usage
@@ -78,42 +78,42 @@ docker run --rm -it \
 
 ```bash
 # Build with multiple dependency groups
-docker build -t fai-script-multi \
+docker build -t fai-agent-multi \
   --build-arg EXTRAS="pdf,rag,a2a" \
-  --build-arg SCRIPT=ingest_pdf.py .
+  --build-arg AGENT=ingest_pdf.py .
 ```
 
-### Custom Script
+### Custom agent
 
 ```bash
-# Build for a custom script (once you create more scripts)
-docker build -t fai-script-custom \
+# Build for a custom agent (once you create more agents)
+docker build -t fai-agent-custom \
   --build-arg EXTRAS=rag \
-  --build-arg SCRIPT=my_custom_script.py .
+  --build-arg AGENT=my_custom_agent.py .
 ```
 
 ### Development Mode with Volume Mounts
 
 ```bash
-# Mount the entire scripts directory for development
+# Mount the entire agents directory for development
 docker run --rm -it \
-  -v "$PWD/scripts:/app/scripts" \
+  -v "$PWD/agents:/app/agents" \
   -v "$PWD/src:/app/src" \
   --env-file .env.docker \
-  fai-script-pdf
+  fai-agent-pdf
 ```
 
 ## Data Mounting
 
 ### PDF Data Directory
 
-The PDF ingestion script expects data in `/app/scripts/data/`. Mount your local data:
+The PDF ingestion agent expects data in `/app/agents/data/`. Mount your local data:
 
 ```bash
 # Mount local data directory
 docker run --rm -it \
-  -v "$PWD/my-pdfs:/app/scripts/data" \
-  fai-script-pdf
+  -v "$PWD/my-pdfs:/app/agents/data" \
+  fai-agent-pdf
 ```
 
 ### Persistent Output
@@ -121,9 +121,9 @@ docker run --rm -it \
 ```bash
 # Mount output directory for persistent results
 docker run --rm -it \
-  -v "$PWD/scripts/data:/app/scripts/data" \
+  -v "$PWD/agents/data:/app/agents/data" \
   -v "$PWD/output:/app/output" \
-  fai-script-pdf
+  fai-agent-pdf
 ```
 
 ## Environment Variables
@@ -167,9 +167,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ### Script Not Found Error
 ```
-Error: Script /app/scripts/my_script.py not found
+Error: Script /app/agents/my_agent.py not found
 ```
-Ensure your script exists in the `scripts/` directory and the filename matches the `SCRIPT` build arg.
+Ensure your agent exists in the `agents/` directory and the filename matches the `AGENT` build arg.
 
 ### Missing Dependencies
 ```
@@ -199,8 +199,8 @@ This shouldn't happen with the provided Dockerfile, but if it does, ensure Tesse
 
 ## Examples Repository
 
-See the `scripts/` directory for example scripts:
+See the `agents/` directory for example agents:
 - `ingest_pdf.py` - PDF ingestion and processing
-- More scripts will be added as the project grows
+- More agents will be added as the project grows
 
-Each script should be self-contained and follow the same pattern for consistency.
+Each agent should be self-contained and follow the same pattern for consistency.
