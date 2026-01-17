@@ -1,35 +1,49 @@
+from __future__ import annotations
+
+from typing import Any
+
 import pytest
 
 from flare_ai_kit.consensus.coordinator.simple import SimpleCoordinator
 
 
-# Dummy Agent to simulate behavior
+# ---------------------------------------------------------------------------
+# Dummy Agent
+# ---------------------------------------------------------------------------
 class DummyAgent:
-    def __init__(self, name: str, status: str = "idle") -> None:
-        self.name = name
-        self.status = status
-        self.started = False
-        self.stopped = False
+    """
+    Minimal async agent used for testing SimpleCoordinator.
+    Simulates start/stop/run behavior with internal flags.
+    """
 
-    async def run(self, task: str):
+    def __init__(self, name: str, status: str = "idle") -> None:
+        self.name: str = name
+        self.status: str = status
+        self.started: bool = False
+        self.stopped: bool = False
+
+    async def run(self, task: str) -> str:
         return f"{self.name} did {task}"
 
-    async def start(self):
+    async def start(self) -> None:
         self.started = True
         self.status = "running"
 
-    async def stop(self):
+    async def stop(self) -> None:
         self.stopped = True
         self.status = "stopped"
 
 
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
 @pytest.mark.asyncio
-async def test_add_and_monitor_agents():
+async def test_add_and_monitor_agents() -> None:
     coordinator = SimpleCoordinator()
     agent = DummyAgent("agent1")
 
     coordinator.add_agent(agent, role="summarizer")
-    agents = coordinator.monitor_agents()
+    agents: list[dict[str, Any]] = coordinator.monitor_agents()
 
     assert len(agents) == 1
     assert agents[0]["role"] == "summarizer"
@@ -37,7 +51,7 @@ async def test_add_and_monitor_agents():
 
 
 @pytest.mark.asyncio
-async def test_remove_agent():
+async def test_remove_agent() -> None:
     coordinator = SimpleCoordinator()
     agent = DummyAgent("agent2")
     coordinator.add_agent(agent, role="filter")
@@ -48,33 +62,31 @@ async def test_remove_agent():
 
 
 @pytest.mark.asyncio
-async def test_distribute_task_all_agents():
+async def test_distribute_task_all_agents() -> None:
     coordinator = SimpleCoordinator()
     coordinator.add_agent(DummyAgent("a1"), role="summarizer")
     coordinator.add_agent(DummyAgent("a2"), role="summarizer")
 
-    results = await coordinator.distribute_task("analyze data")
-    print(results)
-
+    results: list[tuple[str, str]] = await coordinator.distribute_task("analyze data")
     assert len(results) == 2
     assert all("analyze data" in r[1] for r in results)
 
 
 @pytest.mark.asyncio
-async def test_distribute_task_by_role():
+async def test_distribute_task_by_role() -> None:
     coordinator = SimpleCoordinator()
     coordinator.add_agent(DummyAgent("a1"), role="summarizer")
     coordinator.add_agent(DummyAgent("a2"), role="filter")
 
-    results = await coordinator.distribute_task("summarize this", role="summarizer")
-    print(results)
-
+    results: list[tuple[str, str]] = await coordinator.distribute_task(
+        "summarize this", role="summarizer"
+    )
     assert len(results) == 1
     assert "summarize this" in results[0][1]
 
 
 @pytest.mark.asyncio
-async def test_start_and_stop_agents():
+async def test_start_and_stop_agents() -> None:
     coordinator = SimpleCoordinator()
     agent = DummyAgent("a1")
     coordinator.add_agent(agent, role="summarizer")
@@ -82,6 +94,6 @@ async def test_start_and_stop_agents():
     await coordinator.start_agents()
     await coordinator.stop_agents()
 
-    assert agent.started is True
-    assert agent.stopped is True
+    assert agent.started
+    assert agent.stopped
     assert agent.status == "stopped"
