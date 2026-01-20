@@ -30,7 +30,7 @@ def _create_dynamic_model(template: PDFTemplateSettings) -> type[BaseModel]:
         for field in template.fields
     }
     # Use Pydantic's create_model function to build the class
-    return create_model(f"{template.template_name}Model", **fields)  # type: ignore[reportCallIssue]
+    return create_model(f"{template.template_name}Model", **fields)  # type: ignore[call-arg]  # Pydantic dynamic model creation
 
 
 class PDFProcessor:
@@ -70,10 +70,21 @@ class PDFProcessor:
 
         """
         if use_ocr:
-            pix = page.get_pixmap(clip=rect)  # type: ignore[reportArgumentType]
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # type: ignore[reportArgumentType]
-            return str(pytesseract.image_to_string(img).strip())  # type: ignore[reportArgumentType]
-        return str(page.get_text("text", clip=rect).strip())  # type: ignore[reportArgumentType]
+            pix = page.get_pixmap(clip=rect)  # type: ignore[attr-defined]  # fitz missing type stubs
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)  # type: ignore[attr-defined]  # fitz missing type stubs
+            ocr_result = pytesseract.image_to_string(img)  # type: ignore[attr-defined]
+            return (
+                str(ocr_result.strip())
+                if isinstance(ocr_result, str)
+                else str(ocr_result)
+            )
+
+        text_result = page.get_text("text", clip=rect)  # type: ignore[attr-defined]
+        return (
+            str(text_result.strip())
+            if isinstance(text_result, str)
+            else str(text_result)  # type: ignore[attr-defined]
+        )
 
     def process_pdf(self, file_path: str, template_name: str) -> dict[str, Any]:
         """

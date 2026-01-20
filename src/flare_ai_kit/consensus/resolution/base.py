@@ -7,7 +7,7 @@ from typing import Any
 try:
     from pydantic import BaseModel as _PydanticBaseModel
 
-    class BaseModel(_PydanticBaseModel):  # type: ignore[misc]
+    class BaseModel(_PydanticBaseModel):  # type: ignore[misc]  # Optional pydantic fallback pattern
         """Base model using pydantic."""
 
         class Config:
@@ -17,7 +17,7 @@ try:
 
 except ImportError:
     # Fallback for when pydantic is not available
-    class BaseModel:  # type: ignore[misc]
+    class BaseModel:  # type: ignore[misc]  # Optional pydantic fallback pattern
         """Fallback BaseModel when pydantic is not available."""
 
         def __init__(self, **kwargs: Any) -> None:
@@ -48,24 +48,24 @@ class ConflictSeverity(str, Enum):
     CRITICAL = "critical"
 
 
-class ConflictContext(BaseModel):  # type: ignore[misc]
+class ConflictContext(BaseModel):  # type: ignore[misc]  # BaseModel fallback pattern
     """Context information for conflict resolution."""
 
     task_id: str
     conflict_type: ConflictType
     severity: ConflictSeverity
     conflicting_predictions: list[Prediction]
-    metadata: dict[str, Any] = {}  # type: ignore[assignment,misc]  # noqa: RUF012
+    metadata: dict[str, Any] = {}  # noqa: RUF012
 
 
-class ResolutionResult(BaseModel):  # type: ignore[misc]
+class ResolutionResult(BaseModel):  # type: ignore[misc]  # BaseModel fallback pattern
     """Result of conflict resolution process."""
 
     resolved_prediction: Prediction
     resolution_method: str
     confidence_adjustment: float = 0.0
     rationale: str = ""
-    additional_info: dict[str, Any] = {}  # type: ignore[assignment,misc]  # noqa: RUF012
+    additional_info: dict[str, Any] = {}  # noqa: RUF012
 
 
 class BaseConflictDetector(ABC):

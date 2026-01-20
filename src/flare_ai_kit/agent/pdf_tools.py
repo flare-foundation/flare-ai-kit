@@ -33,9 +33,9 @@ def read_pdf_text(
     result: dict[str, Any] = {}
     with fitz.open(file_path) as doc:
         # The logic for handling a potential None value remains the same
-        for i, page in enumerate(doc):  # type: ignore[reportArgumentType]
-            txt = page.get_text("text")  # type: ignore[reportUnknownMemberType,reportUnknownMemberType]
-            pages_data.append({"index": i, "text": txt})  # type: ignore[reportUnknownArgumentType]
+        for i, page in enumerate(doc):  # type: ignore[attr-defined]  # fitz missing type stubs
+            txt = page.get_text("text")  # type: ignore[attr-defined]  # fitz missing type stubs
+            pages_data.append({"index": i, "text": txt})
 
         result = {
             "path": file_path,
@@ -50,4 +50,4 @@ def read_pdf_text(
     return result
 
 
-read_pdf_text_tool = read_pdf_text.__wrapped__  # type: ignore[reportFunctionMemberAccess]
+read_pdf_text_tool = read_pdf_text.__wrapped__  # type: ignore[attr-defined]  # ADK decorator unwrapping
