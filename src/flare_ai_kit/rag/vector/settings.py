@@ -95,3 +95,41 @@ class VectorDbSettings(BaseSettings):
     postgres_dsn: PostgresDsn | None = Field(
         default=None, description="DSN for PostgreSQL connection string."
     )
+
+
+class RerankerSettings(BaseSettings):
+    """Configuration for LLM-based reranker."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="RERANKER__",
+        env_file=".env",
+        extra="ignore",
+    )
+
+    enabled: bool = Field(
+        default=False,
+        description="Enable LLM-based reranking after retrieval.",
+    )
+    model: str = Field(
+        default="gemini-3-flash-preview",
+        description="Gemini model for reranking.",
+    )
+    num_batches: PositiveInt = Field(
+        default=4,
+        description="Number of parallel batches for scoring passages.",
+    )
+    timeout_seconds: float = Field(
+        default=5.0,
+        gt=0.0,
+        description="Timeout per batch in seconds.",
+    )
+    score_threshold: float = Field(
+        default=5.0,
+        ge=0.0,
+        le=10.0,
+        description="Minimum score (0-10) to include a passage in results.",
+    )
+    few_shot_examples: str | None = Field(
+        default=None,
+        description="Custom few-shot examples for calibration. If None, uses defaults.",
+    )
