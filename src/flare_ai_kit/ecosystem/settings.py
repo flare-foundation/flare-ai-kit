@@ -21,6 +21,15 @@ class ContractAddresses(BaseModel):
     sparkdex_swap_router: ChecksumAddress | None = None
     kinetic_comptroller: ChecksumAddress | None = None
     kinetic_ksflr: ChecksumAddress | None = None
+    sceptre_sflr: ChecksumAddress | None = None
+    cyclo_cysflr_vault: ChecksumAddress | None = None
+    cyclo_cysflr_receipt: ChecksumAddress | None = None
+    firelight_stxrp_vault: ChecksumAddress | None = None
+    stargate_token_messaging: ChecksumAddress | None = None
+    stargate_treasurer: ChecksumAddress | None = None
+    stargate_eth_oft: ChecksumAddress | None = None
+    stargate_usdc_oft: ChecksumAddress | None = None
+    stargate_usdt_oft: ChecksumAddress | None = None
 
 
 class Contracts(BaseModel):
@@ -39,6 +48,33 @@ class Contracts(BaseModel):
         ),
         kinetic_ksflr=cast(
             "ChecksumAddress", "0x291487beC339c2fE5D83DD45F0a15EFC9Ac45656"
+        ),
+        sceptre_sflr=cast(
+            "ChecksumAddress", "0x12e605bc104e93B45e1aD99F9e555f659051c2BB"
+        ),
+        cyclo_cysflr_vault=cast(
+            "ChecksumAddress", "0x19831cfB53A0dbeAD9866C43557C1D48DfF76567"
+        ),
+        cyclo_cysflr_receipt=cast(
+            "ChecksumAddress", "0xd387FC43E19a63036d8FCeD559E81f5dDeF7ef09"
+        ),
+        firelight_stxrp_vault=cast(
+            "ChecksumAddress", "0x4C18Ff3C89632c3Dd62E796c0aFA5c07c4c1B2b3"
+        ),
+        stargate_token_messaging=cast(
+            "ChecksumAddress", "0x45d417612e177672958dC0537C45a8f8d754Ac2E"
+        ),
+        stargate_treasurer=cast(
+            "ChecksumAddress", "0x090194F1EEDc134A680e3b488aBB2D212dba8c01"
+        ),
+        stargate_eth_oft=cast(
+            "ChecksumAddress", "0x8e8539e4CcD69123c623a106773F2b0cbbc58746"
+        ),
+        stargate_usdc_oft=cast(
+            "ChecksumAddress", "0x77C71633C34C3784ede189d74223122422492a0f"
+        ),
+        stargate_usdt_oft=cast(
+            "ChecksumAddress", "0x1C10CC06DC6D35970d1D53B2A23c76ef370d4135"
         ),
     )
     coston2: ContractAddresses = ContractAddresses()

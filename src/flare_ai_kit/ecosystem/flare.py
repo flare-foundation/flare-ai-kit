@@ -205,10 +205,26 @@ class Flare:
 
     @with_web3_error_handling("Building transaction")
     async def build_transaction(
-        self, function_call: AsyncContractFunction, from_addr: ChecksumAddress
+        self,
+        function_call: AsyncContractFunction,
+        from_addr: ChecksumAddress,
+        value: int = 0,
     ) -> TxParams | None:
-        """Builds a transaction with dynamic gas and nonce parameters."""
+        """
+        Builds a transaction with dynamic gas and nonce parameters.
+
+        Args:
+            function_call: The contract function call to build a transaction for
+            from_addr: The sender's checksummed address
+            value: Amount of native token (wei) to send with the transaction
+
+        Returns:
+            Transaction parameters dictionary
+
+        """
         base_tx = await self._prepare_base_tx_params(from_addr)
+        if value > 0:
+            base_tx["value"] = value  # pyright: ignore[reportGeneralTypeIssues]
         # Let web3.py handle gas estimation within build_transaction if not provided
         tx = await function_call.build_transaction(base_tx)
         logger.debug("Transaction built successfully", tx=tx)
@@ -234,8 +250,14 @@ class Flare:
             raise ValueError(msg)
 
         try:
+            # Unwrap SecretStr to get actual private key value
+            private_key_value = (
+                self.private_key.get_secret_value()
+                if hasattr(self.private_key, "get_secret_value")
+                else self.private_key
+            )
             signed_tx = self.w3.eth.account.sign_transaction(
-                tx, private_key=self.private_key
+                tx, private_key=private_key_value
             )
             logger.debug("Transaction signed.")
         except Web3Exception as e:

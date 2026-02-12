@@ -14,7 +14,7 @@ SDK for building **verifiable AI Agents** on Flare using Confidential Space Trus
 - **Verifiable execution**: Run logic inside Intel TDX TEEs via [GCP Confidential Space](https://cloud.google.com/confidential-computing/confidential-space/docs/confidential-space-overview).
 - **Multi-agent consensus**: Majority/Tournament/[Consensus Learning](https://arxiv.org/abs/2402.16157) via [Google Agent2Agent](https://github.com/a2aproject/A2A) protocol.
 - **Agent framework**: Built on [Google ADK](https://google.github.io/adk-docs/) with tool-calling, orchestration and evaluation.
-- **Flare integration**: [FTSO](https://dev.flare.network/ftso/overview), [FDC](https://dev.flare.network/fdc/overview), [FAssets](https://dev.flare.network/fassets/overview) + ecosystem dApps ([Sceptre](https://sceptre.fi), [SparkDEX](https://sparkdex.ai), ...).
+- **Flare integration**: [FTSO](https://dev.flare.network/ftso/overview), [FDC](https://dev.flare.network/fdc/overview), [FAssets](https://dev.flare.network/fassets/overview) + ecosystem dApps ([SparkDEX](https://sparkdex.ai), [Sceptre](https://sceptre.fi), [Kinetic](https://www.kinetic.market/), [Cyclo](https://www.cyclo.xyz/), [Firelight](https://www.firelight.fi/), [Stargate](https://stargate.finance/)).
 - **Social connectors**: X, Telegram, Farcaster.
 
 ## 🏗️ Architecture
@@ -50,7 +50,7 @@ flowchart TD
         F --> PR[Protocols]
         PR --o PROTOS["FTSO<br>FDC<br>FAssets"]
         F --> AP[Applications]
-        AP --o APPS[SparkDEX<br>OpenOcean<br>Kinetic<br>Cyclo]
+        AP --o APPS[SparkDEX<br>Sceptre<br>Kinetic<br>Cyclo<br>Firelight<br>Stargate]
     end
 
     %% Social Engine subgraph

@@ -138,3 +138,43 @@ class A2AClientError(FlareAIKitError):
 # --- PDF Processing Errors ---
 class PdfPostingError(FlareAIKitError):
     """Error class concerned with onchain PDF data posting errors."""
+
+
+# --- SparkDEX Errors ---
+class SparkDEXError(FlareAIKitError):
+    """Base exception for errors related to SparkDEX protocol interactions."""
+
+
+# --- Cyclo Errors ---
+
+
+class CycloError(FlareAIKitError):
+    """Base exception for errors related to Cyclo protocol interactions."""
+
+
+# --- Sceptre Errors ---
+
+
+class SceptreError(FlareAIKitError):
+    """Base exception for errors related to Sceptre liquid staking interactions."""
+
+
+# --- Kinetic Errors ---
+
+
+class KineticError(FlareAIKitError):
+    """Base exception for errors related to Kinetic lending protocol interactions."""
+
+
+# --- Firelight Errors ---
+
+
+class FirelightError(FlareAIKitError):
+    """Base exception for errors related to Firelight XRP staking interactions."""
+
+
+# --- Stargate Errors ---
+
+
+class StargateError(FlareAIKitError):
+    """Base exception for errors related to Stargate bridge interactions."""
