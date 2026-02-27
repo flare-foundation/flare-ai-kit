@@ -13,7 +13,7 @@ SDK for building **verifiable AI Agents** on Flare using Confidential Space Trus
 
 - **Verifiable execution**: Run logic inside Intel TDX TEEs via [GCP Confidential Space](https://cloud.google.com/confidential-computing/confidential-space/docs/confidential-space-overview).
 - **Multi-agent consensus**: Majority/Tournament/[Consensus Learning](https://arxiv.org/abs/2402.16157) via [Google Agent2Agent](https://github.com/a2aproject/A2A) protocol.
-- **Agent framework**: Built on [Google ADK](https://google.github.io/adk-docs/) with tool-calling, orchestration and evaluation.
+- **Agent framework**: Built on [Google ADK](https://google.github.io/adk-docs/) with tool-calling, orchestration and evaluation. Supports [MCP](https://modelcontextprotocol.io/) for custom tool integration.
 - **Flare integration**: [FTSO](https://dev.flare.network/ftso/overview), [FDC](https://dev.flare.network/fdc/overview), [FAssets](https://dev.flare.network/fassets/overview) + ecosystem dApps ([Sceptre](https://sceptre.fi), [SparkDEX](https://sparkdex.ai), ...).
 - **Social connectors**: X, Telegram, Farcaster.
 
@@ -29,6 +29,7 @@ flowchart TD
     subgraph AgentFramework["Agent Framework"]
         B["Google ADK"]
         B --o LLM["Gemini<br>GPT<br>Grok<br>+200 models"]
+        B --o MCP["MCP Servers<br>(Custom Tools)"]
     end
 
     %% VectorRAG Engine subgraph
@@ -130,7 +131,7 @@ docker run --rm -it \
   fai-agent-pdf
 ```
 
-Available `EXTRAS`: `pdf`, `rag`, `a2a`, `ftso`, `da`, `fassets`, `social`, `tee`, `wallet`, `ingestion`
+Available `EXTRAS`: `pdf`, `rag`, `a2a`, `ftso`, `da`, `fassets`, `social`, `tee`, `wallet`, `ingestion`, `mcp`
 
 See [Docker Scripts Guide](docs/docker_scripts_guide.md) for detailed usage instructions.
 

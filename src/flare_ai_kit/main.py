@@ -10,10 +10,13 @@ import structlog
 from .config import AppSettings
 
 if TYPE_CHECKING:
+    from google.adk.tools.mcp_tool import McpToolset
+
     from .a2a import A2AClient
     from .ecosystem.api import BlockExplorer, FAssets, Flare, FtsoV2
     from .ingestion.api import GithubIngestor
     from .ingestion.pdf_processor import PDFProcessor
+    from .mcp.manager import MCPManager
     from .rag.vector.api import VectorRAGPipeline
     from .social.api import TelegramClient, XClient
 
@@ -50,6 +53,7 @@ class FlareAIKit:
         self._x_client: XClient | None = None
         self._pdf_processor: PDFProcessor | None = None
         self._a2a_client: A2AClient | None = None
+        self._mcp_manager: MCPManager | None = None
 
     # Ecosystem Interaction Methods
     @property
@@ -159,6 +163,32 @@ class FlareAIKit:
         if self._a2a_client is None:
             self._a2a_client = A2AClient(settings=self.settings.a2a)
         return self._a2a_client
+
+    # MCP Methods
+    @property
+    def mcp_manager(self) -> MCPManager:
+        """Access the MCP manager (configured via `MCP__SERVERS`)."""
+        from .mcp.manager import MCPManager  # noqa: PLC0415
+
+        if self._mcp_manager is None:
+            self._mcp_manager = MCPManager(self.settings.mcp)
+        return self._mcp_manager
+
+    @property
+    def mcp_tools(self) -> list[McpToolset]:
+        """Get MCP toolsets for use with ADK agents (empty if none configured)."""
+        return self.mcp_manager.get_toolsets_sync()
+
+    @property
+    def has_mcp_tools(self) -> bool:
+        """Check if MCP tools are configured and available."""
+        return self.mcp_manager.has_servers
+
+    async def close_mcp(self) -> None:
+        """Close all MCP connections. Call during cleanup."""
+        if self._mcp_manager is not None:
+            await self._mcp_manager.close()
+            self._mcp_manager = None
 
 
 async def core() -> None:
